@@ -1,0 +1,14 @@
+.env
+.dev.vars
+__pycache__/
+*.pyc
+node_modules/
+.wrangler/
+*.log
+.DS_Store
+.agents/
+.claude/
+.playwright-mcp/
+instruction/
+data/skills/
+skills-lock.json

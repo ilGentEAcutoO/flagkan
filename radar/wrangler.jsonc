@@ -1,0 +1,22 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "radar-worker-api",
+	"account_id": "a24ce30584273b42333051f1cdec48e2",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-05",
+	"observability": {
+		"enabled": true,
+		"traces": { "enabled": true }
+	},
+	"triggers": { "crons": ["* * * * *"] },
+	"d1_databases": [
+		{
+			"binding": "DB_MAIN",
+			"database_name": "radar-d1-main",
+			"database_id": "0cf97246-edd4-42b1-b7a9-826646bd054b"
+		}
+	],
+	"assets": { "directory": "./public", "binding": "ASSETS" },
+	"routes": [{ "pattern": "flag.sornkan.com", "custom_domain": true }],
+	"workers_dev": true
+}
