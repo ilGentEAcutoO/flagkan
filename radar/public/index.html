@@ -161,7 +161,7 @@ function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function pct(x){return (x==null||isNaN(Number(x)))?t("na"):Math.round(Number(x)*100)+"%"}
 function num(x){if(x==null||isNaN(Number(x)))return "—";var n=Number(x);if(n>=1e6)return (n/1e6).toFixed(1)+"M";if(n>=1e3)return (n/1e3).toFixed(1)+"K";if(n<0.01&&n>0)return n.toExponential(1);return String(Math.round(n*10000)/10000)}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";loadProof();loadRounds()}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";loadProof();loadRounds();if(LAST)openModal(LAST)}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 function setFilter(f){FILTER=f;document.getElementById("fAll").className=f==="all"?"on":"";document.getElementById("fRed").className=f==="red"?"on":"";document.getElementById("fStar").className=f==="star"?"on":"";loadRounds()}
@@ -172,7 +172,7 @@ function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then
 document.getElementById("cAcc").textContent=d.accuracy==null?"—":pct(d.accuracy);
 document.getElementById("cN").textContent=d.resolved_with_verdict;
 }).catch(function(){})}
-function badge(c){c=c||"none";return '<span class="badge '+c+'">'+c+"</span>"}
+function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
 function loadRounds(){fetch("/api/rounds?limit=50").then(function(r){return r.json()}).then(function(d){
 document.getElementById("cT").textContent=d.rounds.length;
 var h="";
@@ -199,7 +199,7 @@ if(d.error)return;LAST=mint;
 document.getElementById("modal").className="modal open";
 document.getElementById("dName").textContent=(d.coin&&d.coin.name)||mint.slice(0,10);
 document.getElementById("dMint").textContent=mint;
-var ch=(d.verdict&&d.verdict.choice)||"none";
+var ch=(d.verdict&&d.verdict.choice)||"none";if(ch!=="red"&&ch!=="yellow"&&ch!=="green")ch="none";
 var vl=document.getElementById("dVerdict");vl.className="vline "+ch;
 vl.textContent="";var a=document.createElement("span");a.textContent=t(ch);var b=document.createElement("span");b.className="cf";b.textContent="conf "+Math.round(((d.verdict&&d.verdict.confidence)||0)*100)+"%";vl.appendChild(a);vl.appendChild(b);
 var s=d.signals||{},last=d.last||{};
