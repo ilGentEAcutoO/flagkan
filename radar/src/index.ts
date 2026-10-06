@@ -3,9 +3,11 @@ interface Env {
 	ASSETS: Fetcher;
 	TYPESAFE_API_KEY: string;
 	SOLAMI_API_KEY: string;
+	ADMIN_KEY: string;
 }
 
-import { hardRed } from "./ml/train";
+import { hardRed, timeSplitValidate, predict, buildFeatures, DEFAULT_MODEL, FEATURES } from "./ml/train";
+import type { GoldModel, TrainRow } from "./ml/train";
 
 const DEX = "https://api.dexscreener.com";
 const UA = { "User-Agent": "Mozilla/5.0 (radar proof-of-concept)" };
@@ -83,6 +85,80 @@ function applyVerdictOverride(a: any, vstate: Record<string, unknown>, mint: str
 	} else if (llm !== "green" && llm !== "yellow") {
 		a.verdict = { ...(a.verdict ?? {}), choice: "yellow" };
 	}
+}
+
+function numOrNull(v: unknown): number | null {
+	return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+async function loadChampion(env: Env): Promise<{ model: GoldModel; version: number } | null> {
+	const row = await env.DB_MAIN.prepare(
+		"SELECT version, weights, bias FROM models WHERE promoted = 1 ORDER BY version DESC LIMIT 1"
+	).first<{ version: number; weights: string; bias: number }>();
+	if (!row) return null;
+	try {
+		const w = JSON.parse(row.weights);
+		if (!Array.isArray(w) || w.length !== FEATURES.length) return null;
+		return { model: { weights: w.map(Number), bias: Number(row.bias), features: [...FEATURES] }, version: Number(row.version) };
+	} catch { return null; }
+}
+
+async function maybeDemoteGreen(env: Env, a: any, vstate: Record<string, unknown>, mint: string, tag: string): Promise<void> {
+	if (String(a.verdict?.choice ?? "") !== "green") return;
+	try {
+		const champ = await loadChampion(env);
+		const m = champ ? champ.model : DEFAULT_MODEL;
+		const txns = Number(vstate.txns_5m ?? 0);
+		const ratio = Number(vstate.sell_ratio_5m ?? 0.5);
+		const row: TrainRow = {
+			ts: Date.now(), dead: 0, choice: "green",
+			liq: numOrNull(vstate.liquidity_usd), top1: numOrNull(vstate.top1_pct),
+			t211: numOrNull(vstate.top2_11_pct), fdv: numOrNull(vstate.fdv),
+			early: numOrNull(vstate.early_buys), age: numOrNull(vstate.mint_age_min),
+			txns: Number.isFinite(txns) ? txns : null,
+			buys: Math.round((1 - ratio) * Math.max(0, txns)), sells: Math.round(ratio * Math.max(0, txns)),
+			pool: numOrNull(vstate.pool_suspect), pRed: Number(a.verdict?.probabilities?.red ?? 0.5),
+		};
+		if (predict(m, buildFeatures(row)) >= 0.5) {
+			a.verdict = { ...(a.verdict ?? {}), choice: "yellow" };
+			console.log(JSON.stringify({ [tag]: "green_gated", mint }));
+		}
+	} catch { /* gate open on error: keep LLM green */ }
+}
+
+async function retrain(env: Env, dryRun: boolean): Promise<Record<string, unknown>> {
+	const now = Date.now();
+	const qr = await env.DB_MAIN.prepare(
+		"SELECT v.ts AS ts, o.dead AS dead, v.choice AS choice, "
+		+ "(SELECT liquidity_usd FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS liq, "
+		+ "(SELECT fdv FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS fdv, "
+		+ "(SELECT txns_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS txns, "
+		+ "(SELECT buys_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS buys, "
+		+ "(SELECT sells_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS sells, "
+		+ "g.top1_pct AS top1, g.top2_11_pct AS t211, g.early_buys AS early, g.mint_age_min AS age, "
+		+ "g.pool_suspect AS pool, v.p_red AS pRed FROM verdicts v "
+		+ "JOIN outcomes o ON o.mint = v.mint LEFT JOIN signals g ON g.mint = v.mint "
+		+ "ORDER BY v.ts DESC LIMIT 5000"
+	).all<any>();
+	const rows: TrainRow[] = (qr.results ?? []).map((r: any) => ({
+		ts: Number(r.ts), dead: Number(r.dead) === 1 ? 1 : 0, choice: String(r.choice ?? "yellow"),
+		liq: numOrNull(r.liq), top1: numOrNull(r.top1), t211: numOrNull(r.t211), fdv: numOrNull(r.fdv),
+		early: numOrNull(r.early), age: numOrNull(r.age), txns: numOrNull(r.txns),
+		buys: numOrNull(r.buys), sells: numOrNull(r.sells), pool: numOrNull(r.pool), pRed: numOrNull(r.pRed),
+	}));
+	if (rows.length < 30) return { ok: false, reason: "not_enough_data", n: rows.length };
+	const res = timeSplitValidate(rows);
+	const out: Record<string, unknown> = { ok: true, dryRun, n: res.n, nTrain: res.nTrain, nTest: res.nTest, champAcc: res.champAcc, chalAcc: res.chalAcc, promoted: false, version: null };
+	if (!dryRun && res.chalAcc != null && res.champAcc != null && res.chalAcc > res.champAcc) {
+		await env.DB_MAIN.prepare("UPDATE models SET promoted = 0 WHERE promoted = 1").run();
+		const ins = await env.DB_MAIN.prepare(
+			"INSERT INTO models (created_at, weights, bias, features, n_train, test_acc, test_n, champ_acc, promoted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)"
+		).bind(now, JSON.stringify(res.model.weights), res.model.bias, JSON.stringify(res.model.features), res.nTrain, res.chalAcc, res.nTest, res.champAcc).run();
+		out.promoted = true;
+		out.version = Number((ins.meta as any)?.last_row_id ?? 0);
+	}
+	console.log(JSON.stringify({ cron: "retrain", n: res.n, champAcc: res.champAcc, chalAcc: res.chalAcc, promoted: out.promoted }));
+	return out;
 }
 
 async function solamiRpc(env: Env, method: string, params: unknown[]): Promise<any> {
@@ -206,6 +282,7 @@ async function snapshotMint(
 					};
 					const a = await jevVerdict(env, vstate);
 					applyVerdictOverride(a, vstate, mint, "cron");
+					await maybeDemoteGreen(env, a, vstate, mint, "cron");
 					await env.DB_MAIN.prepare(
 						"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					)
@@ -327,7 +404,14 @@ function json(data: unknown, status = 200): Response {
 }
 
 export default {
-	async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+	async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+		if (controller.cron === "17 3 * * 0") {
+			ctx.waitUntil((async () => {
+				try { await retrain(env, false); }
+				catch (e) { console.log(JSON.stringify({ cron: "retrain_fail", err: String(e).slice(0, 200) })); }
+			})());
+			return;
+		}
 		ctx.waitUntil(
 			(async () => {
 				try {
@@ -420,11 +504,28 @@ export default {
 		}
 
 		if (url.pathname === "/api/diag") {
+			let model: unknown = null;
+			try {
+				const m = await env.DB_MAIN.prepare("SELECT version, test_acc, n_train, created_at FROM models WHERE promoted = 1 ORDER BY version DESC LIMIT 1").first<{ version: number; test_acc: number; n_train: number; created_at: number }>();
+				if (m) model = { version: m.version, testAcc: m.test_acc, nTrain: m.n_train, createdAt: m.created_at };
+			} catch { /* diag stays up without model info */ }
 			return json({
 				hasKey: Boolean(env.TYPESAFE_API_KEY),
 				keyLen: (env.TYPESAFE_API_KEY || "").length,
 				now: Date.now(),
+				model,
 			});
+		}
+
+		if (url.pathname === "/api/retrain-now" && request.method === "POST") {
+			const key = url.searchParams.get("key") ?? "";
+			if (!env.ADMIN_KEY || key !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403);
+			const dry = url.searchParams.get("dry_run") === "1";
+			try {
+				return json(await retrain(env, dry));
+			} catch (e) {
+				return json({ ok: false, error: String(e).slice(0, 200) }, 500);
+			}
 		}
 
 		if (url.pathname === "/api/verdict-now" && request.method === "POST") {
@@ -462,6 +563,7 @@ export default {
 				};
 				const a = await jevVerdict(env, state);
 				applyVerdictOverride(a, state, mint, "verdict_now");
+				await maybeDemoteGreen(env, a, state, mint, "verdict_now");
 				await env.DB_MAIN.prepare(
 					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
@@ -507,6 +609,7 @@ export default {
 				};
 				const a = await jevVerdict(env, vstate3);
 				applyVerdictOverride(a, vstate3, mint, "signals_now");
+				await maybeDemoteGreen(env, a, vstate3, mint, "signals_now");
 				await env.DB_MAIN.prepare(
 					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
