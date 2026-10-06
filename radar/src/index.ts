@@ -32,10 +32,9 @@ async function jevVerdict(env: Env, state: Record<string, unknown>): Promise<any
 			questions: {
 				verdict: {
 					type: "choice",
-					instructions: "Which risk light fits this Solana token? Judge strictly by the numbers in state.",
+					instructions: "Which risk light fits this Solana token: yellow or green? RED is handled by a separate rules layer — never output red. Judge strictly by the numbers in state. A high top1_pct alone is NOT alarming: several coins with top1 over 70 survived.",
 					criteria: {
-						red: "High risk, do not buy: pick this when the largest holder top1_pct is over 30, or liquidity_usd is under 10000, or several warning signs combine.",
-						yellow: "Caution, watch closely: the default for new coins. Some risk is present but no single disqualifying red flag.",
+						yellow: "Caution, watch closely: the default for new coins. Any doubt, any missing holder data, or any single warning sign means yellow.",
 						green: "Looks acceptable: ONLY when ALL of these hold at once: top1_pct under 15, top2_11_pct under 40, liquidity_usd over 100000, mint_age_min over 15. If holder data (top1_pct) is missing, never green.",
 					},
 				},
@@ -53,6 +52,43 @@ async function jevVerdict(env: Env, state: Record<string, unknown>): Promise<any
 	});
 	if (!r.ok) throw new Error("jev " + r.status);
 	return ((await r.json()) as any).answers;
+}
+
+function hardRed(s: {
+	liquidity_usd?: unknown;
+	top1_pct?: unknown;
+	early_buys?: unknown;
+	mint_age_min?: unknown;
+}): string | null {
+	const liq = Number(s.liquidity_usd);
+	const top1 = Number(s.top1_pct);
+	const early = Number(s.early_buys);
+	const age = Number(s.mint_age_min);
+	// R1: effectively no liquidity at first sight — unbuyable; 6/6 such coins died in backtest
+	if (Number.isFinite(liq) && liq < 1000 && (!Number.isFinite(top1) || top1 > 10)) return "illiquid";
+	// R2: bot-frenzy ignition — brand-new coin with an extreme early-tx rate
+	if (Number.isFinite(age) && Number.isFinite(early) && age > 0 && age < 10 && early / age > 50)
+		return "bot_frenzy";
+	return null;
+}
+
+function applyVerdictOverride(a: any, vstate: Record<string, unknown>, mint: string, tag: string): void {
+	const rule = hardRed(vstate);
+	const llm = String(a.verdict?.choice ?? "yellow");
+	if (rule) {
+		a.verdict = {
+			...(a.verdict ?? {}),
+			choice: "red",
+			confidence: 0.95,
+			probabilities: { red: 0.95, yellow: 0.05, green: 0 },
+		};
+		console.log(JSON.stringify({ [tag]: "hard_red", mint, rule }));
+	} else if (llm === "red") {
+		a.verdict = { ...(a.verdict ?? {}), choice: "yellow" };
+		console.log(JSON.stringify({ [tag]: "red_demoted", mint }));
+	} else if (llm !== "green" && llm !== "yellow") {
+		a.verdict = { ...(a.verdict ?? {}), choice: "yellow" };
+	}
 }
 
 async function solamiRpc(env: Env, method: string, params: unknown[]): Promise<any> {
@@ -162,14 +198,16 @@ async function snapshotMint(
 					} catch (e) {
 						console.log(JSON.stringify({ cron: "signals_fail", mint, err: String(e).slice(0, 120) }));
 					}
-					const a = await jevVerdict(env, {
+					const vstate = {
 						mint,
 						price_usd: price,
 						liquidity_usd: liq,
 						fdv,
 						txns_5m: tx5,
 						...sig,
-					});
+					};
+					const a = await jevVerdict(env, vstate);
+					applyVerdictOverride(a, vstate, mint, "cron");
 					await env.DB_MAIN.prepare(
 						"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					)
@@ -415,6 +453,7 @@ export default {
 					...sig,
 				};
 				const a = await jevVerdict(env, state);
+				applyVerdictOverride(a, state, mint, "verdict_now");
 				await env.DB_MAIN.prepare(
 					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
@@ -449,14 +488,16 @@ export default {
 					.run();
 				const pairs = await jget(DEX + "/tokens/v1/solana/" + mint);
 				const p = pickPair(pairs);
-				const a = await jevVerdict(env, {
+				const vstate3 = {
 					mint,
 					price_usd: Number(p?.priceUsd ?? 0),
 					liquidity_usd: Number(p?.liquidity?.usd ?? 0),
 					fdv: Number(p?.fdv ?? 0),
 					txns_5m: Number(p?.txns?.m5?.buys ?? 0) + Number(p?.txns?.m5?.sells ?? 0),
 					...s,
-				});
+				};
+				const a = await jevVerdict(env, vstate3);
+				applyVerdictOverride(a, vstate3, mint, "signals_now");
 				await env.DB_MAIN.prepare(
 					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
