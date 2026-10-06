@@ -16,10 +16,14 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
-.topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--line)}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);border-bottom:1px solid var(--line)}
 .topbar .in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink)}
 .brand .f{color:var(--red)}
+.brand{display:inline-flex;align-items:center}
+.mark{display:inline-flex;gap:3px;margin-right:9px}
+.mark i{width:8px;height:8px;border-radius:50%}
+.mark .r{background:var(--red)}.mark .y{background:#d99a17}.mark .g{background:var(--grn)}
 .nav{display:flex;gap:2px;align-items:center}
 .nav a{padding:6px 12px;border-radius:8px;color:var(--dim);font-weight:700;font-size:12.5px;white-space:nowrap;text-decoration:none}
 .nav a:hover{background:var(--bg);color:var(--ink)}
@@ -50,7 +54,7 @@ a{color:var(--acc)}
 </head>
 <body data-page="about">
 <div class="topbar"><div class="in">
-  <a class="brand" href="/"><span class="f">Flag</span>Kan</a>
+  <a class="brand" href="/"><span class="mark" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span><span class="f">Flag</span>Kan</a>
   <nav class="nav" aria-label="Pages"><a href="/board.html" data-nav="board" data-i18n="navBoard">Board</a><a href="/proof.html" data-nav="proof" data-i18n="navProof">Proof</a><a href="/about.html" data-nav="about" data-i18n="navAbout">About</a></nav>
   <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
 </div></div>
@@ -60,7 +64,7 @@ a{color:var(--acc)}
   <div class="panel"><h2 data-i18n="whoT">Who builds it</h2><p data-i18n-html="whoD"></p></div>
   <div class="panel"><h2 data-i18n="nextT">What's next</h2><p data-i18n-html="nextD"></p></div>
   <div class="panel"><h2 data-i18n="linkT">Links</h2>
-    <div class="links"><a class="primary" href="/board.html" data-i18n="lBoard">Live board</a><a href="/proof.html" data-i18n="lProof">Proof &amp; rules</a><a href="https://github.com/ilGentEAcutoO/flagkan">GitHub</a><a href="/api/proof">api/proof</a><a href="/api/rounds?limit=50">api/rounds</a></div>
+    <div class="links"><a class="primary" href="/board.html" data-i18n="lBoard">Live board</a><a href="/proof.html" data-i18n="lProof">Proof &amp; rules</a><a href="https://github.com/ilGentEAcutoO/flagkan" target="_blank" rel="noopener">GitHub</a><a href="/api/proof">api/proof</a><a href="/api/rounds?limit=50">api/rounds</a></div>
   </div>
   <footer><span>FlagKan · SORNKan · Solami + Jev</span><span>Colosseum Crypto World's Fair 2026</span></footer>
 </div>
