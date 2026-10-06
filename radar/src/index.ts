@@ -654,6 +654,13 @@ export default {
 			} catch (e) {
 				out.solami = { ok: false, err: String(e).slice(0, 120) };
 			}
+			try {
+				const r = await fetch("https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1", { headers: { ...UA, Accept: "application/json" } });
+				const j: any = r.ok ? await r.json() : null;
+				out.gecko = { ok: r.ok, status: r.status, pools: r.ok && j && Array.isArray(j.data) ? j.data.length : 0 };
+			} catch (e) {
+				out.gecko = { ok: false, err: String(e).slice(0, 120) };
+			}
 			return json(out);
 		}
 
