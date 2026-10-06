@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="description" content="FlagKan proof — accuracy scoreboard, judging rules, and every resolved coin.">
+<link rel="icon" href="data:,">
+<title>FlagKan — Proof</title>
+<style>
+:root{--bg:#f3f5f9;--card:#ffffff;--line:#e3e8f0;--line2:#cdd5e3;
+--ink:#16233f;--dim:#475569;--faint:#64748b;
+--red:#dc2626;--redbg:#fdecec;--yel:#9a6a00;--yelbg:#fdf3d7;--grn:#0e9d6e;--grnbg:#def7ec;
+--acc:#1e40af;
+--sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Sukhumvit Set','Noto Sans Thai',Arial,sans-serif;
+--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--line)}
+.topbar .in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink)}
+.brand .f{color:var(--red)}
+.nav{display:flex;gap:2px;align-items:center}
+.nav a{padding:6px 12px;border-radius:8px;color:var(--dim);font-weight:700;font-size:12.5px;white-space:nowrap;text-decoration:none}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a.on{background:var(--bg);color:var(--ink)}
+.lang{margin-left:auto}
+.lang button{background:transparent;color:var(--faint);border:1px solid var(--line);border-radius:99px;
+padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.lang button.on{color:var(--ink);border-color:var(--line2);background:var(--bg)}
+.wrap{max-width:1060px;margin:0 auto;padding:26px 16px 40px}
+h1{font-size:28px;letter-spacing:-.02em;font-weight:800}
+.lead{color:var(--dim);font-size:15px;max-width:680px;margin-top:6px}
+.score{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+.stat .v{font-family:var(--mono);font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .v.green{color:var(--grn)}.stat .v.red{color:var(--red)}
+.stat .k{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.stat .s{font-size:12px;color:var(--faint);margin-top:2px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-top:18px}
+.panel h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-bottom:10px}
+.rule{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
+.rule:last-child{border-bottom:none}
+.rule .n{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--acc)}
+.rule .t{font-weight:700;font-size:13.5px}
+.rule .t small{display:block;font-weight:400;color:var(--dim);font-size:12.5px}
+.rule .lim{font-family:var(--mono);font-size:11.5px;color:var(--dim);white-space:nowrap}
+.prose{font-size:13.5px;color:var(--dim);max-width:720px}
+.prose b{color:var(--ink)}
+.prose p+p{margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:left;
+padding:7px 10px;border-bottom:1px solid var(--line);font-weight:700;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:#2b3346;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.coinname{font-family:var(--sans);font-weight:700;color:var(--ink);font-size:12.5px}
+.badge{font-family:var(--mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;text-transform:uppercase}
+.badge.red{background:var(--redbg);color:var(--red)}
+.badge.yellow{background:var(--yelbg);color:var(--yel)}
+.badge.green{background:var(--grnbg);color:var(--grn)}
+.up{color:var(--grn)}.down{color:var(--red)}
+.mut{color:var(--faint)}
+footer{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);
+display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+a{color:var(--acc)}
+@media(max-width:700px){.score{grid-template-columns:1fr}.rule{grid-template-columns:32px 1fr}.rule .lim{grid-column:2}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body data-page="proof">
+<div class="topbar"><div class="in">
+  <a class="brand" href="/"><span class="f">Flag</span>Kan</a>
+  <nav class="nav" aria-label="Pages"><a href="/board.html" data-nav="board" data-i18n="navBoard">Board</a><a href="/proof.html" data-nav="proof" data-i18n="navProof">Proof</a><a href="/about.html" data-nav="about" data-i18n="navAbout">About</a></nav>
+  <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
+</div></div>
+<div class="wrap">
+  <h1 data-i18n="h1">Proof, not promises.</h1>
+  <p class="lead" data-i18n="sub"></p>
+  <div class="score">
+    <div class="stat"><div class="v green" id="sAcc">–</div><div class="k" data-i18n="sAcc">accuracy</div><div class="s" data-i18n="sAccS"></div></div>
+    <div class="stat"><div class="v" id="sRes">–</div><div class="k" data-i18n="sRes">coins judged</div><div class="s" data-i18n="sResS"></div></div>
+    <div class="stat"><div class="v red" id="sRed">–</div><div class="k" data-i18n="sRed">red precision</div><div class="s" data-i18n="sRedS"></div></div>
+  </div>
+  <div class="panel"><h2 data-i18n="ruleT">The 6 checks</h2><div id="rules"></div></div>
+  <div class="panel"><h2 data-i18n="aiT">The AI judge</h2><div class="prose"><p data-i18n-html="aiD"></p><p data-i18n-html="outD"></p></div></div>
+  <div class="panel"><h2 data-i18n="tabT">Every resolved coin</h2>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th data-i18n="cCoin">coin</th><th data-i18n="cLight">light</th><th style="text-align:right" data-i18n="cMove">6h move</th><th style="text-align:right" data-i18n="cOut">outcome</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="4" class="mut">loading…</td></tr></tbody>
+    </table></div>
+  </div>
+  <footer><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
+</div>
+<script>
+(function(){
+"use strict";
+var T={
+en:{navBoard:"Board",navProof:"Proof",navAbout:"About",
+h1:"Proof, not promises.",
+sub:"Every verdict is graded by what actually happened 6 hours after first sight. This page shows the live score and every resolved coin — nothing cherry-picked.",
+sAcc:"accuracy",sAccS:"red+dead or other+alive",sRes:"coins judged",sResS:"resolved with a verdict",sRed:"red precision",sRedS:"red verdicts that died",
+ruleT:"The 6 checks",
+r1t:"Whale concentration",r1d:"Share held by the single largest wallet.",r1l:"red ≥ 30%",
+r2t:"Top holders 2–11",r2d:"Share held by wallets ranked 2 to 11 combined.",r2l:"red ≥ 40%",
+r3t:"First-minute buys",r3d:"Buy pressure in the first minute of the tracked window.",r3l:"red ≥ 300",
+r4t:"Pool liquidity",r4d:"USD liquidity in the pool at verdict time.",r4l:"red < $10k",
+r5t:"Coin age",r5d:"Minutes since the mint was created on-chain.",r5l:"warn < 15 min",
+r6t:"Linked wallets · AI",r6d:"Jev estimates how coordinated the holder wallets look.",r6l:"red ≥ 70%",
+aiT:"The AI judge",
+aiD:"The <b>Jev judge (jev-latest)</b> reads all six checks plus wallet-coordination signals and issues <b>red / yellow / green</b> with probabilities, a coordination score, and a severity rating. One failing check means red unless the judge finds strong counter-evidence. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.",
+outD:"Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight or liquidity drained under $1,000</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.",
+tabT:"Every resolved coin",cCoin:"coin",cLight:"light",cMove:"6h move",cOut:"outcome",
+dead:"dead",alive:"alive",loading:"loading…"},
+th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
+h1:"วัดผลจริง ไม่ใช่คำคุย",
+sub:"ทุกคำชี้ถูกตัดสินจากสิ่งที่เกิดขึ้นจริง 6 ชั่วโมงหลังเจอเหรียญ หน้านี้โชว์คะแนนสดกับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
+sAcc:"ความแม่น",sAccS:"แดง+พัง หรือ อื่น+รอด",sRes:"เหรียญที่ชี้แล้ว",sResS:"รู้ผลพร้อมคำชี้",sRed:"แดงแม่น",sRedS:"ชี้แดงแล้วพังจริง",
+ruleT:"เกณฑ์ 6 ข้อ",
+r1t:"รายใหญ่สุดถือ",r1d:"สัดส่วนที่กระเป๋าใหญ่อันดับ 1 ถือ",r1l:"แดง ≥ 30%",
+r2t:"รายใหญ่อันดับ 2–11",r2d:"สัดส่วนรวมของกระเป๋าอันดับ 2 ถึง 11",r2l:"แดง ≥ 40%",
+r3t:"ยอดซื้อ 1 นาทีแรก",r3d:"แรงซื้อในนาทีแรกของช่วงที่ติดตาม",r3l:"แดง ≥ 300",
+r4t:"สภาพคล่องพูล",r4d:"สภาพคล่องดอลลาร์ในพูลตอนชี้",r4l:"แดง < $10k",
+r5t:"อายุเหรียญ",r5d:"นาทีตั้งแต่ mint ถูกสร้างบนเชน",r5l:"เตือน < 15 นาที",
+r6t:"กระเป๋าโยงกัน · AI",r6d:"Jev ประเมินว่ากระเป๋าผู้ถือดูประสานกันแค่ไหน",r6l:"แดง ≥ 70%",
+aiT:"AI ผู้ชี้",
+aiD:"<b>Jev (jev-latest)</b> อ่านเกณฑ์ทั้ง 6 ข้อบวกสัญญาณกระเป๋าโยงกัน แล้วชี้ <b>แดง / เหลือง / เขียว</b> พร้อมความน่าจะเป็น คะแนนโยงกัน และระดับความรุนแรง ตกข้อเดียวคือแดง เว้นแต่ AI เจอหลักฐานแย้งหนักแน่น เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที",
+outD:"ผลตัดสินอัตโนมัติ: <b>พังคือราคาหลุดเกิน 90% จากตอนเจอ หรือสภาพคล่องต่ำกว่า $1,000</b> เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b> — ช่องทางเดียว",
+tabT:"ทุกเหรียญที่รู้ผลแล้ว",cCoin:"เหรียญ",cLight:"ไฟ",cMove:"6 ชม.",cOut:"ผล",
+dead:"พัง",alive:"รอด",loading:"กำลังโหลด…"}};
+var L="en";
+try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
+function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function pct(x){return (x==null||isNaN(Number(x)))?"—":Math.round(Number(x)*100)+"%"}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderRules();loadProof();loadRows()}
+document.getElementById("bEN").onclick=function(){L="en";applyLang()};
+document.getElementById("bTH").onclick=function(){L="th";applyLang()};
+(function(){var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")==="proof")as[i].className="on"}})();
+function renderRules(){var h="";for(var i=1;i<=6;i++){h+='<div class="rule"><span class="n">0'+i+'</span><span class="t">'+esc(t("r"+i+"t"))+"<small>"+esc(t("r"+i+"d"))+"</small></span>"+'<span class="lim">'+esc(t("r"+i+"l"))+"</span></div>"}document.getElementById("rules").innerHTML=h}
+function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
+document.getElementById("sAcc").textContent=pct(d.accuracy);
+document.getElementById("sRes").textContent=d.resolved_with_verdict==null?"—":d.resolved_with_verdict;
+document.getElementById("sRed").textContent=pct(d.red_precision);
+}).catch(function(){})}
+function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
+function loadRows(){fetch("/api/rounds?limit=100").then(function(r){return r.json()}).then(function(d){
+var h="",n=0;
+for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];if(x.resolved_at==null)continue;n++;
+var mv="—";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;mv='<span class="'+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}
+var nm=esc((x.name||x.mint.slice(0,8))+"").slice(0,18);
+h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(x.dead?t("dead"):t("alive"))+"</td></tr>"}
+document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="mut">'+esc(t("loading"))+"</td></tr>";
+}).catch(function(){})}
+applyLang();
+})();
+</script>
+</body>
+</html>

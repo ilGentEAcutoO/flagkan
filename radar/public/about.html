@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="description" content="About FlagKan — why it exists, who builds it, what's next.">
+<link rel="icon" href="data:,">
+<title>FlagKan — About</title>
+<style>
+:root{--bg:#f3f5f9;--card:#ffffff;--line:#e3e8f0;--line2:#cdd5e3;
+--ink:#16233f;--dim:#475569;--faint:#64748b;
+--red:#dc2626;--acc:#1e40af;
+--sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Sukhumvit Set','Noto Sans Thai',Arial,sans-serif;
+--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--line)}
+.topbar .in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink)}
+.brand .f{color:var(--red)}
+.nav{display:flex;gap:2px;align-items:center}
+.nav a{padding:6px 12px;border-radius:8px;color:var(--dim);font-weight:700;font-size:12.5px;white-space:nowrap;text-decoration:none}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a.on{background:var(--bg);color:var(--ink)}
+.lang{margin-left:auto}
+.lang button{background:transparent;color:var(--faint);border:1px solid var(--line);border-radius:99px;
+padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.lang button.on{color:var(--ink);border-color:var(--line2);background:var(--bg)}
+.wrap{max-width:1060px;margin:0 auto;padding:26px 16px 40px}
+h1{font-size:28px;letter-spacing:-.02em;font-weight:800}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-top:18px;max-width:760px}
+.panel h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-bottom:8px}
+.panel p{font-size:14px;color:var(--dim)}
+.panel p b{color:var(--ink)}
+.panel p+p{margin-top:8px}
+.panel ul{margin:8px 0 0 18px;font-size:14px;color:var(--dim)}
+.panel li+li{margin-top:4px}
+.links{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.links a{display:inline-block;padding:8px 18px;border-radius:10px;font-weight:800;font-size:13.5px;
+text-decoration:none;background:var(--bg);color:var(--ink);border:1px solid var(--line2)}
+.links a:hover{border-color:var(--ink)}
+.links a.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+footer{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);
+display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+a{color:var(--acc)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body data-page="about">
+<div class="topbar"><div class="in">
+  <a class="brand" href="/"><span class="f">Flag</span>Kan</a>
+  <nav class="nav" aria-label="Pages"><a href="/board.html" data-nav="board" data-i18n="navBoard">Board</a><a href="/proof.html" data-nav="proof" data-i18n="navProof">Proof</a><a href="/about.html" data-nav="about" data-i18n="navAbout">About</a></nav>
+  <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
+</div></div>
+<div class="wrap">
+  <h1 data-i18n="h1">About FlagKan</h1>
+  <div class="panel"><h2 data-i18n="whyT">Why it exists</h2><p data-i18n-html="whyD"></p></div>
+  <div class="panel"><h2 data-i18n="whoT">Who builds it</h2><p data-i18n-html="whoD"></p></div>
+  <div class="panel"><h2 data-i18n="nextT">What's next</h2><p data-i18n-html="nextD"></p></div>
+  <div class="panel"><h2 data-i18n="linkT">Links</h2>
+    <div class="links"><a class="primary" href="/board.html" data-i18n="lBoard">Live board</a><a href="/proof.html" data-i18n="lProof">Proof &amp; rules</a><a href="https://github.com/ilGentEAcutoO/flagkan">GitHub</a><a href="/api/proof">api/proof</a><a href="/api/rounds?limit=50">api/rounds</a></div>
+  </div>
+  <footer><span>FlagKan · SORNKan · Solami + Jev</span><span>Colosseum Crypto World's Fair 2026</span></footer>
+</div>
+<script>
+(function(){
+"use strict";
+var T={
+en:{navBoard:"Board",navProof:"Proof",navAbout:"About",
+h1:"About FlagKan",
+whyT:"Why it exists",
+whyD:"New Solana tokens launch every minute, and most of them go to zero within hours. Charts show you the past; <b>nothing tells you the risk before you buy</b>. FlagKan answers one question — safe to touch? — with a red / yellow / green light backed by on-chain data and graded against real outcomes.",
+whoT:"Who builds it",
+whoD:"<b>FlagKan is built by SORNKan, a solo builder in Thailand</b>, for the Colosseum Crypto World's Fair 2026 hackathon (AI × Solana Thailand and Solami tracks). One person, one worker, one database — the whole stack runs on Cloudflare with Solana as the data layer.",
+nextT:"What's next",
+nextD:"After the hackathon: <b>alerts for watched coins</b> when their outcome resolves, a per-signal accuracy leaderboard so the rules keep improving, and distribution where traders already live. The goal stays the same — <b>fewer rugs, proven on-chain</b>.",
+linkT:"Links",lBoard:"Live board",lProof:"Proof & rules"},
+th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
+h1:"เกี่ยวกับ FlagKan",
+whyT:"ทำไมต้องมี",
+whyD:"เหรียญ Solana เกิดใหม่ทุกนาที และส่วนใหญ่เหลือศูนย์ภายในไม่กี่ชั่วโมง กราฟบอกแค่อดีต <b>ไม่มีอะไรบอกความเสี่ยงก่อนคุณซื้อ</b> FlagKan ตอบคำถามเดียว — แตะได้ไหม — ด้วยไฟแดง / เหลือง / เขียว ที่มีข้อมูลเชนหนุนหลังและวัดผลจริง",
+whoT:"ใครสร้าง",
+whoD:"<b>FlagKan สร้างโดย SORNKan นักสร้างเดี่ยวในไทย</b> เพื่อแฮกกาธอน Colosseum Crypto World's Fair 2026 (track AI × Solana Thailand และ Solami) คนเดียว หนึ่ง worker หนึ่งฐานข้อมูล — ทั้งกองรันบน Cloudflare โดยมี Solana เป็นชั้นข้อมูล",
+nextT:"ขั้นต่อไป",
+nextD:"หลังแฮกกาธอน: <b>แจ้งเตือนเหรียญที่ watch</b> เมื่อรู้ผล ตารางความแม่นรายสัญญาณเพื่อให้เกณฑ์ดีขึ้นเรื่อย ๆ และการกระจายไปจุดที่เทรดเดอร์อยู่ เป้าเหมือนเดิม — <b>โดน rug น้อยลง พิสูจน์บนเชน</b>",
+linkT:"ลิงก์",lBoard:"กระดานสด",lProof:"หลักฐานและเกณฑ์"}};
+var L="en";
+try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
+function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":""}
+document.getElementById("bEN").onclick=function(){L="en";applyLang()};
+document.getElementById("bTH").onclick=function(){L="th";applyLang()};
+(function(){var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")==="about")as[i].className="on"}})();
+applyLang();
+})();
+</script>
+</body>
+</html>

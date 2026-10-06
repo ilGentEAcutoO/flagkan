@@ -53,7 +53,7 @@ See `/../.env.example` for the full variable list.
 | `GET /api/proof` | resolved count, accuracy, red precision |
 | `POST /api/verdict-now?mint=` | judge any mint on demand |
 | `POST /api/signals-now?mint=` | recompute on-chain signals + verdict |
-| `GET /api/health` `GET /api/diag` | status |
+| `GET /health` `GET /api/diag` | status |
 
 ## Project layout
 
@@ -61,7 +61,7 @@ See `/../.env.example` for the full variable list.
 radar/
   src/index.ts      worker: cron ingest, signals, Jev verdicts, outcomes, API
   schema.sql        D1 tables
-  public/index.html UI (single file, no build step, TH/EN)
+  public/         UI: index (landing), board, proof, about (no build step, TH/EN)
   wrangler.jsonc   cron * * * * *, D1 binding, assets, custom domain
 ../research/        hackathon rules + eligible tracks (competition homework)
 ../tracks/ ../data/ full track briefs + raw listings

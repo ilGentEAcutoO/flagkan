@@ -4,273 +4,139 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only">
+<meta name="description" content="FlagKan — new-coin risk radar. Red / yellow / green verdicts on fresh Solana tokens with on-chain proof.">
 <link rel="icon" href="data:,">
 <title>FlagKan — Check before you buy</title>
 <style>
-:root{--bg:#f4f6fa;--card:#ffffff;--line:#e3e8f0;--line2:#cdd5e3;
---ink:#131722;--dim:#5b6478;--faint:#8b94a7;
---red:#e5484d;--redbg:#fdecec;--yel:#9a6a00;--yelbg:#fdf3d7;--grn:#0e9d6e;--grnbg:#def7ec;
---acc:#2962ff;
---sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Sukhumvit Set',Arial,sans-serif;
+:root{--bg:#f3f5f9;--card:#ffffff;--line:#e3e8f0;--line2:#cdd5e3;
+--ink:#16233f;--dim:#475569;--faint:#64748b;
+--red:#dc2626;--redbg:#fdecec;--yel:#9a6a00;--yelbg:#fdf3d7;--grn:#0e9d6e;--grnbg:#def7ec;
+--acc:#1e40af;
+--sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Sukhumvit Set','Noto Sans Thai',Arial,sans-serif;
 --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.5}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
 .topbar{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--line)}
-.topbar .in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap}
+.topbar .in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink)}
 .brand .f{color:var(--red)}
-.search{display:flex;gap:6px;flex:1;min-width:220px;max-width:460px}
-.search input{flex:1;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--ink);
-padding:7px 10px;font-family:var(--mono);font-size:12px;min-width:0;outline:none}
-.search input:focus{border-color:var(--acc)}
-.search button{background:var(--ink);border:none;border-radius:8px;color:#fff;font-weight:700;
-padding:7px 16px;cursor:pointer;font-size:12.5px;font-family:var(--sans)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
-.chip{font-family:var(--mono);font-size:11px;background:var(--bg);border:1px solid var(--line);
-border-radius:99px;padding:4px 11px;color:var(--dim);white-space:nowrap}
-.chip b{color:var(--ink)}
+.nav{display:flex;gap:2px;align-items:center}
+.nav a{padding:6px 12px;border-radius:8px;color:var(--dim);font-weight:700;font-size:12.5px;white-space:nowrap;text-decoration:none}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a.on{background:var(--bg);color:var(--ink)}
+.lang{margin-left:auto}
 .lang button{background:transparent;color:var(--faint);border:1px solid var(--line);border-radius:99px;
 padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
 .lang button.on{color:var(--ink);border-color:var(--line2);background:var(--bg)}
-.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 40px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.panelhead{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
-border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
-.panelhead h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--faint)}
-.filter{display:flex;gap:6px}
-.filter button{background:transparent;color:var(--faint);border:1px solid var(--line);border-radius:99px;
-padding:3px 12px;font-size:11.5px;cursor:pointer;font-family:var(--sans)}
-.filter button.on{color:var(--ink);border-color:var(--line2);background:var(--bg)}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:left;
-padding:7px 10px;border-bottom:1px solid var(--line);font-weight:700;background:var(--card);white-space:nowrap}
-td{padding:8px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:#2b3346;white-space:nowrap}
-tbody tr:last-child td{border-bottom:none}
-tbody tr{cursor:pointer}
-tbody tr:hover{background:#f0f4fb}
-td.num{text-align:right}
-.coinname{font-family:var(--sans);font-weight:700;color:var(--ink);font-size:12.5px}
-.coinmint{font-size:10px;color:var(--faint)}
-.badge{font-family:var(--mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;text-transform:uppercase}
-.badge.red{background:var(--redbg);color:var(--red)}
-.badge.yellow{background:var(--yelbg);color:var(--yel)}
-.badge.green{background:var(--grnbg);color:var(--grn)}
-.badge.none{background:var(--bg);color:var(--faint)}
-.star{background:none;border:none;cursor:pointer;font-size:14px;color:#c3cad7;padding:0}
-.star.lit{color:#e8a100}
-.up{color:var(--grn)}.down{color:var(--red)}
-.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(19,23,34,.45);
-align-items:flex-start;justify-content:center;padding:34px 14px;overflow-y:auto}
-.modal.open{display:flex}
-.mcard{background:var(--card);border-radius:14px;max-width:640px;width:100%;padding:20px 22px;
-box-shadow:0 24px 70px rgba(19,23,34,.25)}
-.mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.mhead .nm{font-size:19px;font-weight:800}
-.mhead .mt{font-family:var(--mono);font-size:10.5px;color:var(--faint);word-break:break-all}
-.x{background:var(--bg);border:1px solid var(--line);border-radius:8px;width:30px;height:30px;
-cursor:pointer;font-size:14px;color:var(--dim);flex:none}
-.vline{display:flex;gap:10px;align-items:center;margin:12px 0;padding:10px 14px;border-radius:10px;font-weight:800;font-size:15px}
-.vline.red{background:var(--redbg);color:var(--red)}
-.vline.yellow{background:var(--yelbg);color:var(--yel)}
-.vline.green{background:var(--grnbg);color:var(--grn)}
-.vline .cf{margin-left:auto;font-family:var(--mono);font-size:12px;font-weight:600;opacity:.8}
-.sigrow{display:flex;justify-content:space-between;align-items:center;padding:7px 0;
-border-bottom:1px solid var(--line);font-size:12.5px}
-.sigrow:last-child{border-bottom:none}
-.sigrow .sv{font-family:var(--mono);font-size:12px;color:var(--dim)}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
-.dot.red{background:var(--red)}.dot.yellow{background:#e8a100}.dot.green{background:var(--grn)}.dot.none{background:#c3cad7}
-canvas#chart{width:100%;height:110px;display:block;background:var(--bg);border:1px solid var(--line);border-radius:8px;margin-top:10px}
-.mactions{display:flex;gap:8px;margin-top:12px}
-.mactions button{flex:1;background:var(--bg);color:var(--ink);border:1px solid var(--line2);border-radius:8px;
-padding:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
-.mactions button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-.mrow{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
-.mrow h3{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:10px 0 2px}
-footer{margin-top:12px;color:var(--faint);font-size:11px;font-family:var(--mono);
+.wrap{max-width:1060px;margin:0 auto;padding:26px 16px 40px}
+.lead{padding:18px 4px 6px;max-width:720px}
+.lead h1{font-size:34px;line-height:1.2;letter-spacing:-.02em;font-weight:800}
+.lead h1 .r{color:var(--red)}.lead h1 .y{color:#c78d12}.lead h1 .g{color:var(--grn)}
+.lead p.sub{margin-top:10px;font-size:15.5px;color:var(--dim);max-width:640px}
+.cta{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{display:inline-block;padding:10px 22px;border-radius:10px;font-weight:800;font-size:14px;
+text-decoration:none;cursor:pointer;border:1px solid transparent}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.primary:hover{background:#0d1730}
+.btn.ghost{background:var(--card);color:var(--ink);border-color:var(--line2)}
+.btn.ghost:hover{border-color:var(--ink)}
+.liveband{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 18px;min-width:130px}
+.stat .v{font-family:var(--mono);font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .v.green{color:var(--grn)}.stat .v.red{color:var(--red)}
+.stat .k{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.stat .live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--grn);margin-right:6px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-top:22px}
+.panel h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-bottom:12px}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0}
+.step{padding:4px 18px 4px 0}
+.step+.step{border-left:1px solid var(--line);padding-left:18px}
+.step .n{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--acc)}
+.step h3{font-size:15px;font-weight:800;margin:2px 0 4px}
+.step p{font-size:13px;color:var(--dim)}
+.strip{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-top:22px;
+background:var(--ink);color:#fff;border-radius:12px;padding:18px 22px;flex-wrap:wrap}
+.strip p{font-size:14px;max-width:640px}
+.strip p b{font-weight:800}
+.strip .btn{flex:none}
+.tracks{margin-top:22px;color:var(--faint);font-size:12.5px;font-family:var(--mono);text-align:center}
+footer{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);
 display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
-a{color:var(--acc);text-decoration:none}
-.mut{color:var(--faint)}
-@media(max-width:700px){.mrow{grid-template-columns:1fr}.hideS{display:none}}
-.rule{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
-.rule:last-child{border-bottom:none}
-.st{flex:none;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px}
-.st.pass{background:var(--grnbg);color:var(--grn)}
-.st.warn{background:var(--yelbg);color:var(--yel)}
-.st.fail{background:var(--redbg);color:var(--red)}
-.st.na{background:var(--bg);color:var(--faint)}
-.rule .rt{flex:1}
-.rule .rn{font-weight:700;font-size:12.5px}
-.rule .rv{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
-.prob{display:flex;gap:6px;margin-top:10px}
-.prob div{height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;
-font-family:var(--mono);font-size:10px;font-weight:800;color:#fff;min-width:34px}
-.prob .pr{background:var(--red)}.prob .py{background:#d99a17}.prob .pg{background:var(--grn)}
-.whyline{margin-top:10px;padding:9px 12px;background:var(--bg);border:1px solid var(--line);
-border-radius:8px;font-size:12.5px}
-.evlink{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:700}
-details.meth{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
-details.meth summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--dim)}
-details.meth p{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.6}
+a{color:var(--acc)}
+@media(max-width:700px){.steps{grid-template-columns:1fr}.step+.step{border-left:none;border-top:1px solid var(--line);padding:14px 0 0;margin-top:14px}.step{padding:0}.lead h1{font-size:27px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body>
+<body data-page="home">
 <div class="topbar"><div class="in">
-  <div class="brand"><span class="f">Flag</span>Kan</div>
-  <div class="search"><input id="mint" placeholder="paste mint address…" autocomplete="off" spellcheck="false"><button id="go" type="button" data-i18n="gobtn">Check</button></div>
-  <div class="chips">
-    <span class="chip"><b id="cAcc">–</b> <span data-i18n="acc">acc</span></span>
-    <span class="chip"><b id="cN">–</b> <span data-i18n="res">resolved</span></span>
-    <span class="chip"><b id="cT">–</b> <span data-i18n="trk">tracked</span></span>
-    <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
-  </div>
+  <a class="brand" href="/"><span class="f">Flag</span>Kan</a>
+  <nav class="nav" aria-label="Pages"><a href="/board.html" data-nav="board" data-i18n="navBoard">Board</a><a href="/proof.html" data-nav="proof" data-i18n="navProof">Proof</a><a href="/about.html" data-nav="about" data-i18n="navAbout">About</a></nav>
+  <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
 </div></div>
 <div class="wrap">
-  <div class="panel">
-    <div class="panelhead"><h2 data-i18n="tracked">Tracked — click a row</h2>
-      <div class="filter"><button id="fAll" class="on" type="button" data-i18n="fall">All</button><button id="fRed" type="button" data-i18n="fred">Red</button><button id="fStar" type="button" data-i18n="fstar">★</button></div>
+  <div class="lead">
+    <h1 data-i18n-html="h1">Check before you buy.</h1>
+    <p class="sub" data-i18n="sub"></p>
+    <div class="cta"><a class="btn primary" href="/board.html" data-i18n="ctaBoard">Open the board</a><a class="btn ghost" href="/proof.html" data-i18n="ctaProof">How we judge</a></div>
+    <div class="liveband" aria-live="polite">
+      <div class="stat"><div class="v green" id="sAcc">–</div><div class="k"><span class="live"></span><span data-i18n="sAcc">accuracy</span></div></div>
+      <div class="stat"><div class="v" id="sRes">–</div><div class="k" data-i18n="sRes">coins judged</div></div>
+      <div class="stat"><div class="v red" id="sRed">–</div><div class="k" data-i18n="sRed">red precision</div></div>
     </div>
-    <div style="overflow-x:auto"><table>
-      <thead><tr><th></th><th data-i18n="coin">coin</th><th data-i18n="light">light</th><th data-i18n="conf">conf</th><th style="text-align:right" data-i18n="price">price $</th><th class="hideS" style="text-align:right" data-i18n="liq">liq $</th><th class="hideS" style="text-align:right" data-i18n="top1">top1 %</th><th style="text-align:right" data-i18n="out">outcome</th></tr></thead>
-      <tbody id="rows"><tr><td colspan="8" class="mut">loading…</td></tr></tbody>
-    </table></div>
   </div>
+  <div class="panel"><h2 data-i18n="howT">How it works</h2>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h3 data-i18n="s1t">Spot</h3><p data-i18n="s1d"></p></div>
+      <div class="step"><div class="n">02</div><h3 data-i18n="s2t">Inspect</h3><p data-i18n="s2d"></p></div>
+      <div class="step"><div class="n">03</div><h3 data-i18n="s3t">Judge</h3><p data-i18n="s3d"></p></div>
+    </div>
+  </div>
+  <div class="strip"><p data-i18n-html="strip"></p><a class="btn ghost" href="/proof.html" data-i18n="stripBtn">See the proof</a></div>
+  <div class="tracks" data-i18n="tracks"></div>
   <footer><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
-<div id="modal" class="modal"><div class="mcard">
-  <div class="mhead"><div><div class="nm" id="dName">–</div><div class="mt" id="dMint">–</div></div><button class="x" id="dClose" type="button">✕</button></div>
-  <div id="dVerdict" class="vline yellow">–</div>
-  <div id="dProbs" class="prob" style="display:none"></div>
-  <div id="dWhy" class="whyline" style="display:none"></div>
-  <div id="dTime" class="whyline" style="display:none"></div>
-  <div class="mrow"><div><h3 data-i18n="why">Why</h3><div id="sigs"></div></div>
-  <div><h3 data-i18n="px">Price</h3><canvas id="chart" width="560" height="110"></canvas></div></div>
-  <a id="dEv" class="evlink" href="#" target="_blank" rel="noopener">↗ <span data-i18n="evidence">Verify on explorer</span></a> <a id="dDx" class="evlink" href="#" target="_blank" rel="noopener">↗ <span data-i18n="dxs">Chart</span></a>
-  <details class="meth"><summary data-i18n="methT">Our rules</summary><p data-i18n="methB"></p></details>
-  <div class="mactions"><button id="dCopy" class="primary" type="button" data-i18n="copy">Copy verdict</button><button id="dWatch" type="button">★</button></div>
-</div></div>
 <script>
 (function(){
 "use strict";
 var T={
-en:{gobtn:"Check",acc:"acc",res:"resolved",trk:"tracked",tracked:"Tracked — click a row",fall:"All",fred:"Red",fstar:"★",coin:"coin",light:"light",conf:"conf",price:"price $",liq:"liq $",top1:"top1 %",out:"outcome",red:"RED — do not buy",yellow:"YELLOW — caution",green:"GREEN — looks OK",dead:"dead",alive:"alive",na:"—",why:"Why",px:"Price",copy:"Copy verdict",copied:"Copied!",r1:"Whale concentration",r2:"Top holders 2-11",r3:"First-minute buys",r4:"Pool liquidity",r5:"Coin age",limit:"limit",failn:"Failed checks",warnn:"Warnings",allpass:"All checks pass",rawv:"Raw rules say",evidence:"Verify on explorer",methT:"Our rules",methB:"6 checks: whale share, holder spread, early buys, liquidity, age, pool flags. Any single red check means RED unless the AI judge overrules with strong counter-evidence. Yellow means caution: small size, set a stop. Green needs ALL at once: whale under 15%, liquidity over $100k, age over 15 min. AI also scores wallet coordination.",h:"h",d:"d",min:"m",entered:"On board since",ageNow:"Chain age now",resolvesIn:"Result in",resolvedDrop:"Drops off",r6:"Linked wallets · AI",sev:"severity",dxs:"DexScreener chart",entry:"entry",act:"trades/5m"},
-th:{gobtn:"ตรวจ",acc:"แม่น",res:"ตัดสิน",trk:"ติดตาม",tracked:"กำลังติดตาม — กดแถวดูรายละเอียด",fall:"ทั้งหมด",fred:"แดง",fstar:"★",coin:"เหรียญ",light:"ไฟ",conf:"มั่นใจ",price:"ราคา $",liq:"liq $",top1:"top1 %",out:"ผล",red:"แดง — อย่าซื้อ",yellow:"เหลือง — ระวัง",green:"เขียว — พอได้",dead:"พัง",alive:"รอด",na:"—",why:"ทำไม",px:"ราคา",copy:"คัดลอกคำชี้",copied:"คัดลอกแล้ว!",r1:"รายใหญ่สุดถือ",r2:"รายใหญ่ลำดับ 2-11",r3:"ยอดซื้อ 1 นาทีแรก",r4:"สภาพคล่องพูล",r5:"อายุเหรียญ",limit:"เกณฑ์",failn:"ข้อที่ไม่ผ่าน",warnn:"ข้อที่เตือน",allpass:"ผ่านทุกข้อ",rawv:"เกณฑ์ดิบชี้ว่า",evidence:"ตรวจเองบน explorer",methT:"เกณฑ์ 6 ข้อของเรา",methB:"ตรวจ 6 ข้อ: รายใหญ่สุด การกระจาย ยอดซื้อแรก สภาพคล่อง อายุ และพูลน่าสงสัย แดงข้อเดียวเท่ากับไฟแดง เว้นแต่ AI มีหลักฐานแย้ง เหลืองแปลว่าระวัง ลงน้อย ตั้งจุดตัดขาดทุน เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที AI ให้คะแนนกระเป๋าโยงกันเพิ่มอีกข้อ",h:" ชม.",d:" วัน",min:" นาที",entered:"เข้าบอร์ด",ageNow:"อายุตอนนี้",resolvesIn:"รู้ผลใน",resolvedDrop:"หลุดบอร์ด",r6:"กระเป๋าโยงกัน · AI",sev:"ความรุนแรง",dxs:"กราฟ DexScreener",entry:"เข้า",act:"เทรด/5นาที"}};
-var L="en",WATCH={},FILTER="all",LAST=null;
-try{WATCH=JSON.parse(localStorage.getItem("flagkan_watch")||"{}")}catch(e){WATCH={}}
+en:{navBoard:"Board",navProof:"Proof",navAbout:"About",
+h1:'Check before you buy.',
+sub:"FlagKan watches newly boosted Solana tokens and gives each one a risk light — red, yellow, or green. Six hours later the chain itself grades every verdict.",
+ctaBoard:"Open the board",ctaProof:"How we judge",
+sAcc:"accuracy",sRes:"coins judged",sRed:"red precision",
+howT:"How it works",
+s1t:"Spot",s1d:"Every minute we pull the newest boosted Solana tokens off the launchpad firehose.",
+s2t:"Inspect",s2d:"Solami RPC reads the chain: top holders, early buys, coin age. Same chain anyone can read — no insider data.",
+s3t:"Judge",s3d:"The Jev AI judge issues red / yellow / green with written reasons, then the outcome settles on-chain.",
+strip:"<b>Dead means down 90%+ or liquidity under $1,000.</b> The scoreboard counts every resolved coin — nothing cherry-picked.",
+stripBtn:"See the proof",
+tracks:"Built for Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami"},
+th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
+h1:"เช็กก่อนซื้อ.",
+sub:"FlagKan เฝ้าเหรียญ Solana น้องใหม่ที่ถูกบูสต์ แล้วติดไฟให้ทุกเหรียญ — แดง เหลือง หรือเขียว อีก 6 ชั่วโมงต่อมาเชนจะตัดสินเองว่าคำชี้ถูกหรือผิด",
+ctaBoard:"เปิดกระดาน",ctaProof:"ดูวิธีตัดสิน",
+sAcc:"ความแม่น",sRes:"เหรียญที่ชี้แล้ว",sRed:"แดงแม่น",
+howT:"ทำงานยังไง",
+s1t:"จับ",s1d:"ทุกนาทีเราดึงเหรียญ Solana น้องใหม่ที่ถูกบูสต์ล่าสุด",
+s2t:"ตรวจ",s2d:"Solami RPC อ่านเชน: รายใหญ่ ยอดซื้อแรก อายุเหรียญ เชนเดียวกับที่ทุกคนอ่านได้ — ไม่มีข้อมูลวงใน",
+s3t:"ชี้",s3d:"AI Jev ชี้แดง / เหลือง / เขียว พร้อมเหตุผลเป็นข้อ ๆ แล้วผลตัดสินจริงบนเชน",
+strip:"<b>พังคือร่วงเกิน 90% หรือสภาพคล่องต่ำกว่า $1,000</b> ตารางคะแนนนับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
+stripBtn:"ดูหลักฐาน",
+tracks:"สร้างเพื่อ Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami"}};
+var L="en";
+try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
-function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function pct(x){return (x==null||isNaN(Number(x)))?t("na"):Math.round(Number(x)*100)+"%"}
-function num(x){if(x==null||isNaN(Number(x)))return "—";var n=Number(x);if(n>=1e6)return (n/1e6).toFixed(1)+"M";if(n>=1e3)return (n/1e3).toFixed(1)+"K";if(n<0.01&&n>0)return n.toExponential(1);return String(Math.round(n*10000)/10000)}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";loadProof();loadRounds();if(LAST)openModal(LAST)}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":""}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
-function setFilter(f){FILTER=f;document.getElementById("fAll").className=f==="all"?"on":"";document.getElementById("fRed").className=f==="red"?"on":"";document.getElementById("fStar").className=f==="star"?"on":"";loadRounds()}
-document.getElementById("fAll").onclick=function(){setFilter("all")};
-document.getElementById("fRed").onclick=function(){setFilter("red")};
-document.getElementById("fStar").onclick=function(){setFilter("star")};
-function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
-document.getElementById("cAcc").textContent=d.accuracy==null?"—":pct(d.accuracy);
-document.getElementById("cN").textContent=d.resolved_with_verdict;
-}).catch(function(){})}
-function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
-function loadRounds(){fetch("/api/rounds?limit=50").then(function(r){return r.json()}).then(function(d){
-document.getElementById("cT").textContent=d.rounds.length;
-var h="";
-for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];
-if(FILTER==="star"&&!WATCH[x.mint])continue;
-if(FILTER==="red"&&x.choice!=="red")continue;
-var out;if(x.dead==null){var hrs=Math.max(0,Math.ceil((x.first_seen+21600000-Date.now())/3600000));out="⏳"+hrs+t("h")}else{out=x.dead?t("dead"):t("alive")}
-var nm=esc((x.name||x.mint.slice(0,8))+"").slice(0,18);
-var star=WATCH[x.mint]?"lit":"";
-var chg="";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;chg=' <span class="'+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}
-h+='<tr data-m="'+esc(x.mint)+'"><td><button class="star '+star+'" data-s="'+esc(x.mint)+'" type="button">★</button></td><td><span class="coinname">'+nm+'</span> <span class="coinmint">'+esc(x.mint.slice(0,6))+"</span></td><td>"+badge(x.choice)+"</td><td>"+(x.confidence==null?"—":Math.round(x.confidence*100)+"%")+'</td><td class="num">'+(x.last_price||"—")+chg+'</td><td class="num hideS">'+(x.last_liq==null?"—":"$"+num(x.last_liq))+'</td><td class="num hideS">'+(x.top1==null?"—":x.top1+"%")+'</td><td class="num">'+out+"</td></tr>"}
-document.getElementById("rows").innerHTML=h||'<tr><td colspan="8" class="mut">—</td></tr>';
-var trs=document.querySelectorAll("#rows tr[data-m]");
-for(var j=0;j<trs.length;j++){trs[j].onclick=function(ev){if(ev.target&&ev.target.className&&String(ev.target.className).indexOf("star")>=0)return;openModal(this.getAttribute("data-m"))}}
-var st=document.querySelectorAll("#rows .star");
-for(var k=0;k<st.length;k++){st[k].onclick=function(ev){ev.stopPropagation();toggleWatch(this.getAttribute("data-s"))}}
-}).catch(function(){})}
-function toggleWatch(m){if(WATCH[m]){delete WATCH[m]}else{WATCH[m]=1}try{localStorage.setItem("flagkan_watch",JSON.stringify(WATCH))}catch(e){}loadRounds();syncDWatch()}
-function fmtDate(ts){if(!ts)return "?";try{return new Date(ts).toLocaleString(L==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}catch(err){return "?"}}
-function fmtAge(mins){mins=Math.max(0,Math.round(mins));if(mins>=1440)return Math.floor(mins/1440)+t("d");if(mins>=60)return Math.floor(mins/60)+t("h");return mins+t("min")}
-function flag(v,red,yel){v=Number(v);if(isNaN(v))return "none";if(v>=red)return "red";if(v>=yel)return "yellow";return "green"}
-function openModal(mint){fetch("/api/coin?mint="+encodeURIComponent(mint)).then(function(r){return r.json()}).then(function(d){
-if(d.error)return;LAST=mint;
-document.getElementById("modal").className="modal open";
-document.getElementById("dName").textContent=(d.coin&&d.coin.name)||mint.slice(0,10);
-document.getElementById("dMint").textContent=mint;
-var ch=(d.verdict&&d.verdict.choice)||"none";if(ch!=="red"&&ch!=="yellow"&&ch!=="green")ch="none";
-var vl=document.getElementById("dVerdict");vl.className="vline "+ch;
-vl.textContent="";var a=document.createElement("span");a.textContent=t(ch);var b=document.createElement("span");b.className="cf";b.textContent="conf "+Math.round(((d.verdict&&d.verdict.confidence)||0)*100)+"%";vl.appendChild(a);vl.appendChild(b);
-var s=d.signals||{},last=d.last||{};
-var lch=(ch==="none")?"yellow":ch;var vv=d.verdict||{};
-function stOf(c){return c==="red"?"fail":c==="yellow"?"warn":c==="green"?"pass":"na"}
-function glyph(st){return st==="pass"?"✓":st==="warn"?"!":st==="fail"?"✕":"–"}
-var liq=Number(last.liquidity_usd);
-var liqSt=isNaN(liq)?"na":liq<10000?"fail":liq<100000?"warn":"pass";
-var rules=[
-{rn:t("r1"),rv:(s.top1_pct==null?"?":s.top1_pct+"%")+" · "+t("limit")+" 30%"+(s.pool_suspect?" · (pool?)":""),st:stOf(flag(s.top1_pct,30,15))},
-{rn:t("r2"),rv:(s.top2_11_pct==null?"?":s.top2_11_pct+"%")+" · "+t("limit")+" 40%",st:stOf(flag(s.top2_11_pct,40,20))},
-{rn:t("r3"),rv:(s.early_buys==null?"?":String(s.early_buys))+" · "+t("limit")+" 300",st:stOf(flag(s.early_buys,300,50))},
-{rn:t("r4"),rv:"$"+num(last.liquidity_usd)+" · "+t("limit")+" $10k",st:liqSt},
-{rn:t("r5"),rv:(s.mint_age_min==null?"?":Math.round(s.mint_age_min)+" min"),st:(s.mint_age_min||99)<15?"warn":"pass"},
-{rn:t("r6"),rv:(vv.coordinated==null?"?":Math.round(vv.coordinated*100)+"%"),st:(function(){var c=Number(vv.coordinated);if(vv.coordinated==null||isNaN(c))return "na";if(c>=0.7)return "fail";if(c>=0.4)return "warn";return "pass"})(),skip:1}];
-var fails=[],warns=[],h="";
-for(var i=0;i<rules.length;i++){var r=rules[i];if(!r.skip){if(r.st==="fail")fails.push(i+1);if(r.st==="warn")warns.push(i+1)}h+='<div class="rule"><span class="st '+r.st+'">'+glyph(r.st)+'</span><span class="rt"><div class="rn">'+(i+1)+". "+esc(r.rn)+'</div><div class="rv">'+esc(r.rv)+"</div></span></div>"}
-document.getElementById("sigs").innerHTML=h;
-var raw=fails.length>0?"red":warns.length>=2?"yellow":"green";
-var why=t(lch)+" — ";
-if(fails.length>0)why+=t("failn")+" "+fails.join(", ");
-else if(warns.length>0)why+=t("warnn")+" "+warns.join(", ");
-else why+=t("allpass");
-why+="<br>"+t("rawv")+": "+t(raw)+" · AI: "+t(lch)+(vv.severity!=null?" · "+t("sev")+" "+Number(vv.severity).toFixed(1)+"/3":"");
-var wEl=document.getElementById("dWhy");wEl.innerHTML=why;wEl.style.display="block";
-var pEl=document.getElementById("dProbs");
-if(vv.p_red!=null){var pr=Math.round(vv.p_red*100),py=Math.round(vv.p_yellow*100),pg=Math.round(vv.p_green*100);
-pEl.innerHTML='<div class="pr" style="flex:'+pr+'" title="P(red)">R '+pr+'%</div><div class="py" style="flex:'+py+'" title="P(yellow)">Y '+py+'%</div><div class="pg" style="flex:'+pg+'" title="P(green)">G '+pg+"%</div>";pEl.style.display="flex"}else{pEl.style.display="none"}
-document.getElementById("dEv").href="https://solscan.io/token/"+mint;
-var rd=d.coin||{},oc=d.outcome,tH=t("entered")+": "+fmtDate(rd.first_seen);
-if(s.mint_age_min!=null&&s.ts){tH+=" · "+t("ageNow")+": "+fmtAge(s.mint_age_min+(Date.now()-s.ts)/60000)}
-if(last.fdv!=null){tH+="<br>FDV $"+num(last.fdv);if(last.txns_5m!=null)tH+=" · "+last.txns_5m+" "+t("act")}
-if(oc&&oc.resolved_at){tH+="<br>"+t("resolvedDrop")+": "+fmtDate(oc.resolved_at+604800000);if(oc.first_price&&oc.last_price)tH+=" · "+t("entry")+" $"+Number(oc.first_price).toPrecision(3)+" → $"+Number(oc.last_price).toPrecision(3)}
-else if(rd.first_seen){var rh=Math.max(0,Math.ceil((rd.first_seen+21600000-Date.now())/3600000));tH+="<br>"+t("resolvesIn")+": "+rh+t("h")}
-var tEl=document.getElementById("dTime");tEl.innerHTML=tH;tEl.style.display="block";
-var dx=document.getElementById("dDx");if(rd.pair_address){dx.href="https://dexscreener.com/solana/"+rd.pair_address;dx.style.display="inline-block"}else{dx.style.display="none"}
-drawChart(d.history||[]);syncDWatch();
-}).catch(function(){})}
-function syncDWatch(){var b=document.getElementById("dWatch");if(!b)return;b.textContent=LAST&&WATCH[LAST]?"★ Watched":"★ Watch"}
-document.getElementById("dWatch").onclick=function(){if(LAST)toggleWatch(LAST)};
-function drawChart(hist){var c=document.getElementById("chart");var x=c.getContext("2d");
-var W=c.width,H=c.height;x.clearRect(0,0,W,H);
-var pts=hist.map(function(p){return Number(p.price_usd)}).filter(function(n){return n>0});
-x.fillStyle="#8b94a7";x.font="11px sans-serif";
-if(pts.length<2){x.fillText("collecting…",10,18);return}
-var mn=Math.min.apply(null,pts),mx=Math.max.apply(null,pts);if(mx===mn)mx=mn*1.01;
-var up=pts[pts.length-1]>=pts[0];x.strokeStyle=up?"#0e9d6e":"#e5484d";x.lineWidth=1.6;x.beginPath();
-for(var i=0;i<pts.length;i++){var px=4+(W-8)*i/(pts.length-1);var py=H-8-(H-16)*(pts[i]-mn)/(mx-mn);if(i===0){x.moveTo(px,py)}else{x.lineTo(px,py)}}
-x.stroke()}
-function closeModal(){document.getElementById("modal").className="modal";LAST=null}
-document.getElementById("dClose").onclick=closeModal;
-document.getElementById("modal").addEventListener("click",function(ev){if(ev.target===this)closeModal()});
-document.addEventListener("keydown",function(ev){if(ev.key==="Escape")closeModal()});
-document.getElementById("dCopy").onclick=function(){if(!LAST)return;
-fetch("/api/coin?mint="+encodeURIComponent(LAST)).then(function(r){return r.json()}).then(function(d){
-var ch=((d.verdict&&d.verdict.choice)||"?").toUpperCase();var s=d.signals||{};
-var txt="FlagKan "+ch+" | "+LAST+" | top1 "+(s.top1_pct||"?")+"% | conf "+Math.round(((d.verdict&&d.verdict.confidence)||0)*100)+"% | https://flag.sornkan.com/";
-function done(ok){document.getElementById("dCopy").textContent=ok?t("copied"):t("copy");if(ok){setTimeout(function(){document.getElementById("dCopy").textContent=t("copy")},1500)}}
-if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){done(true)},function(){done(false)})}
-else{done(false)}
-}).catch(function(){})};
-document.getElementById("go").onclick=function(){
-var m=document.getElementById("mint").value.trim();
-if(!m)return;
-var btn=document.getElementById("go");btn.textContent="…";
-fetch("/api/verdict-now?mint="+encodeURIComponent(m),{method:"POST"}).then(function(r){return r.json()}).then(function(d){
-btn.textContent=t("gobtn");
-if(d.error){return}
-loadRounds();openModal(m);
-}).catch(function(){btn.textContent=t("gobtn")})};
-applyLang();setInterval(loadProof,60000);setInterval(loadRounds,60000);
+function pct(x){return (x==null||isNaN(Number(x)))?"—":Math.round(Number(x)*100)+"%"}
+fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
+document.getElementById("sAcc").textContent=pct(d.accuracy);
+document.getElementById("sRes").textContent=d.resolved_with_verdict==null?"—":d.resolved_with_verdict;
+document.getElementById("sRed").textContent=pct(d.red_precision);
+}).catch(function(){});
+applyLang();
 })();
 </script>
 </body>
