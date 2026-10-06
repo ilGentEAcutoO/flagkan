@@ -635,6 +635,8 @@ export default {
 		if (url.pathname === "/api/verdict-now" && request.method === "POST") {
 			const mint = url.searchParams.get("mint") ?? "";
 			if (!mint) return json({ error: "missing mint" }, 400);
+			const vcount = await env.DB_MAIN.prepare("SELECT COUNT(*) AS n FROM verdicts WHERE ts > ?").bind(Date.now() - 24 * 3600 * 1000).first<{ n: number }>();
+			if (Number(vcount?.n ?? 0) >= MAX_VERDICTS_PER_DAY) return json({ error: "daily budget exhausted" }, 429);
 			try {
 				const pairs = await jget(DEX + "/tokens/v1/solana/" + mint);
 				const p = pickPair(pairs);
@@ -692,6 +694,8 @@ export default {
 		if (url.pathname === "/api/signals-now" && request.method === "POST") {
 			const mint = url.searchParams.get("mint") ?? "";
 			if (!mint) return json({ error: "missing mint" }, 400);
+			const akey = url.searchParams.get("key") ?? "";
+			if (!env.ADMIN_KEY || akey !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403);
 			try {
 				const s = await computeSignals(env, mint);
 				const now = Date.now();
@@ -776,6 +780,8 @@ export default {
 		}
 
 		if (url.pathname === "/api/run-once" && request.method === "POST") {
+			const akey = url.searchParams.get("key") ?? "";
+			if (!env.ADMIN_KEY || akey !== env.ADMIN_KEY) return json({ error: "forbidden" }, 403);
 			try {
 				const stats = await ingest(env, url.searchParams.get("refresh") === "1");
 				return json({ ran: true, ...stats });
