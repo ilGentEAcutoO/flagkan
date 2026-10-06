@@ -5,6 +5,8 @@ interface Env {
 	SOLAMI_API_KEY: string;
 }
 
+import { hardRed } from "./ml/train";
+
 const DEX = "https://api.dexscreener.com";
 const UA = { "User-Agent": "Mozilla/5.0 (radar proof-of-concept)" };
 const MAX_MINTS = 20;
@@ -62,24 +64,6 @@ async function jevVerdict(env: Env, state: Record<string, unknown>): Promise<any
 	});
 	if (!r.ok) throw new Error("jev " + r.status);
 	return ((await r.json()) as any).answers;
-}
-
-function hardRed(s: {
-	liquidity_usd?: unknown;
-	top1_pct?: unknown;
-	early_buys?: unknown;
-	mint_age_min?: unknown;
-}): string | null {
-	const liq = Number(s.liquidity_usd);
-	const top1 = Number(s.top1_pct);
-	const early = Number(s.early_buys);
-	const age = Number(s.mint_age_min);
-	// R1: effectively no liquidity at first sight — unbuyable; 6/6 such coins died in backtest
-	if (Number.isFinite(liq) && liq < 1000 && (!Number.isFinite(top1) || top1 > 10)) return "illiquid";
-	// R2: bot-frenzy ignition — brand-new coin with an extreme early-tx rate
-	if (Number.isFinite(age) && Number.isFinite(early) && age > 0 && age < 10 && early / age > 50)
-		return "bot_frenzy";
-	return null;
 }
 
 function applyVerdictOverride(a: any, vstate: Record<string, unknown>, mint: string, tag: string): void {

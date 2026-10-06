@@ -45,3 +45,15 @@ CREATE TABLE IF NOT EXISTS outcomes (
 	mult REAL,
 	dead INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS models (
+	version INTEGER PRIMARY KEY AUTOINCREMENT,
+	created_at INTEGER NOT NULL,
+	weights TEXT NOT NULL,
+	bias REAL NOT NULL,
+	features TEXT NOT NULL,
+	n_train INTEGER NOT NULL,
+	test_acc REAL,
+	test_n INTEGER,
+	champ_acc REAL,
+	promoted INTEGER NOT NULL DEFAULT 0
+);
