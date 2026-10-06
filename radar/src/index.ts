@@ -258,36 +258,39 @@ async function snapshotMint(
 async function ingest(env: Env, forceRefresh = false): Promise<Record<string, number>> {
 	const now = Date.now();
 	const stats = { mints: 0, snapshots: 0, verdicts: 0, resolved: 0, errors: 0, refreshed: 0 };
+	const fullRound = forceRefresh || new Date(now).getUTCMinutes() % 5 === 0;
 	let mints: string[] = [];
-	try {
-		const boosts = await jget(DEX + "/token-boosts/top/v1");
-		mints = (Array.isArray(boosts) ? boosts : [])
-			.filter((b) => b?.chainId === "solana" && b?.tokenAddress)
-			.slice(0, MAX_MINTS)
-			.map((b) => b.tokenAddress);
-		stats.mints = mints.length;
+	if (fullRound) {
+		try {
+			const boosts = await jget(DEX + "/token-boosts/top/v1");
+			mints = (Array.isArray(boosts) ? boosts : [])
+				.filter((b) => b?.chainId === "solana" && b?.tokenAddress)
+				.slice(0, MAX_MINTS)
+				.map((b) => b.tokenAddress);
+			stats.mints = mints.length;
 
-		const dayStart = now - 24 * 3600 * 1000;
-		const vcount = await env.DB_MAIN.prepare(
-			"SELECT COUNT(*) AS n FROM verdicts WHERE ts > ?"
-		)
-			.bind(dayStart)
-			.first<{ n: number }>();
-		const vb = { budget: 0, start: 0 };
-		vb.budget = vb.start = MAX_VERDICTS_PER_DAY - Number(vcount?.n ?? 0);
+			const dayStart = now - 24 * 3600 * 1000;
+			const vcount = await env.DB_MAIN.prepare(
+				"SELECT COUNT(*) AS n FROM verdicts WHERE ts > ?"
+			)
+				.bind(dayStart)
+				.first<{ n: number }>();
+			const vb = { budget: 0, start: 0 };
+			vb.budget = vb.start = MAX_VERDICTS_PER_DAY - Number(vcount?.n ?? 0);
 
-		for (const mint of mints) {
-			const r = await snapshotMint(env, mint, now, vb);
-			if (r === "snap") stats.snapshots++;
-			else if (r === "fail") stats.errors++;
+			for (const mint of mints) {
+				const r = await snapshotMint(env, mint, now, vb);
+				if (r === "snap") stats.snapshots++;
+				else if (r === "fail") stats.errors++;
+			}
+			stats.verdicts = Math.max(0, vb.start - vb.budget);
+		} catch (e) {
+			stats.errors++;
+			console.log(JSON.stringify({ cron: "boosts_fail", err: String(e).slice(0, 160) }));
 		}
-		stats.verdicts = Math.max(0, vb.start - vb.budget);
-	} catch (e) {
-		stats.errors++;
-		console.log(JSON.stringify({ cron: "boosts_fail", err: String(e).slice(0, 160) }));
 	}
 
-	if (true) { // every round: oldest-first rotation keeps snapshot gaps small
+	if (fullRound) { // full rounds only: oldest-first rotation keeps snapshot gaps small
 		const tracked = await env.DB_MAIN.prepare(
 			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint WHERE o.mint IS NULL AND r.first_seen > ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) ASC LIMIT 8"
 		)
