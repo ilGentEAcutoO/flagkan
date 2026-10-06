@@ -405,7 +405,7 @@ function json(data: unknown, status = 200): Response {
 
 export default {
 	async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-		if (controller.cron === "17 3 * * 0") {
+		if (controller.cron !== "* * * * *") { // any non-minutely trigger = weekly retrain
 			ctx.waitUntil((async () => {
 				try { await retrain(env, false); }
 				catch (e) { console.log(JSON.stringify({ cron: "retrain_fail", err: String(e).slice(0, 200) })); }
