@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS rounds (
 	mint TEXT PRIMARY KEY,
 	first_seen INTEGER NOT NULL,
 	pair_address TEXT,
-	name TEXT
+	name TEXT,
+	source TEXT
 );
 CREATE TABLE IF NOT EXISTS snapshots (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,

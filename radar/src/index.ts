@@ -20,12 +20,12 @@ async function sleep(ms: number): Promise<void> {
 	return new Promise((r) => setTimeout(r, ms));
 }
 
-async function jget(url: string, tries = 3): Promise<any> {
+async function jget(url: string, tries = 3, label = "dex"): Promise<any> {
 	let last = "";
 	for (let i = 0; i < tries; i++) {
 		const r = await fetch(url, { headers: UA });
 		if (r.ok) return r.json();
-		last = "dex " + r.status + " " + url.slice(0, 80);
+		last = label + " " + r.status + " " + url.slice(0, 80);
 		if (r.status !== 429 && r.status < 500) throw new Error(last);
 		await sleep(500 * 2 ** i + Math.random() * 300);
 	}
@@ -228,6 +228,165 @@ function pickPair(pairs: any[]): any | null {
 	return best;
 }
 
+interface Market {
+	price: number;
+	liq: number;
+	fdv: number;
+	buys5: number;
+	sells5: number;
+	tx5: number;
+	sellRatio: number;
+	name: string;
+	pair: string;
+}
+
+async function dexMarket(mint: string): Promise<Market | null> {
+	const pairs = await jget(DEX + "/tokens/v1/solana/" + mint);
+	const p = pickPair(pairs);
+	if (!p) return null;
+	const buys5 = Number(p.txns?.m5?.buys ?? 0);
+	const sells5 = Number(p.txns?.m5?.sells ?? 0);
+	const tx5 = buys5 + sells5;
+	return {
+		price: Number(p.priceUsd ?? 0),
+		liq: Number(p.liquidity?.usd ?? 0),
+		fdv: Number(p.fdv ?? 0),
+		buys5,
+		sells5,
+		tx5,
+		sellRatio: sells5 / Math.max(1, tx5),
+		name: String(p.baseToken?.name ?? "").slice(0, 80),
+		pair: String(p.pairAddress ?? ""),
+	};
+}
+
+async function geckoMarket(pool: string): Promise<Market | null> {
+	const j: any = await jget("https://api.geckoterminal.com/api/v2/networks/solana/pools/" + pool, 3, "gecko");
+	const a = j?.data?.attributes;
+	if (!a) return null;
+	const buys5 = Number(a.transactions?.m5?.buys ?? 0);
+	const sells5 = Number(a.transactions?.m5?.sells ?? 0);
+	const tx5 = buys5 + sells5;
+	const nm = String(a.name ?? "");
+	return {
+		price: Number(a.base_token_price_usd ?? 0),
+		liq: Number(a.reserve_in_usd ?? 0),
+		fdv: Number(a.fdv_usd ?? 0),
+		buys5,
+		sells5,
+		tx5,
+		sellRatio: sells5 / Math.max(1, tx5),
+		name: nm.split(" / ")[0].slice(0, 80),
+		pair: pool,
+	};
+}
+
+async function geckoNewMints(): Promise<Array<{ mint: string; pool: string }>> {
+	const j: any = await jget("https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1", 3, "gecko");
+	const out: Array<{ mint: string; pool: string }> = [];
+	const seenM = new Set<string>();
+	for (const d of (Array.isArray(j?.data) ? j.data : []).slice(0, MAX_MINTS)) {
+		const id = String(d?.relationships?.base_token?.data?.id ?? "");
+		if (!id.startsWith("solana_")) continue;
+		const mint = id.slice("solana_".length);
+		if (!mint || seenM.has(mint)) continue;
+		seenM.add(mint);
+		const pool = String(d?.attributes?.address ?? "");
+		if (!pool) continue;
+		out.push({ mint, pool });
+	}
+	return out;
+}
+
+async function recordMint(
+	env: Env,
+	mint: string,
+	m: Market,
+	source: string,
+	now: number,
+	doVerdict: { budget: number }
+): Promise<"snap"> {
+	const seen = await env.DB_MAIN.prepare("SELECT mint FROM rounds WHERE mint = ?")
+		.bind(mint)
+		.first();
+	if (!seen) {
+		await env.DB_MAIN.prepare(
+			"INSERT INTO rounds (mint, first_seen, pair_address, name, source) VALUES (?, ?, ?, ?, ?)"
+		)
+			.bind(mint, now, m.pair, m.name, source)
+			.run();
+		if (doVerdict.budget > 0 && env.TYPESAFE_API_KEY) {
+			try {
+				let sig: Record<string, number> = {};
+				try {
+					const s = await computeSignals(env, mint);
+					sig = s as unknown as Record<string, number>;
+					await env.DB_MAIN.prepare(
+						"INSERT OR REPLACE INTO signals (mint, ts, top1_pct, top10_pct, top2_11_pct, pool_suspect, early_buys, mint_age_min) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+					)
+						.bind(mint, now, s.top1_pct, s.top10_pct, s.top2_11_pct, s.pool_suspect, s.early_buys, s.mint_age_min)
+						.run();
+				} catch (e) {
+					console.log(JSON.stringify({ cron: "signals_fail", mint, err: String(e).slice(0, 120) }));
+				}
+				const vstate = {
+					mint,
+					price_usd: m.price,
+					liquidity_usd: m.liq,
+					fdv: m.fdv,
+					txns_5m: m.tx5,
+					sell_ratio_5m: m.sellRatio,
+					...sig,
+				};
+				const a = await jevVerdict(env, vstate);
+				applyVerdictOverride(a, vstate, mint, "cron");
+				await maybeDemoteGreen(env, a, vstate, mint, "cron");
+				await env.DB_MAIN.prepare(
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+				)
+					.bind(
+						mint,
+						now,
+						String(a.verdict?.choice ?? "yellow"),
+						Number(a.verdict?.confidence ?? 0),
+						Number(a.verdict?.probabilities?.red ?? 0),
+						Number(a.verdict?.probabilities?.yellow ?? 0),
+						Number(a.verdict?.probabilities?.green ?? 0),
+						Number(a.coordinated?.noul ?? 0),
+						Number(a.severity?.score ?? 0)
+					)
+					.run();
+				doVerdict.budget--;
+			} catch (e) {
+				console.log(JSON.stringify({ cron: "verdict_fail", mint, err: String(e).slice(0, 120) }));
+			}
+		}
+	}
+	await env.DB_MAIN.prepare(
+		"INSERT INTO snapshots (mint, ts, price_usd, liquidity_usd, fdv, txns_5m, buys_5m, sells_5m) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+	)
+		.bind(mint, now, m.price, m.liq, m.fdv, m.tx5, m.buys5, m.sells5)
+		.run();
+	return "snap";
+}
+
+async function snapshotMintGecko(
+	env: Env,
+	mint: string,
+	pool: string,
+	now: number,
+	doVerdict: { budget: number }
+): Promise<"snap" | "skip" | "fail"> {
+	try {
+		const m = await geckoMarket(pool);
+		if (!m) return "skip";
+		return await recordMint(env, mint, m, "gecko", now, doVerdict);
+	} catch (e) {
+		console.log(JSON.stringify({ cron: "mint_fail", mint, err: String(e).slice(0, 120) }));
+		return "fail";
+	}
+}
+
 async function snapshotMint(
 	env: Env,
 	mint: string,
@@ -235,81 +394,10 @@ async function snapshotMint(
 	doVerdict: { budget: number }
 ): Promise<"snap" | "skip" | "fail"> {
 	try {
-		const pairs = await jget(DEX + "/tokens/v1/solana/" + mint);
-		const p = pickPair(pairs);
-		if (!p) return "skip";
-		const price = Number(p.priceUsd ?? 0);
-		const liq = Number(p.liquidity?.usd ?? 0);
-		const fdv = Number(p.fdv ?? 0);
-		const buys5 = Number(p.txns?.m5?.buys ?? 0);
-		const sells5 = Number(p.txns?.m5?.sells ?? 0);
-		const tx5 = buys5 + sells5;
-		const sellRatio = sells5 / Math.max(1, tx5);
-		const name = String(p.baseToken?.name ?? "").slice(0, 80);
-		const pair = String(p.pairAddress ?? "");
+		const m = await dexMarket(mint);
+		if (!m) return "skip";
 
-		const seen = await env.DB_MAIN.prepare("SELECT mint FROM rounds WHERE mint = ?")
-			.bind(mint)
-			.first();
-		if (!seen) {
-			await env.DB_MAIN.prepare(
-				"INSERT INTO rounds (mint, first_seen, pair_address, name) VALUES (?, ?, ?, ?)"
-			)
-				.bind(mint, now, pair, name)
-				.run();
-			if (doVerdict.budget > 0 && env.TYPESAFE_API_KEY) {
-				try {
-					let sig: Record<string, number> = {};
-					try {
-						const s = await computeSignals(env, mint);
-						sig = s as unknown as Record<string, number>;
-						await env.DB_MAIN.prepare(
-							"INSERT OR REPLACE INTO signals (mint, ts, top1_pct, top10_pct, top2_11_pct, pool_suspect, early_buys, mint_age_min) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-						)
-							.bind(mint, now, s.top1_pct, s.top10_pct, s.top2_11_pct, s.pool_suspect, s.early_buys, s.mint_age_min)
-							.run();
-					} catch (e) {
-						console.log(JSON.stringify({ cron: "signals_fail", mint, err: String(e).slice(0, 120) }));
-					}
-					const vstate = {
-						mint,
-						price_usd: price,
-						liquidity_usd: liq,
-						fdv,
-						txns_5m: tx5,
-						sell_ratio_5m: sellRatio,
-						...sig,
-					};
-					const a = await jevVerdict(env, vstate);
-					applyVerdictOverride(a, vstate, mint, "cron");
-					await maybeDemoteGreen(env, a, vstate, mint, "cron");
-					await env.DB_MAIN.prepare(
-						"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-					)
-						.bind(
-							mint,
-							now,
-							String(a.verdict?.choice ?? "yellow"),
-							Number(a.verdict?.confidence ?? 0),
-							Number(a.verdict?.probabilities?.red ?? 0),
-							Number(a.verdict?.probabilities?.yellow ?? 0),
-							Number(a.verdict?.probabilities?.green ?? 0),
-							Number(a.coordinated?.noul ?? 0),
-							Number(a.severity?.score ?? 0)
-						)
-						.run();
-					doVerdict.budget--;
-				} catch (e) {
-					console.log(JSON.stringify({ cron: "verdict_fail", mint, err: String(e).slice(0, 120) }));
-				}
-			}
-		}
-		await env.DB_MAIN.prepare(
-			"INSERT INTO snapshots (mint, ts, price_usd, liquidity_usd, fdv, txns_5m, buys_5m, sells_5m) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-		)
-			.bind(mint, now, price, liq, fdv, tx5, buys5, sells5)
-			.run();
-		return "snap";
+		return await recordMint(env, mint, m, "dex", now, doVerdict);
 	} catch (e) {
 		console.log(JSON.stringify({ cron: "mint_fail", mint, err: String(e).slice(0, 120) }));
 		return "fail";
@@ -318,10 +406,18 @@ async function snapshotMint(
 
 async function ingest(env: Env, forceRefresh = false): Promise<Record<string, number>> {
 	const now = Date.now();
-	const stats = { mints: 0, snapshots: 0, verdicts: 0, resolved: 0, errors: 0, refreshed: 0 };
+	const stats = { mints: 0, snapshots: 0, verdicts: 0, resolved: 0, errors: 0, refreshed: 0, fallback: 0 };
 	const fullRound = forceRefresh || new Date(now).getUTCMinutes() % 5 === 0;
 	let mints: string[] = [];
 	if (fullRound) {
+		const dayStart = now - 24 * 3600 * 1000;
+		const vcount = await env.DB_MAIN.prepare(
+			"SELECT COUNT(*) AS n FROM verdicts WHERE ts > ?"
+		)
+			.bind(dayStart)
+			.first<{ n: number }>();
+		const vb = { budget: 0, start: 0 };
+		vb.budget = vb.start = MAX_VERDICTS_PER_DAY - Number(vcount?.n ?? 0);
 		try {
 			const boosts = await jget(DEX + "/token-boosts/top/v1");
 			mints = (Array.isArray(boosts) ? boosts : [])
@@ -329,16 +425,6 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 				.slice(0, MAX_MINTS)
 				.map((b) => b.tokenAddress);
 			stats.mints = mints.length;
-
-			const dayStart = now - 24 * 3600 * 1000;
-			const vcount = await env.DB_MAIN.prepare(
-				"SELECT COUNT(*) AS n FROM verdicts WHERE ts > ?"
-			)
-				.bind(dayStart)
-				.first<{ n: number }>();
-			const vb = { budget: 0, start: 0 };
-			vb.budget = vb.start = MAX_VERDICTS_PER_DAY - Number(vcount?.n ?? 0);
-
 			for (const mint of mints) {
 				const r = await snapshotMint(env, mint, now, vb);
 				if (r === "snap") stats.snapshots++;
@@ -348,19 +434,37 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 		} catch (e) {
 			stats.errors++;
 			console.log(JSON.stringify({ cron: "boosts_fail", err: String(e).slice(0, 160) }));
+			try {
+				const gm = await geckoNewMints();
+				mints = gm.map((g) => g.mint);
+				stats.mints = mints.length;
+				stats.fallback = 1;
+				console.log(JSON.stringify({ cron: "gecko_fallback", mints: mints.length }));
+				for (const g of gm) {
+					const r = await snapshotMintGecko(env, g.mint, g.pool, now, vb);
+					if (r === "snap") stats.snapshots++;
+					else if (r === "fail") stats.errors++;
+				}
+				stats.verdicts = Math.max(0, vb.start - vb.budget);
+			} catch (e2) {
+				stats.errors++;
+				console.log(JSON.stringify({ cron: "gecko_fail", err: String(e2).slice(0, 160) }));
+			}
 		}
 	}
 
 	if (fullRound) { // full rounds only: oldest-first rotation keeps snapshot gaps small
 		const tracked = await env.DB_MAIN.prepare(
-			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint WHERE o.mint IS NULL AND r.first_seen > ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) ASC LIMIT 8"
+			"SELECT r.mint AS mint, r.source AS source, r.pair_address AS pair FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint WHERE o.mint IS NULL AND r.first_seen > ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) ASC LIMIT 8"
 		)
 			.bind(now - 24 * 3600 * 1000)
-			.all<{ mint: string }>();
+			.all<{ mint: string; source: string | null; pair: string | null }>();
 		const boostSet = new Set(mints);
 		for (const row of tracked.results ?? []) {
 			if (boostSet.has(row.mint)) continue;
-			const r = await snapshotMint(env, row.mint, now, { budget: 0 });
+			const r = row.source === "gecko" && row.pair
+				? await snapshotMintGecko(env, row.mint, row.pair, now, { budget: 0 })
+				: await snapshotMint(env, row.mint, now, { budget: 0 });
 			if (r === "snap") stats.refreshed++;
 		}
 	}
