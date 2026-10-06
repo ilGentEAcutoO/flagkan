@@ -762,6 +762,13 @@ export default {
 				const r = await fetch("https://api.geckoterminal.com/api/v2/networks/solana/new_pools?page=1", { headers: { ...UA, Accept: "application/json" } });
 				const j: any = r.ok ? await r.json() : null;
 				out.gecko = { ok: r.ok, status: r.status, pools: r.ok && j && Array.isArray(j.data) ? j.data.length : 0 };
+				if (r.ok && j && Array.isArray(j.data) && j.data.length > 0) {
+					const pool = String(j.data[0]?.attributes?.address ?? "");
+					const rd = await fetch("https://api.geckoterminal.com/api/v2/networks/solana/pools/" + pool, { headers: { ...UA, Accept: "application/json" } });
+					const jd: any = rd.ok ? await rd.json() : null;
+					const at = jd?.data?.attributes;
+					out.gecko_detail = { ok: rd.ok, status: rd.status, hasPrice: at?.base_token_price_usd != null, hasLiq: at?.reserve_in_usd != null };
+				}
 			} catch (e) {
 				out.gecko = { ok: false, err: String(e).slice(0, 120) };
 			}
