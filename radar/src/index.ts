@@ -12,10 +12,20 @@ const MAX_VERDICTS_PER_DAY = 50;
 const RESOLVE_AFTER_MS = 6 * 3600 * 1000;
 const BOARD_RETENTION_MS = 7 * 24 * 3600 * 1000;
 
-async function jget(url: string): Promise<any> {
-	const r = await fetch(url, { headers: UA });
-	if (!r.ok) throw new Error("dex " + r.status + " " + url.slice(0, 80));
-	return r.json();
+async function sleep(ms: number): Promise<void> {
+	return new Promise((r) => setTimeout(r, ms));
+}
+
+async function jget(url: string, tries = 3): Promise<any> {
+	let last = "";
+	for (let i = 0; i < tries; i++) {
+		const r = await fetch(url, { headers: UA });
+		if (r.ok) return r.json();
+		last = "dex " + r.status + " " + url.slice(0, 80);
+		if (r.status !== 429 && r.status < 500) throw new Error(last);
+		await sleep(500 * 2 ** i + Math.random() * 300);
+	}
+	throw new Error(last);
 }
 
 async function jevVerdict(env: Env, state: Record<string, unknown>): Promise<any> {
@@ -34,8 +44,8 @@ async function jevVerdict(env: Env, state: Record<string, unknown>): Promise<any
 					type: "choice",
 					instructions: "Which risk light fits this Solana token: yellow or green? RED is handled by a separate rules layer — never output red. Judge strictly by the numbers in state. A high top1_pct alone is NOT alarming: several coins with top1 over 70 survived.",
 					criteria: {
-						yellow: "Caution, watch closely: the default for new coins. Any doubt, any missing holder data, or any single warning sign means yellow.",
-						green: "Looks acceptable: ONLY when ALL of these hold at once: top1_pct under 15, top2_11_pct under 40, liquidity_usd over 100000, mint_age_min over 15. If holder data (top1_pct) is missing, never green.",
+						yellow: "Caution, watch closely: the default for new coins. Any doubt, any missing holder data, or any single warning sign means yellow. High sell pressure (sell_ratio_5m over 0.7) means yellow.",
+						green: "Looks acceptable: ONLY when ALL of these hold at once: top1_pct under 15, top2_11_pct under 40, liquidity_usd over 100000, mint_age_min over 15, sell_ratio_5m under 0.6. If holder data (top1_pct) is missing, never green.",
 					},
 				},
 				coordinated: {
@@ -171,7 +181,10 @@ async function snapshotMint(
 		const price = Number(p.priceUsd ?? 0);
 		const liq = Number(p.liquidity?.usd ?? 0);
 		const fdv = Number(p.fdv ?? 0);
-		const tx5 = Number(p.txns?.m5?.buys ?? 0) + Number(p.txns?.m5?.sells ?? 0);
+		const buys5 = Number(p.txns?.m5?.buys ?? 0);
+		const sells5 = Number(p.txns?.m5?.sells ?? 0);
+		const tx5 = buys5 + sells5;
+		const sellRatio = sells5 / Math.max(1, tx5);
 		const name = String(p.baseToken?.name ?? "").slice(0, 80);
 		const pair = String(p.pairAddress ?? "");
 
@@ -204,6 +217,7 @@ async function snapshotMint(
 						liquidity_usd: liq,
 						fdv,
 						txns_5m: tx5,
+						sell_ratio_5m: sellRatio,
 						...sig,
 					};
 					const a = await jevVerdict(env, vstate);
@@ -230,9 +244,9 @@ async function snapshotMint(
 			}
 		}
 		await env.DB_MAIN.prepare(
-			"INSERT INTO snapshots (mint, ts, price_usd, liquidity_usd, fdv, txns_5m) VALUES (?, ?, ?, ?, ?, ?)"
+			"INSERT INTO snapshots (mint, ts, price_usd, liquidity_usd, fdv, txns_5m, buys_5m, sells_5m) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 		)
-			.bind(mint, now, price, liq, fdv, tx5)
+			.bind(mint, now, price, liq, fdv, tx5, buys5, sells5)
 			.run();
 		return "snap";
 	} catch (e) {
@@ -244,32 +258,38 @@ async function snapshotMint(
 async function ingest(env: Env, forceRefresh = false): Promise<Record<string, number>> {
 	const now = Date.now();
 	const stats = { mints: 0, snapshots: 0, verdicts: 0, resolved: 0, errors: 0, refreshed: 0 };
-	const boosts = await jget(DEX + "/token-boosts/top/v1");
-	const mints: string[] = (Array.isArray(boosts) ? boosts : [])
-		.filter((b) => b?.chainId === "solana" && b?.tokenAddress)
-		.slice(0, MAX_MINTS)
-		.map((b) => b.tokenAddress);
-	stats.mints = mints.length;
+	let mints: string[] = [];
+	try {
+		const boosts = await jget(DEX + "/token-boosts/top/v1");
+		mints = (Array.isArray(boosts) ? boosts : [])
+			.filter((b) => b?.chainId === "solana" && b?.tokenAddress)
+			.slice(0, MAX_MINTS)
+			.map((b) => b.tokenAddress);
+		stats.mints = mints.length;
 
-	const dayStart = now - 24 * 3600 * 1000;
-	const vcount = await env.DB_MAIN.prepare(
-		"SELECT COUNT(*) AS n FROM verdicts WHERE ts > ?"
-	)
-		.bind(dayStart)
-		.first<{ n: number }>();
-	const vb = { budget: 0, start: 0 };
-	vb.budget = vb.start = MAX_VERDICTS_PER_DAY - Number(vcount?.n ?? 0);
+		const dayStart = now - 24 * 3600 * 1000;
+		const vcount = await env.DB_MAIN.prepare(
+			"SELECT COUNT(*) AS n FROM verdicts WHERE ts > ?"
+		)
+			.bind(dayStart)
+			.first<{ n: number }>();
+		const vb = { budget: 0, start: 0 };
+		vb.budget = vb.start = MAX_VERDICTS_PER_DAY - Number(vcount?.n ?? 0);
 
-	for (const mint of mints) {
-		const r = await snapshotMint(env, mint, now, vb);
-		if (r === "snap") stats.snapshots++;
-		else if (r === "fail") stats.errors++;
+		for (const mint of mints) {
+			const r = await snapshotMint(env, mint, now, vb);
+			if (r === "snap") stats.snapshots++;
+			else if (r === "fail") stats.errors++;
+		}
+		stats.verdicts = Math.max(0, vb.start - vb.budget);
+	} catch (e) {
+		stats.errors++;
+		console.log(JSON.stringify({ cron: "boosts_fail", err: String(e).slice(0, 160) }));
 	}
-	stats.verdicts = Math.max(0, vb.start - vb.budget);
 
-	if (forceRefresh || new Date(now).getUTCMinutes() % 3 === 0) {
+	if (true) { // every round: oldest-first rotation keeps snapshot gaps small
 		const tracked = await env.DB_MAIN.prepare(
-			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint WHERE o.mint IS NULL AND r.first_seen > ? LIMIT 30"
+			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint WHERE o.mint IS NULL AND r.first_seen > ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) ASC LIMIT 8"
 		)
 			.bind(now - 24 * 3600 * 1000)
 			.all<{ mint: string }>();
@@ -450,6 +470,7 @@ export default {
 					liquidity_usd: Number(p.liquidity?.usd ?? 0),
 					fdv: Number(p.fdv ?? 0),
 					txns_5m: Number(p.txns?.m5?.buys ?? 0) + Number(p.txns?.m5?.sells ?? 0),
+					sell_ratio_5m: Number(p.txns?.m5?.sells ?? 0) / Math.max(1, Number(p.txns?.m5?.buys ?? 0) + Number(p.txns?.m5?.sells ?? 0)),
 					...sig,
 				};
 				const a = await jevVerdict(env, state);
@@ -494,6 +515,7 @@ export default {
 					liquidity_usd: Number(p?.liquidity?.usd ?? 0),
 					fdv: Number(p?.fdv ?? 0),
 					txns_5m: Number(p?.txns?.m5?.buys ?? 0) + Number(p?.txns?.m5?.sells ?? 0),
+					sell_ratio_5m: Number(p?.txns?.m5?.sells ?? 0) / Math.max(1, Number(p?.txns?.m5?.buys ?? 0) + Number(p?.txns?.m5?.sells ?? 0)),
 					...s,
 				};
 				const a = await jevVerdict(env, vstate3);

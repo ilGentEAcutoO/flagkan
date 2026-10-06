@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS snapshots (
 	price_usd REAL,
 	liquidity_usd REAL,
 	fdv REAL,
-	txns_5m INTEGER
+	txns_5m INTEGER,
+	buys_5m INTEGER,
+	sells_5m INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_snap_mint_ts ON snapshots (mint, ts);
 CREATE TABLE IF NOT EXISTS verdicts (
