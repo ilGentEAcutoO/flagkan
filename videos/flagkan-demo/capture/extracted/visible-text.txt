@@ -1,0 +1,59 @@
+[span] Flag
+[a] Kan
+[button] ไทย
+[span] live · 100 tracked
+[h1] Check before you buy
+[p] FlagKan watches newly boosted Solana tokens and gives each one a risk light — red, yellow, or green. Six hours later the chain itself grades every verdict.
+[span] Open the board
+[span] How we judge
+[div] 58%
+[div] accuracy
+[div] 2928
+[div] coins judged
+[div] 23%
+[div] red precision
+[b] Dead means down 90%+, liquidity under $1,000, or price frozen with zero trading.
+[p] The scoreboard counts every resolved coin — nothing cherry-picked.
+[a] See how every coin resolved
+[h2] Watch the demo
+[p] 90 seconds: a live verdict, then the chain grades it.
+[span] Demo video coming soon
+[h2] How it works
+[h3] Spot
+[p] Every few minutes we pull the newest boosted Solana tokens off the launchpad firehose.
+[h3] Inspect
+[p] Solami RPC reads the chain: top holders, early buys, coin age. Same chain anyone can read — no insider data.
+[h3] Judge
+[p] The Jev AI judge issues red / yellow / green with written reasons, then the outcome settles on-chain.
+[h2] Fresh verdicts
+[p] The newest coins on the radar — click through to the board for the full story.
+[span] VANTOR
+[span] 7SxKU2
+[span] yellow
+[span] 83%
+[span] Gorlock
+[span] 3JLoq3
+[span] yellow
+[span] 86%
+[span] GOLDMIND
+[span] 7nzTW2
+[span] yellow
+[span] 86%
+[span] Nvidia
+[span] DSBARj
+[span] yellow
+[span] 96%
+[span] PQC
+[span] agvY2S
+[span] yellow
+[span] 86%
+[span] Yxz3Ux
+[span] yellow
+[span] 83%
+[a] Open the full board →
+[div] Built for Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami
+[b] Not financial advice.
+[p] FlagKan flags risk patterns — it can't see private chats, planned unlocks, or off-chain deals. Past accuracy doesn't promise future results. Never bet more than you can lose.
+[span] FlagKan · SORNKan · Solami + Jev
+[a] api/proof
+[a] api/rounds

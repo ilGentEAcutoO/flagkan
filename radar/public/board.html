@@ -161,6 +161,29 @@ details.meth{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
 details.meth summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--dim)}
 details.meth p{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.6}
 </style>
+<link rel="stylesheet" href="/theme.css">
+<style>
+/* sticker-pop upgrades (shared base in /theme.css) */
+body{font-size:13px;line-height:1.5}
+.panel{border-width:2px;box-shadow:var(--sh)}
+.search input,.qbox input,.pg-per select{border:2px solid var(--line);background:#fff}
+.search button{border:2px solid var(--line);box-shadow:var(--sh-sm)}
+.chip{border:2px solid var(--line);background:#fff}
+.filter button{border:2px solid var(--line);background:#fff;color:var(--dim);font-weight:700}
+.filter button.on{background:var(--ink);color:var(--paper)}
+.pg-ctl button{border:2px solid var(--line);background:#fff}
+th{background:var(--cream)}
+tbody tr:hover{background:var(--cream)}
+.mcard{border:2px solid var(--line);box-shadow:6px 6px 0 var(--ink)}
+.x,.mactions button{border:2px solid var(--line)}
+.mactions button.primary{background:var(--red);color:#fff}
+.vline{border:2px solid var(--line)}
+.vline.none{background:var(--cream);color:var(--dim)}
+.whyline,canvas#chart{border:2px solid var(--line);background:#fff}
+.st{border:2px solid var(--line)}
+.prob div{border:2px solid var(--line)}
+.star{border:none}
+</style>
 </head>
 <body>
 <div class="topbar"><div class="in">
@@ -189,7 +212,7 @@ details.meth p{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.6}
     </table></div>
     <div class="pager"><span class="pg-range" id="pgRange">–</span><div class="pg-ctl"><button id="pgPrev" type="button" data-i18n-t="prevP" title="Previous page" aria-label="Previous">‹</button><span id="pgNums"></span><button id="pgNext" type="button" data-i18n-t="nextP" title="Next page" aria-label="Next">›</button></div><label class="pg-per"><span data-i18n="perpage">per page</span> <select id="pgPer" aria-label="Rows per page"><option value="10">10</option><option value="20">20</option><option value="50">50</option></select></label></div>
   </div>
-  <footer><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
+  <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
 <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="dName"><div class="mcard">
   <div class="mhead"><div><div class="nm" id="dName">–</div><div class="mt" id="dMint">–</div></div><button class="x" id="dClose" type="button">✕</button></div>
@@ -207,9 +230,9 @@ details.meth p{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.6}
 (function(){
 "use strict";
 var T={
-en:{navBoard:"Board",navProof:"Proof",navAbout:"About",gobtn:"Check",acc:"acc",res:"resolved",trk:"tracked",tracked:"Tracked — click a row",fall:"All",fred:"Red",fyel:"Yellow",fgrn:"Green",fstar:"★",coin:"coin",light:"light",conf:"conf",price:"price $",liq:"liq $",top1:"top1 %",out:"outcome",red:"RED — do not buy",yellow:"YELLOW — caution",green:"GREEN — looks OK",dead:"dead",alive:"alive",na:"—",why:"Why",px:"Price",copy:"Copy verdict",copied:"Copied!",r1:"Whale concentration",r2:"Top holders 2-11",r3:"First-minute buys",r4:"Pool liquidity",r5:"Coin age",limit:"limit",failn:"Failed checks",warnn:"Warnings",allpass:"All checks pass",rawv:"Raw rules say",evidence:"Verify on explorer",methT:"Our rules",methB:"6 checks: whale share, holder spread, early buys, liquidity, age, pool flags. Any single red check means RED unless the AI judge overrules with strong counter-evidence. Yellow means caution: small size, set a stop. Green needs ALL at once: whale under 15%, liquidity over $100k, age over 15 min. AI also scores wallet coordination.",h:"h",d:"d",min:"m",entered:"On board since",ageNow:"Chain age now",resolvesIn:"Result in",resolvedDrop:"Drops off",r6:"Linked wallets · AI",sev:"severity",dxs:"DexScreener chart",entry:"entry",act:"trades/5m",qph:"Filter name or mint…",clear:"Clear",nomatch:"No coins match — try another name or mint",loading:"loading…",pend:"left",perpage:"per page",ofP:"of",prevP:"Previous page",nextP:"Next page"},
-th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",gobtn:"ตรวจ",acc:"แม่น",res:"ตัดสิน",trk:"ติดตาม",tracked:"กำลังติดตาม — กดแถวดูรายละเอียด",fall:"ทั้งหมด",fred:"แดง",fyel:"เหลือง",fgrn:"เขียว",fstar:"★",coin:"เหรียญ",light:"ไฟ",conf:"มั่นใจ",price:"ราคา $",liq:"liq $",top1:"top1 %",out:"ผล",red:"แดง — อย่าซื้อ",yellow:"เหลือง — ระวัง",green:"เขียว — พอได้",dead:"พัง",alive:"รอด",na:"—",why:"ทำไม",px:"ราคา",copy:"คัดลอกคำชี้",copied:"คัดลอกแล้ว!",r1:"รายใหญ่สุดถือ",r2:"รายใหญ่ลำดับ 2-11",r3:"ยอดซื้อ 1 นาทีแรก",r4:"สภาพคล่องพูล",r5:"อายุเหรียญ",limit:"เกณฑ์",failn:"ข้อที่ไม่ผ่าน",warnn:"ข้อที่เตือน",allpass:"ผ่านทุกข้อ",rawv:"เกณฑ์ดิบชี้ว่า",evidence:"ตรวจเองบน explorer",methT:"เกณฑ์ 6 ข้อของเรา",methB:"ตรวจ 6 ข้อ: รายใหญ่สุด การกระจาย ยอดซื้อแรก สภาพคล่อง อายุ และพูลน่าสงสัย แดงข้อเดียวเท่ากับไฟแดง เว้นแต่ AI มีหลักฐานแย้ง เหลืองแปลว่าระวัง ลงน้อย ตั้งจุดตัดขาดทุน เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที AI ให้คะแนนกระเป๋าโยงกันเพิ่มอีกข้อ",h:" ชม.",d:" วัน",min:" นาที",entered:"เข้าบอร์ด",ageNow:"อายุตอนนี้",resolvesIn:"รู้ผลใน",resolvedDrop:"หลุดบอร์ด",r6:"กระเป๋าโยงกัน · AI",sev:"ความรุนแรง",dxs:"กราฟ DexScreener",entry:"เข้า",act:"เทรด/5นาที",qph:"กรองชื่อหรือ mint…",clear:"ล้าง",nomatch:"ไม่เจอเหรียญที่ตรง — ลองชื่อหรือ mint อื่น",loading:"กำลังโหลด…",pend:"เหลือ",perpage:"ต่อหน้า",ofP:"จาก",prevP:"ก่อนหน้า",nextP:"ถัดไป"}};
-var L="en",WATCH={},FILTER="all",LAST=null,ROUNDS=[],QUERY="",SORT={key:"",dir:1},LOADED=false,PAGE=1,PER=20;
+en:{navBoard:"Board",navProof:"Proof",navAbout:"About",gobtn:"Check",acc:"acc",res:"resolved",trk:"tracked",tracked:"Tracked — click a row",fall:"All",fred:"Red",fyel:"Yellow",fgrn:"Green",fstar:"★",coin:"coin",light:"light",conf:"conf",price:"price $",liq:"liq $",top1:"top1 %",out:"outcome",red:"RED — do not buy",yellow:"YELLOW — caution",green:"GREEN — looks OK",dead:"dead",alive:"alive",na:"—",why:"Why",px:"Price",copy:"Copy verdict",copied:"Copied!",r1:"Whale concentration",r2:"Top holders 2-11",r3:"First-minute buys",r4:"Pool liquidity",r5:"Coin age",limit:"limit",failn:"Failed checks",warnn:"Warnings",allpass:"All checks pass",rawv:"Raw rules say",evidence:"Verify on explorer",methT:"Our rules",methB:"6 checks: whale share, holder spread, early buys, liquidity, age, pool flags. Single weak signals no longer mean RED by themselves — low-evidence reds become calibrated yellow; only measured crashes re-arm red before the outcome. Yellow means caution: small size, set a stop. Green needs ALL at once: whale under 15%, liquidity over $100k, age over 15 min. AI also scores wallet coordination.",h:"h",d:"d",min:"m",entered:"On board since",ageNow:"Chain age now",resolvesIn:"Result in",resolvedDrop:"Drops off",r6:"Linked wallets · AI",sev:"severity",dxs:"DexScreener chart",entry:"entry",act:"trades/5m",qph:"Filter name or mint…",clear:"Clear",nomatch:"No coins match — try another name or mint",loading:"loading…",pend:"left",perpage:"per page",ofP:"of",prevP:"Previous page",nextP:"Next page"},
+th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",gobtn:"ตรวจ",acc:"แม่น",res:"ตัดสิน",trk:"ติดตาม",tracked:"กำลังติดตาม — กดแถวดูรายละเอียด",fall:"ทั้งหมด",fred:"แดง",fyel:"เหลือง",fgrn:"เขียว",fstar:"★",coin:"เหรียญ",light:"ไฟ",conf:"มั่นใจ",price:"ราคา $",liq:"liq $",top1:"top1 %",out:"ผล",red:"แดง — อย่าซื้อ",yellow:"เหลือง — ระวัง",green:"เขียว — พอได้",dead:"พัง",alive:"รอด",na:"—",why:"ทำไม",px:"ราคา",copy:"คัดลอกคำชี้",copied:"คัดลอกแล้ว!",r1:"รายใหญ่สุดถือ",r2:"รายใหญ่ลำดับ 2-11",r3:"ยอดซื้อ 1 นาทีแรก",r4:"สภาพคล่องพูล",r5:"อายุเหรียญ",limit:"เกณฑ์",failn:"ข้อที่ไม่ผ่าน",warnn:"ข้อที่เตือน",allpass:"ผ่านทุกข้อ",rawv:"เกณฑ์ดิบชี้ว่า",evidence:"ตรวจเองบน explorer",methT:"เกณฑ์ 6 ข้อของเรา",methB:"ตรวจ 6 ข้อ: รายใหญ่สุด การกระจาย ยอดซื้อแรก สภาพคล่อง อายุ และพูลน่าสงสัย สัญญาณอ่อนอย่างเดียวไม่เท่ากับไฟแดงอีกต่อไป — ใบแดงหลักฐานน้อยกลายเป็นเหลือง จะกลับแดงต้องมี crash ที่วัดได้จริงก่อนรู้ผล เหลืองแปลว่าระวัง ลงน้อย ตั้งจุดตัดขาดทุน เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที AI ให้คะแนนกระเป๋าโยงกันเพิ่มอีกข้อ",h:" ชม.",d:" วัน",min:" นาที",entered:"เข้าบอร์ด",ageNow:"อายุตอนนี้",resolvesIn:"รู้ผลใน",resolvedDrop:"หลุดบอร์ด",r6:"กระเป๋าโยงกัน · AI",sev:"ความรุนแรง",dxs:"กราฟ DexScreener",entry:"เข้า",act:"เทรด/5นาที",qph:"กรองชื่อหรือ mint…",clear:"ล้าง",nomatch:"ไม่เจอเหรียญที่ตรง — ลองชื่อหรือ mint อื่น",loading:"กำลังโหลด…",pend:"เหลือ",perpage:"ต่อหน้า",ofP:"จาก",prevP:"ก่อนหน้า",nextP:"ถัดไป"}};
+var L="en",WATCH={},FILTER="all",LAST=null,ROUNDS=[],QUERY="",SORT={key:"",dir:1},LOADED=false,PAGE=1,PER=20,OFFSET=0,TOTAL=null,LOADING=false;
 var SORTDEF={coin:1,light:1,conf:-1,price:-1,liq:-1,top1:-1,outcome:1};
 try{WATCH=JSON.parse(localStorage.getItem("flagkan_watch")||"{}")}catch(e){WATCH={}}
 try{var _p=parseInt(localStorage.getItem("flagkan_per")||"20",10);if(_p===10||_p===20||_p===50)PER=_p}catch(e){}
@@ -264,9 +287,13 @@ for(var j=0;j<trs.length;j++){trs[j].onclick=function(ev){if(ev.target&&ev.targe
 var st=document.querySelectorAll("#rows .star");
 for(var k=0;k<st.length;k++){st[k].onclick=function(ev){ev.stopPropagation();toggleWatch(this.getAttribute("data-s"))}}
 }
-function loadRounds(){fetch("/api/rounds?limit=50").then(function(r){return r.json()}).then(function(d){
-ROUNDS=(d&&d.rounds)||[];LOADED=true;document.getElementById("cT").textContent=ROUNDS.length;renderRows();
+function syncT(){var t=document.getElementById("cT");t.textContent=TOTAL!=null&&TOTAL>ROUNDS.length?ROUNDS.length+" / "+TOTAL:String(ROUNDS.length)}
+function loadRounds(){fetch("/api/rounds?limit=50&offset=0").then(function(r){return r.json()}).then(function(d){
+ROUNDS=(d&&d.rounds)||[];TOTAL=(d&&typeof d.total==="number")?d.total:ROUNDS.length;OFFSET=ROUNDS.length;LOADED=true;syncT();renderRows();
 }).catch(function(){})}
+// Partial load: append older pages on demand. Newest-first + live inserts can
+// shift offsets, so dedupe by mint (dupes covered; rare skips acceptable).
+function fetchMore(){if(LOADING||TOTAL==null||ROUNDS.length>=TOTAL)return;LOADING=true;var b=document.getElementById("pgNext");b.disabled=true;fetch("/api/rounds?limit=50&offset="+OFFSET).then(function(r){return r.json()}).then(function(d){var rows=(d&&d.rounds)||[];var seen={},i;for(i=0;i<ROUNDS.length;i++)seen[ROUNDS[i].mint]=1;for(i=0;i<rows.length;i++)if(!seen[rows[i].mint]){ROUNDS.push(rows[i]);seen[rows[i].mint]=1}if(d&&typeof d.total==="number")TOTAL=d.total;OFFSET=ROUNDS.length;LOADING=false;syncT();renderRows()}).catch(function(){LOADING=false;renderRows()})}
 function toggleWatch(m){if(WATCH[m]){delete WATCH[m]}else{WATCH[m]=1}try{localStorage.setItem("flagkan_watch",JSON.stringify(WATCH))}catch(e){}renderRows();syncDWatch()}
 function cycleSort(key){PAGE=1;var def=SORTDEF[key]||1;if(SORT.key!==key){SORT.key=key;SORT.dir=def}else if(SORT.dir===def){SORT.dir=-def}else{SORT.key="";SORT.dir=1}syncSortUI();renderRows()}
 (function(){var ths=document.querySelectorAll("th[data-sort]");for(var i=0;i<ths.length;i++){(function(th){var key=th.getAttribute("data-sort");th.addEventListener("click",function(){cycleSort(key)});th.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();cycleSort(key)}})})(ths[i])}})();
@@ -279,7 +306,7 @@ function renderPager(n,pages){
 var r=document.getElementById("pgRange");
 r.textContent=n?((PAGE-1)*PER+1)+"–"+Math.min(PAGE*PER,n)+" "+t("ofP")+" "+n:"0 "+t("ofP")+" 0";
 document.getElementById("pgPrev").disabled=PAGE<=1;
-document.getElementById("pgNext").disabled=PAGE>=pages;
+document.getElementById("pgNext").disabled=PAGE>=pages&&!(TOTAL!=null&&ROUNDS.length<TOTAL)&&!LOADING;
 var keep=[],i;for(i=1;i<=pages;i++){if(i===1||i===pages||Math.abs(i-PAGE)<=1)keep.push(i)}
 var h="",prev=0;
 for(i=0;i<keep.length;i++){var p=keep[i];if(p-prev>1)h+='<span class="pg-gap">…</span>';h+='<button type="button" class="pg-num'+(p===PAGE?" on":"")+'" data-pg="'+p+'"'+(p===PAGE?' aria-current="page"':'')+">"+p+"</button>";prev=p}
@@ -287,7 +314,7 @@ var box=document.getElementById("pgNums");box.innerHTML=h;
 var btns=box.querySelectorAll("button");for(i=0;i<btns.length;i++){btns[i].onclick=function(){PAGE=parseInt(this.getAttribute("data-pg"),10);renderRows()}}
 }
 document.getElementById("pgPrev").onclick=function(){if(PAGE>1){PAGE--;renderRows()}};
-document.getElementById("pgNext").onclick=function(){PAGE++;renderRows()};
+document.getElementById("pgNext").onclick=function(){var pages=Math.max(1,Math.ceil(ROUNDS.length/PER));if(PAGE>=pages){fetchMore();return}PAGE++;renderRows()};
 (function(){var sel=document.getElementById("pgPer");sel.value=String(PER);sel.onchange=function(){var v=parseInt(sel.value,10);if(v===10||v===20||v===50){PER=v;try{localStorage.setItem("flagkan_per",String(v))}catch(e){}}PAGE=1;renderRows()}})();
 function fmtDate(ts){if(!ts)return "?";try{return new Date(ts).toLocaleString(L==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}catch(err){return "?"}}
 function fmtAge(mins){mins=Math.max(0,Math.round(mins));if(mins>=1440)return Math.floor(mins/1440)+t("d");if(mins>=60)return Math.floor(mins/60)+t("h");return mins+t("min")}
@@ -360,15 +387,16 @@ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.write
 else{done(false)}
 }).catch(function(){})};
 document.getElementById("go").onclick=function(){
-var m=document.getElementById("mint").value.trim();
-if(!m)return;
+var mi=document.getElementById("mint"),m=mi.value.trim();
+function bad(){mi.style.borderColor="#dc2626";setTimeout(function(){mi.style.borderColor=""},1600)}
+if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(m)){bad();return}
 var btn=document.getElementById("go");btn.textContent="…";
 fetch("/api/verdict-now?mint="+encodeURIComponent(m),{method:"POST"}).then(function(r){return r.json()}).then(function(d){
 btn.textContent=t("gobtn");
-if(d.error){return}
+if(d.error){bad();return}
 loadRounds();openModal(m);
-}).catch(function(){btn.textContent=t("gobtn")})};
-window.FlagKan={setData:function(r){ROUNDS=r||[];LOADED=true;PAGE=1;document.getElementById("cT").textContent=ROUNDS.length;renderRows()},render:renderRows,state:function(){return{sort:SORT.key+":"+SORT.dir,filter:FILTER,query:QUERY,page:PAGE,per:PER,shown:document.querySelectorAll("#rows tr[data-m]").length,matched:document.getElementById("cShow").textContent,total:ROUNDS.length}}};
+}).catch(function(){btn.textContent=t("gobtn");bad()})};
+window.FlagKan={setData:function(r){ROUNDS=r||[];LOADED=true;PAGE=1;TOTAL=(r||[]).length;OFFSET=TOTAL;document.getElementById("cT").textContent=ROUNDS.length;renderRows()},render:renderRows,state:function(){return{sort:SORT.key+":"+SORT.dir,filter:FILTER,query:QUERY,page:PAGE,per:PER,shown:document.querySelectorAll("#rows tr[data-m]").length,matched:document.getElementById("cShow").textContent,total:ROUNDS.length}}};
 applyLang();loadRounds();setInterval(loadProof,60000);setInterval(loadRounds,60000);
 })();
 </script>

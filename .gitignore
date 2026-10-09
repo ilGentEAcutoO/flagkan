@@ -9,6 +9,7 @@ node_modules/
 .agents/
 .claude/
 .playwright-mcp/
+agent-temp/
 instruction/
 data/skills/
 skills-lock.json

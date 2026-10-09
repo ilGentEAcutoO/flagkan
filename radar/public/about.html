@@ -54,6 +54,14 @@ display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
 a{color:var(--acc)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<link rel="stylesheet" href="/theme.css">
+<style>
+/* sticker-pop upgrades (shared base in /theme.css) */
+.wrap{max-width:1060px}
+.panel{border-width:2px;box-shadow:var(--sh)}
+.links a{border:2px solid var(--line);box-shadow:var(--sh-sm)}
+.links a.primary{background:var(--red);color:#fff}
+</style>
 </head>
 <body data-page="about">
 <div class="topbar"><div class="in">
@@ -69,7 +77,7 @@ a{color:var(--acc)}
   <div class="panel"><h2 data-i18n="linkT">Links</h2>
     <div class="links"><a class="primary" href="/board.html" data-i18n="lBoard">Live board</a><a href="/proof.html" data-i18n="lProof">Proof &amp; rules</a><a href="https://github.com/ilGentEAcutoO/flagkan" target="_blank" rel="noopener">GitHub</a><a href="/api/proof">api/proof</a><a href="/api/rounds?limit=50">api/rounds</a></div>
   </div>
-  <footer><span>FlagKan · SORNKan · Solami + Jev</span><span>Colosseum Crypto World's Fair 2026</span></footer>
+  <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span>Colosseum Crypto World's Fair 2026</span></footer>
 </div>
 <script>
 (function(){

@@ -1,0 +1,94 @@
+/* FlagKan sticker-pop theme — shared by index/board/proof/about.
+   Cream paper · chunky ink borders · hard shadows · Sarabun-first.
+   No purple · no glass · no gradient text · motion honors reduced-motion. */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font:"Sarabun",-apple-system,BlinkMacSystemFont,"Segoe UI","Sukhumvit Set","Noto Sans Thai",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --bg:#FFFDF7; --paper:#FFFDF7; --cream:#FCEFD9; --card:#FFFFFF;
+  --ink:#26211B; --dim:#6E6252; --faint:#A2937C; --line:#26211B;
+  --line2:#26211B; /* compat: old soft-line name now maps to ink */
+  --hover:#FCEFD9;
+  --red:#B7321F; --redbg:#FDE3DC;
+  --yel:#8A5E00; --yelbg:#FFF1D4; --yeldot:#E8A100;
+  --grn:#0B7A55; --grnbg:#DDF5E9;
+  --acc:#B7321F; /* compat: old link blue now maps to ink-red */
+  --sun:#FFB020; --sunbg:#FFF1D4;
+  --sh:4px 4px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink);
+  --r:16px;
+  /* compat with page inline styles */
+  --ink2:#26211B; --ease:cubic-bezier(.32,.72,0,1);
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sun)}
+a{color:var(--acc)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:4px}
+
+/* ---------- topbar ---------- */
+.topbar{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:2px solid var(--line)}
+.topbar .in{max-width:1180px;margin:0 auto;padding:0 16px;min-height:64px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:800;font-size:19px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
+.brand .f{color:var(--red)}
+.mark{display:inline-flex;gap:3px;margin-right:9px}
+.mark i{width:10px;height:10px;border-radius:50%;border:2px solid var(--ink)}
+.mark .r{background:var(--red)}.mark .y{background:var(--yeldot)}.mark .g{background:var(--grn)}
+.nav{display:flex;gap:2px;align-items:center}
+.nav a{padding:7px 13px;border-radius:9px;color:var(--dim);font-weight:700;font-size:13.5px;white-space:nowrap;text-decoration:none}
+.nav a:hover{background:var(--cream);color:var(--ink)}
+.nav a.on{background:var(--ink);color:var(--paper)}
+.lang{margin-left:auto}
+.lang button{background:#fff;color:var(--dim);border:2px solid var(--line);font-weight:800;font-size:12px;padding:5px 12px;cursor:pointer;font-family:var(--font)}
+.lang button:first-child{border-radius:10px 0 0 10px;border-right-width:1px}
+.lang button:last-child{border-radius:0 10px 10px 0;border-left-width:1px}
+.lang button.on{background:var(--ink);color:var(--paper)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 40px}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:22px 24px;margin-top:20px}
+.panel h2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:var(--dim);margin-bottom:8px}
+.mut{color:var(--faint)}
+
+/* ---------- badges / dots ---------- */
+.badge{font-family:var(--mono);font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;text-transform:uppercase;border:2px solid var(--line);white-space:nowrap}
+.badge.red{background:var(--red);color:#fff;border-color:var(--red)}
+.badge.yellow{background:var(--yelbg);color:var(--yel)}
+.badge.green{background:var(--grn);color:#fff;border-color:var(--grn)}
+.badge.none{background:var(--cream);color:var(--faint)}
+.oc{font-weight:700;white-space:nowrap}
+.oc i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;border:1px solid var(--ink)}
+.oc.pend{color:var(--dim)}.oc.pend i{background:var(--yeldot)}
+.oc.alive{color:var(--grn)}.oc.alive i{background:var(--grn)}
+.oc.dead{color:var(--red)}.oc.dead i{background:var(--red)}
+.up{color:var(--grn)}.down{color:var(--red)}
+
+/* ---------- buttons / inputs ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:11px 22px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;cursor:pointer;border:2px solid var(--line);box-shadow:var(--sh-sm);font-family:var(--font);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.primary{background:var(--red);color:#fff}
+.btn.primary:hover{background:#D23D27}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn .arr{font-size:15px}
+input,select,button{font-family:var(--font)}
+
+/* ---------- trust band / risk note ---------- */
+.trustband{background:var(--ink);color:var(--paper);border:2px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px 24px;margin-top:20px;font-size:14px}
+.trustband b{color:var(--sun)}
+.trustband a{color:var(--sun);font-weight:800}
+.risk{margin-top:16px;font-size:12.5px;color:var(--dim);border:2px dashed var(--line);border-radius:12px;padding:12px 16px;background:var(--paper)}
+.risk b{color:var(--ink)}
+
+/* ---------- footer ---------- */
+footer.site{margin-top:22px;background:var(--ink);color:#CFC2A8;border-radius:var(--r);border:2px solid var(--line);padding:16px 20px;font-size:12px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer.site a{color:var(--sun);text-decoration:none;font-weight:700}
+footer.site a:hover{text-decoration:underline}
+footer.plain{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+
+@media(max-width:700px){
+  .topbar .in{gap:8px}
+  .panel{padding:18px 16px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}

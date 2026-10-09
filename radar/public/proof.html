@@ -75,6 +75,14 @@ a{color:var(--acc)}
 @media(max-width:700px){.score{grid-template-columns:1fr}.rule{grid-template-columns:32px 1fr}.rule .lim{grid-column:2}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<link rel="stylesheet" href="/theme.css">
+<style>
+/* sticker-pop upgrades (shared base in /theme.css) */
+.wrap{max-width:1060px}
+.stat,.panel{border-width:2px;box-shadow:var(--sh)}
+.rule{border-bottom:2px dashed #E5DCC8}
+th{background:var(--cream)}
+</style>
 </head>
 <body data-page="proof">
 <div class="topbar"><div class="in">
@@ -98,7 +106,7 @@ a{color:var(--acc)}
       <tbody id="rows"><tr><td colspan="4" class="mut">loading…</td></tr></tbody>
     </table></div>
   </div>
-  <footer><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
+  <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
 <script>
 (function(){
@@ -116,8 +124,8 @@ r4t:"Pool liquidity",r4d:"USD liquidity in the pool at verdict time.",r4l:"red <
 r5t:"Coin age",r5d:"Minutes since the mint was created on-chain.",r5l:"warn < 15 min",
 r6t:"Linked wallets · AI",r6d:"Jev estimates how coordinated the holder wallets look.",r6l:"red ≥ 70%",
 aiT:"The AI judge",
-aiD:"The <b>Jev judge (jev-latest)</b> reads all six checks plus wallet-coordination signals and issues <b>red / yellow / green</b> with probabilities, a coordination score, and a severity rating. One failing check means red unless the judge finds strong counter-evidence. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.",
-outD:"Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight or liquidity drained under $1,000</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.",
+aiD:"The <b>Jev judge (jev-latest)</b> reads all six checks plus wallet-coordination signals and issues <b>red / yellow / green</b> with probabilities, a coordination score, and a severity rating. Single weak signals no longer mean red by themselves: low-evidence reds become calibrated yellow, and only measured crashes re-arm red before the outcome. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.",
+outD:"Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight, liquidity drained under $1,000, or the price sat frozen with zero trading</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.",
 tabT:"Every resolved coin",cCoin:"coin",cLight:"light",cMove:"6h move",cOut:"outcome",
 dead:"dead",alive:"alive",loading:"loading…"},
 th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
@@ -132,8 +140,8 @@ r4t:"สภาพคล่องพูล",r4d:"สภาพคล่องด�
 r5t:"อายุเหรียญ",r5d:"นาทีตั้งแต่ mint ถูกสร้างบนเชน",r5l:"เตือน < 15 นาที",
 r6t:"กระเป๋าโยงกัน · AI",r6d:"Jev ประเมินว่ากระเป๋าผู้ถือดูประสานกันแค่ไหน",r6l:"แดง ≥ 70%",
 aiT:"AI ผู้ชี้",
-aiD:"<b>Jev (jev-latest)</b> อ่านเกณฑ์ทั้ง 6 ข้อบวกสัญญาณกระเป๋าโยงกัน แล้วชี้ <b>แดง / เหลือง / เขียว</b> พร้อมความน่าจะเป็น คะแนนโยงกัน และระดับความรุนแรง ตกข้อเดียวคือแดง เว้นแต่ AI เจอหลักฐานแย้งหนักแน่น เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที",
-outD:"ผลตัดสินอัตโนมัติ: <b>พังคือราคาหลุดเกิน 90% จากตอนเจอ หรือสภาพคล่องต่ำกว่า $1,000</b> เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b> — ช่องทางเดียว",
+aiD:"<b>Jev (jev-latest)</b> อ่านเกณฑ์ทั้ง 6 ข้อบวกสัญญาณกระเป๋าโยงกัน แล้วชี้ <b>แดง / เหลือง / เขียว</b> พร้อมความน่าจะเป็น คะแนนโยงกัน และระดับความรุนแรง สัญญาณอ่อนอย่างเดียวไม่เท่ากับแดงอีกต่อไป: ใบแดงหลักฐานน้อยกลายเป็นเหลืองคาลิเบรต จะกลับแดงต้องมี crash ที่วัดได้จริงก่อนรู้ผล เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที",
+outD:"ผลตัดสินอัตโนมัติ: <b>พังคือราคาหลุดเกิน 90% จากตอนเจอ สภาพคล่องต่ำกว่า $1,000 หรือราคานิ่งไม่มีเทรดเลย</b> เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b> — ช่องทางเดียว",
 tabT:"ทุกเหรียญที่รู้ผลแล้ว",cCoin:"เหรียญ",cLight:"ไฟ",cMove:"6 ชม.",cOut:"ผล",
 dead:"พัง",alive:"รอด",loading:"กำลังโหลด…"}};
 var L="en";
@@ -152,7 +160,7 @@ document.getElementById("sRes").textContent=d.resolved_with_verdict==null?"—":
 document.getElementById("sRed").textContent=pct(d.red_precision);
 }).catch(function(){})}
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
-function loadRows(){fetch("/api/rounds?limit=100").then(function(r){return r.json()}).then(function(d){
+function loadRows(){fetch("/api/rounds?limit=100&resolved=1").then(function(r){return r.json()}).then(function(d){
 var h="",n=0;
 for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];if(x.resolved_at==null)continue;n++;
 var mv="—";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;mv='<span class="'+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}

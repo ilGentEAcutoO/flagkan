@@ -7,7 +7,10 @@
 		"dev": "wrangler dev",
 		"deploy": "wrangler deploy",
 		"types": "wrangler types",
-		"smoke": "node smoke-guards.mjs"
+		"smoke": "node smoke-guards.mjs",
+		"mltest": "node ml-check.mjs",
+		"backtest": "node backtest.mjs",
+		"calibrate": "node calibrate.mjs"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^5.0.0",

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>บิดชัวร์ BidSure — แผน Product ประมูล ชนะใจกรรมการ + ขายได้จริง</title>
+<style>
+  :root{
+    --ink:#1c1a15; --muted:#5c574c; --line:#e3ddd0;
+    --paper:#ffffff; --stone:#f4f1e8; --green:#0e6b4a; --green-dk:#0a5238;
+    --amber:#b45309; --amber-bg:#fdf3e3; --green-bg:#e9f4ee; --red:#b3261e; --red-bg:#fbecea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Noto Sans Thai","Leelawadee UI","Segoe UI",Tahoma,Arial,sans-serif;line-height:1.75;font-size:16px}
+  .wrap{max-width:880px;margin:0 auto;padding:0 22px 60px}
+  header.top{border-bottom:3px solid var(--ink);padding:30px 0 18px}
+  .date{color:var(--muted);font-size:14px}
+  h1{font-family:Georgia,"TH Sarabun New",serif;font-size:36px;line-height:1.25;margin:10px 0 8px;letter-spacing:-.5px}
+  h1 .en{font-size:20px;color:var(--muted);font-weight:normal}
+  .subtitle{color:var(--muted);font-size:16.5px;margin:0}
+  .tabbar{position:sticky;top:0;background:var(--paper);z-index:10;display:flex;flex-wrap:wrap;gap:6px;
+    padding:12px 0;border-bottom:2px solid var(--ink)}
+  .tabbar button{font-family:inherit;font-size:14.5px;padding:6px 16px;border:1px solid var(--line);
+    background:#fff;border-radius:20px;cursor:pointer;color:var(--ink)}
+  .tabbar button:hover{border-color:var(--ink)}
+  .tabbar button[aria-selected="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tabpanel{display:none;padding-top:4px}
+  .tabpanel.active{display:block}
+  h2{font-family:Georgia,"TH Sarabun New",serif;font-size:26px;margin:26px 0 6px}
+  h3{font-size:19px;margin:24px 0 8px}
+  p{margin:10px 0}
+  .lede{font-size:18px}
+  .verdict{background:var(--green-bg);border:1px solid #bcd8c7;border-left:6px solid var(--green);padding:18px 20px;margin:18px 0}
+  .verdict strong{color:var(--green-dk)}
+  .warn{background:var(--amber-bg);border:1px solid #ecd3a8;border-left:6px solid var(--amber);padding:16px 20px;margin:18px 0}
+  .risk{background:var(--red-bg);border:1px solid #f0c4c0;border-left:6px solid var(--red);padding:16px 20px;margin:18px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:var(--stone);font-weight:700}
+  .timeline{list-style:none;padding:0;margin:14px 0}
+  .timeline li{padding:12px 16px;border:1px solid var(--line);margin-bottom:10px;background:#fff}
+  .timeline li b.day{display:inline-block;background:var(--ink);color:#fff;font-size:13px;border-radius:4px;padding:2px 10px;margin-right:8px}
+  .tag{display:inline-block;font-size:13px;border:1px solid var(--line);border-radius:20px;padding:1px 11px;margin:2px 4px 2px 0;background:#fff}
+  .tag.hot{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tag.money{background:var(--green-bg);border-color:#bcd8c7;color:var(--green-dk)}
+  .small{font-size:14px;color:var(--muted)}
+  .check{list-style:none;padding:0}
+  .check li{padding:7px 0 7px 30px;position:relative;border-bottom:1px dashed var(--line)}
+  .check li::before{content:"";position:absolute;left:4px;top:14px;width:11px;height:6px;
+    border-left:3px solid var(--green);border-bottom:3px solid var(--green);transform:rotate(-45deg)}
+  .onchain{display:inline-block;background:var(--green);color:#fff;font-size:12.5px;border-radius:4px;padding:1px 9px;margin-right:6px}
+  .offchain{display:inline-block;background:#6b675c;color:#fff;font-size:12.5px;border-radius:4px;padding:1px 9px;margin-right:6px}
+  .trust{color:var(--red);font-weight:700}
+  details.fold{border:1px solid var(--line);margin:10px 0;background:#fff}
+  details.fold summary{cursor:pointer;padding:10px 14px;font-weight:700;font-size:15px}
+  details.fold summary:hover{background:var(--stone)}
+  details.fold .fold-body{padding:0 14px 12px}
+  .scene{border:1px solid var(--line);margin:14px 0;background:#fff}
+  .sc-head{padding:9px 14px;background:var(--ink);color:#fff;font-size:15px}
+  .sc-grid{display:grid;grid-template-columns:1fr 1fr}
+  .sc-grid>div{padding:12px 14px;font-size:14.5px}
+  .sc-grid .old{background:var(--red-bg)}
+  .sc-grid .new{background:var(--green-bg);border-left:1px solid var(--line)}
+  .sc-grid b{display:block;margin-bottom:4px}
+  .sc-grid p{margin:0}
+  .who{margin:0;padding:9px 14px;font-size:14px;border-top:1px solid var(--line)}
+  .who b{color:var(--green-dk)}
+  .pager{display:flex;justify-content:space-between;margin-top:30px;padding-top:14px;border-top:1px solid var(--line)}
+  .pager button{font-family:inherit;font-size:14px;padding:7px 18px;border:1px solid var(--ink);background:#fff;
+    border-radius:6px;cursor:pointer;color:var(--ink)}
+  .pager button:hover{background:var(--ink);color:#fff}
+  .pager button:disabled{opacity:.3;cursor:default;background:#fff;color:var(--ink)}
+  .cta-strip{margin-top:26px;padding:12px 16px;background:var(--stone);border:1px solid var(--line);font-size:14px}
+  .cta-strip strong{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1px 10px;margin:0 3px;white-space:nowrap}
+  footer{margin-top:40px;padding-top:20px;border-top:3px solid var(--ink);color:var(--muted);font-size:14px}
+  @media(max-width:640px){.sc-grid{grid-template-columns:1fr}.sc-grid .new{border-left:none;border-top:1px solid var(--line)}h1{font-size:28px}}
+  @media print{.tabbar,.pager,.cta-strip{display:none}.tabpanel{display:block}details.fold{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="date">แผนเสนอ Product ประมูล — 25 ก.ย. 2026 · ทีมวิจัย 5 สาย + กรรมการ 2 ท่าน · สำหรับ Crypto World&#8217;s Fair (ปิดรับ 13 ต.ค. 2026)</div>
+  <h1>บิดชัวร์ <span class="en">BidSure — มัดจำกันเบี้ยว ประมูลของจริง (ส่วนหนึ่งของ BIDKan)</span></h1>
+  <p class="subtitle">สโลแกนจำง่าย: <b>“บิด = วางมัดจำ · เบี้ยว = โดนยึด · แพ้ = ได้คืนอัตโนมัติ”</b> — คนใช้ไม่ต้องรู้เลยว่าข้างหลังคือ crypto</p>
+</header>
+
+<div class="tabbar" role="tablist" aria-label="หัวข้อแผน">
+  <button role="tab" data-tab="summary" aria-selected="true">สรุป</button>
+  <button role="tab" data-tab="story" aria-selected="false">เรื่องเล่า</button>
+  <button role="tab" data-tab="flow" aria-selected="false">แผนภาพเงิน</button>
+  <button role="tab" data-tab="qa" aria-selected="false">Q&amp;A</button>
+  <button role="tab" data-tab="build" aria-selected="false">แผนทำ + ตัดสินใจ</button>
+</div>
+
+<section class="tabpanel active" id="panel-summary" role="tabpanel">
+<h2>สรุปสำหรับคนไม่มีเวลา</h2>
+<div class="verdict">
+  <p class="lede" style="margin-top:0"><b>บิดชัวร์ BidSure</b> — ระบบมัดจำกลางบน <code>sure.bidkan.com</code> สำหรับประมูลของจริง (เครื่องมือช่าง พระเครื่อง การ์ด รถมือสอง)</p>
+  <p style="margin-bottom:0"><b>Pain ประโยคเดียว:</b> คนขายโดนบิดลม/ชนะแล้วหาย ต้องเปิดประมูลใหม่และทวงเงินเอง · <b>Solution ประโยคเดียว:</b> รอบแบบ Secured ล็อกมัดจำ 5–10% (สูงสุด 500 บาท) ก่อนบิด แพ้คืนอัตโนมัติ ชนะแล้วเบี้ยวใน 48 ชม. โดนยึดให้คนขาย</p>
+</div>
+<div class="warn"><b>ลำดับที่ถูกต้อง (จากประสบการณ์จริงของคุณ):</b> BIDKan แบบไม่วางมัดจำยังไม่มีคนบิด — แปลว่าด่านแรกคือ <b>cold start ไม่ใช่บิดลม</b> · <b>เฟส 0:</b> พิสูจน์ demand ด้วยการ hand-run 5–10 รอบในกลุ่มเดิม (ไม่ต้องเขียนโค้ด) · <b>เฟส 1:</b> พอบิดลมเกิดจริง (สัญญาณว่ามี demand) ค่อยเปิดเลน Secured · <b>ทางลัด:</b> ฝังการบิดใน LINE/กลุ่มเดิมแทนการดึงคนมาเว็บใหม่</div>
+<p>
+  <span class="tag hot">crypto = 0 ก็ใช้ได้</span>
+  <span class="tag money">คนซื้อฟรี · คนขาย 2%</span>
+  <span class="tag money">ต้นแบบ 2–4 วัน (fork)</span>
+</p>
+<details class="fold"><summary>เบื้องหลัง: กรรมการโหวตอย่างไร + ฆ่าอะไรทิ้ง</summary><div class="fold-body">
+<p>กรรมการ 2 สาย (ทำจริง-ขายจริง และ Colosseum/นักลงทุน) <b>โหวตมัดจำกลางเป็นที่ 1 ตรงกัน</b> จากไอเดีย 17 ข้อ ส่วนที่โดน skeptic ฆ่า: escrow เต็มบังคับ (เผลอกดก็จบ + ไม่ทันเส้นตาย) · ดาว/แบนอย่างเดียว (โจรวนสมัครใหม่ได้) · ประกันคนขายเดี่ยวๆ (ไม่กันบิดลม) · COD/Shopee/blacklist (กันได้เสี้ยวเดียว) · รับรองของแท้ทุกหมวด (chain ตรวจของไม่ได้)</p>
+<p>ตัวรองที่เก็บเป็นเฟส 2: <b>ลานเครื่องมือช่าง</b> (หมวดแรกหลังระบบนิ่ง) + <b>ห้องประมูลใน LINE</b> (LIFF ใช้ระบบมัดจำชุดเดียวกัน — ตอนนี้สำคัญกว่าเดิมเพราะแก้ distribution)</p>
+</div></details>
+<details class="fold"><summary>หลักฐานว่า pain มีจริง</summary><div class="fold-body">
+<ul class="check">
+  <li><b>Uamulet (เว็บประมูลพระอันดับ 1)</b> มีบทลงโทษบิดลมโดยเฉพาะ 4 ข้อ — เจอบ่อยจนต้องเขียนเป็นกฎ</li>
+  <li><b>รายงานจุฬาฯ (n=6,973):</b> เหยื่อหลอกซื้อขาย 14.7 ล้านคน 82.4% ไม่ได้เงินคืน — “ตามเงินไม่ได้” คือสภาพปกติ</li>
+  <li><b>ข่าว NBT + สคบ.:</b> เตือนแก๊งหลอกประมูลมีหน้าม้าปั่นราคาโดยเฉพาะ</li>
+</ul>
+</div></details>
+</section>
+
+<section class="tabpanel" id="panel-story" role="tabpanel">
+<h2>เรื่องเล่า: ประมูลสว่าน Bosch หนึ่งรอบ ใครได้อะไร</h2>
+<p>ตามตัวละคร 3 คนนี้ไปหนึ่งรอบประมูล — ทุกฉากเทียบ <b>แบบเดิม</b> กับ <b>แบบบิดชัวร์</b> ให้เห็นชัดๆ:</p>
+<table>
+  <tr><th style="width:22%">ตัวละคร</th><th style="width:30%">เป็นใคร</th><th>วันนี้เจออะไร</th></tr>
+  <tr><td><b>พี่ชาติ · คนขาย</b></td><td>ร้านเครื่องมือช่าง มีของมือสองจะระบาย</td><td>โดน “ชนะแล้วหาย” มา 2 รอบติด เปิดใหม่ทีเสียอาทิตย์ แถมรอบที่ 3 คนบิดน้อยเพราะของค้างนาน</td></tr>
+  <tr><td><b>น้องฟ้า · คนบิด</b></td><td>ช่างไฟ มองหาสว่านมือสองสภาพดี</td><td>เคยโอนมัดจำให้คนขายตรงๆ แล้วได้ของไม่ตรงปก ทวงเงินคืนไม่ได้ ตอนนี้กลัวทุกรอบที่ต้องโอนก่อน</td></tr>
+  <tr><td><b>พี่โจ · แอดมินกลุ่ม</b></td><td>แอดมินกลุ่มประมูล 8,000 คน</td><td>ไกล่เกลี่ยข้อพิพาททุกสัปดาห์ ตามทวงก็แล้ว แบนก็แล้ว แต่ไม่มีเครื่องมือ ไม่มีอำนาจดึงเงินคืน และไม่มีรายได้</td></tr>
+</table>
+
+<h3>ก่อนเปิดเรื่อง: ตัวเลขความเจ็บของทั้งสามคน</h3>
+<table>
+  <tr><th style="width:20%">ใคร</th><th>เสียไปแล้วเท่าไร (3 เดือนล่าสุด)</th><th style="width:30%">ต้นตอ</th></tr>
+  <tr><td><b>พี่ชาติ</b></td><td>ดีลล่ม 6 รอบ ≈ เสียโอกาสขาย ~18,000 บาท + เสียเวลาลงขายซ้ำรอบละ ~2 ชม.</td><td>ชนะแล้วหาย 2 รอบ + บิดลมปั่นแล้วทิ้ง 4 รอบ</td></tr>
+  <tr><td><b>ฟ้า</b></td><td>โดนไป 1,500 บาท (มัดจำที่ทวงไม่ได้) + เลิกบิดไป 2 เดือนเพราะกลัว</td><td>โอนตรงให้คนขาย ของมาไม่ตรงปก ไม่มีคนกลางช่วย</td></tr>
+  <tr><td><b>พี่โจ</b></td><td>ไกล่เกลี่ย ~12 เคส/เดือน เคสละ ~1 ชม. = 12 ชม./เดือนที่ไม่ได้เงินสักบาท</td><td>ไม่มีเครื่องมือ ไม่มีอำนาจดึงเงิน ตัดสินแล้วไม่มีใครฟัง</td></tr>
+</table>
+<p class="small">ตัวเลขสมมติจาก pattern จริงในวงการ — ใช้เป็น baseline ไว้วัดว่าเรื่องนี้ช่วยแต่ละคนได้เท่าไรตอนจบเรื่อง (ดูฉาก 7)</p>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 1 · ศุกร์ 19:00 — พี่ชาติเปิดประมูลสว่าน Bosch เปิด 3,000 ปิดอาทิตย์ 20:00</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>โพสต์ลงกลุ่มตามปกติ ลุ้นเอาว่าคนที่มาบิดจะเอาจริงหรือปั่นเล่น — เคยโดนมาแล้วเลยเปิดแบบไม่มั่นใจ</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>เลือกรอบ “Secured มัดจำ 200” ระบบแปะป้ายให้ว่ารอบนี้เอาจริง — คนบิดเห็นป้ายแล้วรู้ว่าทุกคนในรอบนี้วางเงินแล้ว</p></div></div>
+<p class="who"><b>พี่ชาติได้:</b> ความมั่นใจตั้งแต่ก่อนเริ่มว่าบิดที่เข้ามาเป็นบิดจริง · <b>ฟ้าได้:</b> เห็นป้ายแล้วกล้าร่วมวง เพราะรู้ว่าไม่มีบิดลมมากวนราคา</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 2 · เสาร์ — ฟ้าจะบิด 3,200 (มีหน้าม้าแอบดูอยู่)</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>พิมพ์บิดในคอมเมนต์ ใครก็ปั่นได้ฟรีไม่จำกัด หน้าม้าของอีกร้านดันราคาฟรีๆ ไม่มีต้นทุน</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>ฟ้าเติม 200 ครั้งเดียว (ยอดคงเหลือ ใช้ได้ทุกรอบ ถอนได้ตลอด) กดบิด 3,200 — หน้าม้าอยากปั่น 5 รอบต้องจม 1,000 และพลาดชนะต้องจ่ายจริงหรือโดนยึด</p></div></div>
+<p class="who"><b>ฟ้าได้:</b> สนามที่ราคามาจากคนเอาจริง · <b>พี่ชาติได้:</b> ราคาปิดที่เชื่อได้ ไม่ใช่ราคาหลอกที่จบแล้วไม่มีคนจ่าย</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 2.5 · เสาร์ดึก — หน้าม้าลองของ (แล้วถอย)</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>หน้าม้าร้านคู่แข่งเข้ามาดันราคาจาก 3,200 → 3,700 ฟรีๆ ไม่เสียอะไร พี่ชาติเห็นราคาสูงดีใจเก้อ — สุดท้ายหน้าม้าชนะแล้วหาย รอบล่ม ฟ้าก็เซ็งที่โดนปั่นราคา</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>หน้าม้าจะดันต้องวาง 200 ก่อนทุกไม้ ดัน 3 ไม้ = จม 600 แถมถ้าพลาดชนะที่ 3,700 ต้องจ่ายจริงหรือโดนยึด 200 + เสียเครดิต — หน้าม้าคำนวณแล้วไม่คุ้ม ถอยตั้งแต่ไม้แรก ราคาจบที่คนเอาจริง</p></div></div>
+<p class="who"><b>พี่ชาติได้:</b> ราคาปิดที่เชื่อได้ · <b>ฟ้าได้:</b> ไม่โดนปั่นราคา · <b>ระบบได้:</b> deterrence ทำงานโดยไม่ต้องจับใครได้เลยสักคน</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 3 · อาทิตย์ 20:00 — ปิดรอบ ฟ้าชนะที่ 3,800 (มีคนแพ้ 4 คน)</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>ถ้ามีมัดจำ พี่ชาติต้องโอนคืนทีละคน ทวงกันในแชท — ถ้าไม่มีมัดจำ ก็ลุ้นว่าฟ้าจะหายไหมเหมือน 2 รอบที่แล้ว</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>คนแพ้ 4 คนได้ 200 คืนอัตโนมัติในไม่กี่วินาที ไม่ต้องทักทวงใคร — ฟ้าเหลือเวลา 48 ชม. จ่ายส่วนต่าง 3,600</p></div></div>
+<p class="who"><b>คนแพ้ได้:</b> เงินคืนเอง ไม่ต้องทวง กล้ามาบิดรอบหน้าอีก · <b>พี่ชาติได้:</b> ไม่ต้องทำงานคืนเงินเองเลย</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 4 · จันทร์ — ทางแยก: ฟ้าจ่าย หรือฟ้าหาย</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>ฟ้าหาย = พี่ชาติเสียอาทิตย์ฟรี เปิดใหม่เริ่มนับหนึ่ง คนบิดรอบที่แล้วกระจายหายไปหมดแล้ว</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>ฟ้าจ่าย 3,600 เข้าบัญชีกลาง — แต่ถ้าฟ้าหายเกิน 48 ชม. โดนยึด 200 ให้พี่ชาติเป็นค่าเสียเวลา และพี่ชาติเปิดรอบใหม่ได้ทันทีพร้อมเงินชดเชย</p></div></div>
+<p class="who"><b>พี่ชาติได้:</b> เบี้ยวก็มีชดเชย ไม่เสียเที่ยวเปล่า — นี่คือ pain หลักที่ระบบฆ่าได้เกือบ 100%</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 4.5 · อังคาร — ทางแยก B: ถ้าฟ้าหายจริง (เดินให้ดูจนจบ)</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>พี่ชาติทักไป 3 วันเงียบ โพสต์ประจานในกลุ่ม (เสี่ยงโดนฟ้อง) เปิดรอบใหม่เริ่มนับหนึ่ง ของค้างสต็อกอีกอาทิตย์ คนบิดรอบที่แล้วกระจายหายหมด</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>ครบ 48 ชม. โปรแกรมยึด 200 ให้พี่ชาติอัตโนมัติ (ไม่ต้องทวง ไม่ต้องประจาน) ฟ้าโดนหักเครดิต + ประวัติติดตัว พี่ชาติเปิดรอบใหม่ได้ทันทีโดยมี 200 ชดเชยค่าเสียเวลา — รอบใหม่ยังดึงคนบิดเก่ากลับมาได้เพราะระบบแจ้งเตือน</p></div></div>
+<p class="who"><b>พี่ชาติได้:</b> เงินชดเชย + รอบใหม่ทันที ไม่ต้องเป็นนักทวงหนี้ · <b>ฟ้า (ถ้าเบี้ยว):</b> เสีย 200 + เสียเครดิต — ครั้งหน้าคิดก่อนบิด</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 5 · อังคาร-พุธ — ส่งของ + รับของ + เงินออก</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>โอนตรงก่อนส่งของ — ฝ่ายใดฝ่ายหนึ่งต้องเสี่ยงก่อนเสมอ ฟ้าเคยเจ็บตรงนี้มาแล้ว</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>พี่ชาติส่งของ กรอกเลขพัสดุ ฟ้าได้ของเช็กแล้วกด “ได้รับของ” → เงิน 3,800 ออกให้พี่ชาติ (หัก fee 2% = 76 บาท) ฟ้าไม่ต้องเสี่ยงโอนก่อน พี่ชาติไม่ต้องเสี่ยงส่งก่อน</p></div></div>
+<p class="who"><b>ฟ้าได้:</b> ตรวจของก่อนเงินออก · <b>พี่ชาติได้:</b> เงินชัวร์เมื่อของถึงมือ (จ่าย 76 บาทแลกดีลที่ปิดจริง)</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 6 · ทางแยกที่สอง: ถ้าของมีปัญหา</b></div>
+<div class="sc-grid"><div class="old"><b>แบบเดิม</b><p>ทะเลาะในแชท พี่โจต้องมาไกล่เกลี่ยฟรีๆ ตัดสินยังไงก็ไม่มีอำนาจดึงเงินคืนให้ใคร</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>ฟ้ากด dispute เงิน 3,800 ค้างที่กลาง พี่โจดูรูป+แชท+เลขพัสดุแล้วตัดสิน เงินไปตามคำตัดสิน — พี่โจได้ส่วนแบ่งค่าไกล่เกลี่ย มีรายได้จากงานที่ทำอยู่แล้ว</p></div></div>
+<p class="who"><b>พี่โจได้:</b> เครื่องมือ + อำนาจดึงเงินตามคำตัดสิน + รายได้ · <b>ฟ้าได้:</b> ทางได้เงินคืนที่แบบเดิมไม่มี</p>
+</div>
+
+<div class="scene">
+<div class="sc-head"><b>ฉาก 7 · หนึ่งเดือนผ่านไป — ตัวเลขเปลี่ยนไปแค่ไหน</b></div>
+<div class="sc-grid"><div class="old"><b>ถ้ายังแบบเดิม</b><p>พี่ชาติล่มอีก ~2 รอบ เสียโอกาส ~6,000 ฟ้ายังกลัวไม่กล้าบิด พี่โจไกล่เกลี่ยฟรีอีก 12 ชม. — ทุกอย่างเหมือนเดิม</p></div>
+<div class="new"><b>แบบบิดชัวร์</b><p>พี่ชาติปิดไป 12 รอบ ยอดรวม ~45,000 จ่าย fee 900 (ฟรีช่วงเปิด) บิดลมเหลือ 0 รอบ (มีเบี้ยว 1 รายแต่ได้ชดเชย 200) · ฟ้าบิด 20 รอบ ชนะ 3 ได้ของตรงปกทั้ง 3 · พี่โจตัดสิน 4 เคสผ่านระบบ ได้ส่วนแบ่ง ~800 + เวลาไกล่เกลี่ยนอกระบบเหลือเกือบ 0</p></div></div>
+<p class="who"><b>ทั้งสามคนได้:</b> พี่ชาติรับสุทธิ ~44,100 · ฟ้าได้ของ 3 ชิ้นแบบไม่ต้องลุ้น · พี่โจมีรายได้แรก 800 จากงานที่เคยทำฟรี</p>
+</div>
+
+<h3>สรุป: ใครได้อะไร จ่ายอะไร</h3>
+<table>
+  <tr><th style="width:14%">ใคร</th><th>ได้อะไร</th><th style="width:22%">จ่ายอะไร</th><th style="width:26%">ตัวเลขเดือนแรก (จากฉาก 7)</th></tr>
+  <tr><td><b>พี่ชาติ (ขาย)</b></td><td>ดีลปิดจริง · เบี้ยวมีชดเชย · ไม่ต้องตามทวง/คืนเงินเอง</td><td>fee 2% (76 บาท/รอบ) ฟรีถึงสิ้น ต.ค.</td><td>ปิด 12 รอบ ยอด 45,000 บิดลม 0 (เบี้ยว 1 ได้ชดเชย 200)</td></tr>
+  <tr><td><b>น้องฟ้า (บิด)</b></td><td>สนามไม่มีบิดลม · ตรวจของก่อนเงินออก · แพ้คืนออโต้ · มีทาง dispute</td><td>ฟรี (มัดจำได้คืน)</td><td>บิด 20 ชนะ 3 ได้ของตรงปก 3/3 เสียเพิ่ม 0 บาท</td></tr>
+  <tr><td><b>พี่โจ (แอดมิน)</b></td><td>เครื่องมือไกล่เกลี่ย + อำนาจตามคำตัดสิน + รายได้ส่วนแบ่ง</td><td>รายเดือน 990–4,900 (เริ่มฟรีช่วงนำร่อง)</td><td>ตัดสิน 4 เคสผ่านระบบ รับ ~800 ประหยัดเวลา ~10 ชม.</td></tr>
+  <tr><td><b>เรา (BIDKan)</b></td><td>fee 2% + รายเดือนแอดมิน + data ประวัติบิด (ต่อยอดจับปั่นบิด)</td><td>เวลาสร้าง ~1–2 สัปดาห์</td><td>รายได้ fee 900/กลุ่ม + data บิด 20+ รอบไว้ต่อยอด</td></tr>
+</table>
+<p class="small">ซื่อสัตย์: ฉากที่ระบบกันไม่ได้ — ของปลอมแบบเนียนๆ (ต้องพึ่งคนตรวจของกลาง เฟส ToolBid Yard) และคนซื้อเผลอกด “ได้รับของ” (กันด้วยคำเตือน + หน่วง 24 ชม. เฟส 2) — รายละเอียดใน tab <a href="#qa">Q&amp;A</a></p>
+</section>
+
+<section class="tabpanel" id="panel-flow" role="tabpanel">
+<h2>แผนภาพ: เงินไหลไปไหน อะไรอยู่บน chain</h2>
+<p>อ่านแบบนี้: <span class="onchain">ON-CHAIN</span> = โปรแกรมคุม ไม่ต้องไว้ใจใคร ตรวจได้ทุกคน · <span class="offchain">OFF-CHAIN</span> = คนนอกจอทำ ต้องมีคนยืนยัน <span class="trust">★ = จุดที่โกงได้อยู่ดี</span></p>
+<svg viewBox="0 0 836 292" width="100%" role="img" aria-labelledby="moneyflow-title moneyflow-desc" style="border:1px solid #e3ddd0;background:#fff" font-family="'Noto Sans Thai','Leelawadee UI','Segoe UI',Tahoma,sans-serif">
+<title id="moneyflow-title">เงินไหลไปไหน: จากกระเป๋าคนบิดถึงมือคนขาย</title>
+<desc id="moneyflow-desc">แผนภาพแสดงเงินมัดจำไหลจากกระเป๋าคนบิดเข้าบัญชีกลาง แล้วแยกสามทาง: แพ้คืนอัตโนมัติ มีปัญหารอแอดมินตัดสิน ปกติปล่อยให้คนขายหลังกดรับของ</desc>
+<defs>
+<marker id="mf-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5c574c"/></marker>
+<marker id="mf-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0e6b4a"/></marker>
+<marker id="mf-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+</defs>
+<line x1="148" y1="70" x2="168" y2="70" stroke="#5c574c" stroke-width="1.2" marker-end="url(#mf-arrow)"/>
+<line x1="312" y1="70" x2="332" y2="70" stroke="#5c574c" stroke-width="1.2" marker-end="url(#mf-arrow)"/>
+<line x1="476" y1="70" x2="496" y2="70" stroke="#5c574c" stroke-width="1.2" marker-end="url(#mf-arrow)"/>
+<line x1="640" y1="70" x2="660" y2="70" stroke="#5c574c" stroke-width="1.2" marker-end="url(#mf-arrow)"/>
+<line x1="406" y1="100" x2="406" y2="156" stroke="#5c574c" stroke-width="1.2" marker-end="url(#mf-arrow)"/>
+<line x1="570" y1="100" x2="570" y2="156" stroke="#5c574c" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#mf-arrow)"/>
+<line x1="734" y1="100" x2="734" y2="156" stroke="#5c574c" stroke-width="1.2" marker-end="url(#mf-arrow)"/>
+<rect x="364" y="124" width="34" height="12" rx="2" fill="#ffffff"/><text x="381" y="133" fill="#5c574c" font-size="8" text-anchor="middle">แพ้</text>
+<rect x="508" y="124" width="54" height="12" rx="2" fill="#ffffff"/><text x="535" y="133" fill="#5c574c" font-size="8" text-anchor="middle">มีปัญหา</text>
+<rect x="694" y="124" width="32" height="12" rx="2" fill="#ffffff"/><text x="710" y="133" fill="#5c574c" font-size="8" text-anchor="middle">ปกติ</text>
+<rect x="8" y="40" width="140" height="60" rx="6" fill="#ffffff"/><rect x="8" y="40" width="140" height="60" rx="6" fill="#f4f1e8" stroke="#8a8474" stroke-width="1"/>
+<rect x="16" y="46" width="60" height="12" rx="2" fill="none" stroke="#8a8474" stroke-width="0.8"/><text x="46" y="55" fill="#8a8474" font-size="8" text-anchor="middle" letter-spacing="0.08em">OFF-CHAIN</text>
+<text x="78" y="80" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">กระเป๋าคนบิด</text>
+<rect x="172" y="40" width="140" height="60" rx="6" fill="#ffffff"/><rect x="172" y="40" width="140" height="60" rx="6" fill="#e9f4ee" stroke="#0e6b4a" stroke-width="1.5"/>
+<rect x="180" y="46" width="60" height="12" rx="2" fill="none" stroke="#0e6b4a" stroke-width="0.8"/><text x="210" y="55" fill="#0e6b4a" font-size="8" text-anchor="middle" letter-spacing="0.08em">ON-CHAIN</text>
+<text x="242" y="76" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">Escrow</text>
+<text x="242" y="94" fill="#1c1a15" font-size="12" text-anchor="middle">ล็อกมัดจำแล้ว</text>
+<rect x="336" y="40" width="140" height="60" rx="6" fill="#ffffff"/><rect x="336" y="40" width="140" height="60" rx="6" fill="#ffffff" stroke="#1c1a15" stroke-width="1"/>
+<rect x="344" y="46" width="60" height="12" rx="2" fill="none" stroke="#1c1a15" stroke-width="0.8" opacity="0.5"/><text x="374" y="55" fill="#1c1a15" font-size="8" text-anchor="middle" letter-spacing="0.08em">ON-CHAIN</text>
+<text x="406" y="76" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">หมดเวลา</text>
+<text x="406" y="94" fill="#1c1a15" font-size="12" text-anchor="middle">ตัดรอบผู้ชนะ</text>
+<rect x="500" y="40" width="140" height="60" rx="6" fill="#ffffff"/><rect x="500" y="40" width="140" height="60" rx="6" fill="#ffffff" stroke="#1c1a15" stroke-width="1"/>
+<rect x="508" y="46" width="60" height="12" rx="2" fill="none" stroke="#1c1a15" stroke-width="0.8" opacity="0.5"/><text x="538" y="55" fill="#1c1a15" font-size="8" text-anchor="middle" letter-spacing="0.08em">ON-CHAIN</text>
+<text x="570" y="76" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">ผู้ชนะจ่ายครบ</text>
+<text x="570" y="94" fill="#1c1a15" font-size="12" text-anchor="middle">รอส่งของ</text>
+<rect x="664" y="40" width="140" height="60" rx="6" fill="#ffffff"/><rect x="664" y="40" width="140" height="60" rx="6" fill="#ffffff" stroke="#6b675c" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="672" y="46" width="60" height="12" rx="2" fill="none" stroke="#6b675c" stroke-width="0.8"/><text x="702" y="55" fill="#6b675c" font-size="8" text-anchor="middle" letter-spacing="0.08em">OFF-CHAIN</text>
+<text x="734" y="76" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">คนซื้อกด</text>
+<text x="734" y="94" fill="#1c1a15" font-size="12" text-anchor="middle">“ได้รับของ”</text>
+<rect x="336" y="160" width="140" height="60" rx="6" fill="#ffffff"/><rect x="336" y="160" width="140" height="60" rx="6" fill="#ffffff" stroke="#1c1a15" stroke-width="1"/>
+<rect x="344" y="166" width="60" height="12" rx="2" fill="none" stroke="#1c1a15" stroke-width="0.8" opacity="0.5"/><text x="374" y="175" fill="#1c1a15" font-size="8" text-anchor="middle" letter-spacing="0.08em">ON-CHAIN</text>
+<text x="406" y="200" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">แพ้ → คืนออโต้</text>
+<rect x="500" y="160" width="140" height="60" rx="6" fill="#ffffff"/><rect x="500" y="160" width="140" height="60" rx="6" fill="#ffffff" stroke="#6b675c" stroke-width="1" stroke-dasharray="4,3"/>
+<rect x="508" y="166" width="60" height="12" rx="2" fill="none" stroke="#6b675c" stroke-width="0.8"/><text x="538" y="175" fill="#6b675c" font-size="8" text-anchor="middle" letter-spacing="0.08em">OFF-CHAIN</text>
+<text x="570" y="196" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">dispute →</text>
+<text x="570" y="212" fill="#1c1a15" font-size="12" text-anchor="middle">แอดมินตัดสิน</text>
+<rect x="664" y="160" width="140" height="60" rx="6" fill="#ffffff"/><rect x="664" y="160" width="140" height="60" rx="6" fill="#ffffff" stroke="#1c1a15" stroke-width="1"/>
+<rect x="672" y="166" width="60" height="12" rx="2" fill="none" stroke="#1c1a15" stroke-width="0.8" opacity="0.5"/><text x="702" y="175" fill="#1c1a15" font-size="8" text-anchor="middle" letter-spacing="0.08em">ON-CHAIN</text>
+<text x="734" y="196" fill="#1c1a15" font-size="16" font-weight="600" text-anchor="middle">ปล่อยเงิน</text>
+<text x="734" y="212" fill="#1c1a15" font-size="12" text-anchor="middle">ให้คนขาย</text>
+<line x1="8" y1="252" x2="828" y2="252" stroke="rgba(28,26,21,0.12)" stroke-width="0.8"/>
+<text x="8" y="272" fill="#5c574c" font-size="8" letter-spacing="0.14em">LEGEND</text>
+<rect x="100" y="260" width="12" height="12" fill="#e9f4ee" stroke="#0e6b4a"/><text x="120" y="270" fill="#1c1a15" font-size="12">จุดสำคัญ: บัญชีกลาง</text>
+<rect x="340" y="260" width="12" height="12" fill="#ffffff" stroke="#1c1a15"/><text x="360" y="270" fill="#1c1a15" font-size="12">ขั้น on-chain (โปรแกรมคุม)</text>
+<rect x="580" y="260" width="12" height="12" fill="#ffffff" stroke="#6b675c" stroke-dasharray="4,3"/><text x="600" y="270" fill="#1c1a15" font-size="12">ขั้น off-chain (คนทำ)</text>
+</svg>
+<h3>คุ้มไหม — คณิตแบบกลมๆ</h3>
+<table>
+  <tr><th>ฝั่ง</th><th>ต้นทุน</th><th>ได้อะไร</th></tr>
+  <tr><td><b>คนใช้ (ต่อรอบ)</b></td><td>ล็อกมัดจำ 100–500 (ได้คืน) + ค่า fee ไม่ถึงบาท + สมัครครั้งเดียว</td><td>บิดลม ~0 · ปั่นแพง · แพ้คืนเองไม่ต้องทวง</td></tr>
+  <tr><td><b>คนขาย (ต่อบิล)</b></td><td>fee 2% (10–150 บาท) ฟรีถึงสิ้น ต.ค.</td><td>ดีลปิดจริง ไม่ต้องเปิดใหม่ ไม่ต้องตามทวง</td></tr>
+  <tr><td><b>เราคนสร้าง</b></td><td>~1–2 สัปดาห์ (fork escrow + เว็บ + LIFF)</td><td>fee 2% + รายเดือนแอดมิน + ลุ้นรางวัล tracks</td></tr>
+</table>
+<div class="warn"><b>เกณฑ์คุ้ม:</b> มัดจำคุ้มเมื่อ “มูลค่าที่เสียบิดลม” สูงกว่า “ต้นทุนเสียดทาน” — เช่น 5 รอบล่ม 1 รอบ รอบละเสียเวลา/โอกาส ~500 บาท = เสียเดือนละหลายพัน แลกกับมัดจำที่ได้คืน + fee 2% · <b>แต่ถ้ายังไม่มีคนบิดเลย ต้องแก้ distribution (เฟส 0) ก่อนเสมอ</b></div>
+<details class="fold"><summary>ดูขั้นทีละ 9 ขั้น (ใครทำ on/off-chain หลักฐานคืออะไร)</summary><div class="fold-body">
+<ul class="timeline">
+  <li><b class="day">ขั้น 1</b><span class="offchain">OFF-CHAIN</span><b>คนขายเปิดรอบ:</b> ลงของในเว็บ BIDKan หลักฐานคือหน้าเว็บ <span class="trust">★ ลงของปลอมได้ → กันด้วยประกันคนขาย + เครดิต (เฟส 2)</span></li>
+  <li><b class="day">ขั้น 2</b><span class="onchain">ON-CHAIN</span><b>คนบิดวางมัดจำ:</b> โอน USDC เข้าบัญชีกลาง หลักฐานคือ tx hash <b>ไม่ต้องมีใครมาบอกว่าจ่ายแล้ว — โปรแกรมอ่านยอดเอง</b></li>
+  <li><b class="day">ขั้น 3</b><span class="offchain">OFF-CHAIN</span><b>การบิดแต่ละครั้ง (MVP):</b> บิดในเว็บ real-time ฟรี หลักฐานคือ log เซิร์ฟเวอร์ <span class="trust">★ ประวัติแก้ไม่ได้ 100% ต้องย้ายบิดขึ้น chain (เฟส 2)</span></li>
+  <li><b class="day">ขั้น 4</b><span class="offchain">OFF-CHAIN</span><b>หมดเวลา / ได้ผู้ชนะ:</b> เซิร์ฟเวอร์ตัดรอบจาก log (เฟส 2 ค่อยให้โปรแกรมตัดเอง)</li>
+  <li><b class="day">ขั้น 5</b><span class="onchain">ON-CHAIN</span><b>ผู้ชนะจ่ายส่วนต่างใน 48 ชม.:</b> ไม่โอนตามเวลา <b>โปรแกรมยึดมัดจำให้คนขายอัตโนมัติ — อ่านนาฬิกาเอง ไม่มีใครต้องกด</b></li>
+  <li><b class="day">ขั้น 6</b><span class="onchain">ON-CHAIN</span><b>คนแพ้ได้คืน:</b> โปรแกรมคืนอัตโนมัติ (ใครกดปุ่ม settle ก็ได้ กติกาเหมือนเดิม)</li>
+  <li><b class="day">ขั้น 7</b><span class="offchain">OFF-CHAIN</span><b>คนขายส่งของ:</b> ส่งพัสดุ กรอกเลขในเว็บ <span class="trust">★ chain ไม่รู้ว่าส่งจริงไหม → พึ่งเลขพัสดุ + คนซื้อกดยืนยัน</span></li>
+  <li><b class="day">ขั้น 8</b><span class="offchain">OFF → ON</span><b>คนซื้อกด “ได้รับของ”:</b> คนกด → โปรแกรมปล่อยเงินให้คนขาย <span class="trust">★ จุดอ่อนใหญ่สุด: เผลอกด = เงินออกเลย → กันด้วยคำเตือน + หน่วง 24 ชม. (เฟส 2)</span></li>
+  <li><b class="day">ขั้น 9</b><span class="offchain">OFF → ON</span><b>ถ้ามี dispute:</b> แอดมินดูหลักฐานตัดสิน → โปรแกรมคืน/ปล่อยตามคำตัดสิน <span class="trust">★ ต้องไว้ใจแอดมิน → กันด้วย log โปร่งใส + ตัดสินหลายคน</span></li>
+</ul>
+</div></details>
+<details class="fold"><summary>ปั่นบิดโชว์หลักฐานได้ไหม?</summary><div class="fold-body">
+<p>ได้ 2 ชั้น: <b>(1) ทำให้ปั่นแพง (มีตั้งแต่วันแรก):</b> หน้าม้าต้องวางเงินจริงทุกรอบ พลาดชนะต้องจ่ายหรือโดนยึด — ปั่น 10 รอบ = จม 10 ก้อน <b>(2) โชว์ประวัติเป็นหลักฐาน (ต้องมี data ก่อน):</b> “กระเป๋าใบนี้บิดร้านนี้ 8/10 รอบ ไม่เคยจ่ายเลย” — ไม่มีคนบิดก็ไม่มี data ให้จับ จึงเป็นฟีเจอร์เฟสหลัง</p>
+</div></details>
+</section>
+
+<section class="tabpanel" id="panel-qa" role="tabpanel">
+<h2>คำถามเจาะลึก: blockchain การันตีอะไรกันแน่?</h2>
+<p>รวมคำถามที่คุณถามมา (ดีทุกข้อ เพราะนี่คือจุดที่ pitch ต้องตอบให้ได้) + คำตอบตรงๆ:</p>
+<h3>Q1: คนเปิดประมูลขอให้วางมัดจำเองก็ได้อยู่แล้วนี่?</h3>
+<p>ขอได้ครับ แต่ในทางปฏิบัติมันพัง 3 จุด: <b>(1)</b> คนบิดไม่กล้าโอนเข้าบัญชีส่วนตัวของคนแปลกหน้า — ขอแล้วก็ไม่มีคนวาง <b>(2)</b> คนเปิดต้องไล่คืนมัดจำคนแพ้ทีละคน + ตามทวงคนชนะที่หาย = งานแอดมินล้วนๆ <b>(3)</b> กติกายึดไม่มีคนกลางบังคับ เป็นคำพูดฝ่ายเดียว ทะเลาะกันทุกครั้ง — ปัญหาจริงคือ <b>“ไม่มีใครไว้ใจใครพอจะวาง/รับมัดจำกัน”</b> (deadlock สองฝั่ง)</p>
+<h3>Q2: แล้วระบบนี้การันตีอะไรให้ทั้งสองฝั่ง?</h3>
+<table>
+  <tr><th style="width:30%">ฝั่ง</th><th>ได้อะไร</th></tr>
+  <tr><td><b>คนลงบิด</b></td><td>เงินไม่ได้เข้ากระเป๋าคนขาย แต่อยู่ที่โปรแกรมกลางซึ่งคนขายแตะไม่ได้ → กล้าวางมัดจำ แพ้ได้คืนเอง ชนะแต่ของไม่มา กด dispute แล้วเงินยังไม่ปล่อย</td></tr>
+  <tr><td><b>คนเปิดประมูล</b></td><td>ทุกบิดมีเงินล็อกจริง → บิดลมตาย ชนะแล้วหายโดนยึดเองไม่ต้องตาม และไม่โดนกล่าวหาว่าอมมัดจำเพราะตัวเองก็ไม่ได้จับเงินคนแพ้</td></tr>
+  <tr><td><b>สิ่งที่ chain ทำ</b></td><td>เงินอยู่ครบตามกติกา · ทำตามที่เขียนไว้ (คืน/ยึด/ปล่อย) · ประวัติบิดแก้ย้อนหลังไม่ได้ · คืนเงินทีละหลายคนด้วยต้นทุนต่ำกว่าบาท</td></tr>
+</table>
+<h3>Q3: บังคับวางมัดจำ คนจะยิ่งไม่บิดหรือเปล่า?</h3>
+<p>เสี่ยงจริงครับ เลยออกแบบรับมือ: <b>(1)</b> ยอดเล็ก 5–10% หรือ 100–500 บาท <b>(2)</b> เติมครั้งเดียวเป็นยอดคงเหลือ ใช้ได้ทุกห้อง ถอนเมื่อไรก็ได้ <b>(3)</b> แพ้คืนอัตโนมัติ <b>(4)</b> ให้คนเปิดเลือก: รอบเล็กแบบ open ไม่ต้องมีมัดจำ รอบของมีค่าแบบ secured ค่อยมี — และถ้ายังไม่มีคนบิดเลย ปัญหาคือ distribution (เฟส 0) ไม่ใช่ค่ามัดจำ</p>
+<h3>Q4: ของต้องอยู่บน chain ไหม?</h3>
+<p>ไม่ต้องครับ — chain การันตีได้แค่ <b>“ฝั่งเงิน”</b> แต่การันตี <b>“ของที่ส่ง”</b> ไม่ได้ ของตรงปก/ส่งจริงต้องใช้ปุ่มกดยืนยันรับของ + เลขพัสดุ + แอดมินตัดสินข้อพิพาท + เครดิตสะสม</p>
+<h3>Q5: สุดท้ายคนลงบิดก็โดนโกงได้อยู่ดีไม่ใช่หรือ?</h3>
+<p>ตอบตรงๆ: <b>กันได้ไม่ 100% ครับ</b> ถ้าคนขายตั้งใจโกงแล้วคนซื้อเผลอกด “ได้รับของแล้ว” ก็เสร็จอยู่ดี สิ่งที่ระบบทำคือเปลี่ยนจาก <b>“โอนแล้วจบ ตามเงินไม่ได้เลย”</b> เป็น <b>“เงินค้างที่กลาง มีเวลาตรวจ มีทางได้คืน และคนโกงมีต้นทุน”</b> (ไม่ส่งของใน N วันคืนเงินออโต้ · ของไม่ตรงปกกด dispute เงินไม่ปล่อย · คนขายวางประกันด้วยโกงแล้วยึดทันที)</p>
+<div class="verdict"><b>สรุป pain หลักประโยคเดียว:</b> <b>“ประมูลไม่จบ ดีลล่ม”</b> — บิดชัวร์คืออุปกรณ์ผูกมัดที่ทำให้บิดแต่ละครั้งมีต้นทุนนิดหน่อย แต่ปลอดภัยทั้งสองฝั่งเพราะเงินอยู่กับคนกลางที่เป็นโปรแกรม</div>
+</section>
+
+<section class="tabpanel" id="panel-build" role="tabpanel">
+<h2>แผนทำ + ตัดสินใจ</h2>
+<h3>เฟส 0 — พิสูจน์ demand (สัปดาห์นี้ ไม่ต้องเขียนโค้ด)</h3>
+<p>hand-run ประมูล 5–10 รอบในกลุ่มเดิมที่คนอยู่แล้ว วัดว่ามีคนบิดไหม — <b>เลิก/เปลี่ยนมุมทันทีถ้า:</b> ไม่มีคนบิดเลยแม้รอบฟรี หรือแอดมิน 0/5 ยอมให้ลอง</p>
+<h3>เฟส 1 — เลน Secured (7 วัน เมื่อ demand มาจริง)</h3>
+<ul class="timeline">
+  <li><b class="day">วัน 1–2</b><b>เว็บ + ล็อกอิน + ลงของ:</b> Next.js + ล็อกอิน LINE/อีเมล ลงประกาศได้ ตั้งราคาเปิด มัดจำ เวลาปิด</li>
+  <li><b class="day">วัน 3–5</b><b>ระบบมัดจำกลาง (fork ของสำเร็จรูป):</b> วางมัดจำ → ล็อก → แพ้คืนออโต้ / เบี้ยวยึด — ทดสอบบน devnet</li>
+  <li><b class="day">วัน 6–7</b><b>ปิดรอบให้ได้ + ทดสอบกลุ่มปิด:</b> หน้าสรุปผู้ชนะ + ปุ่มยึดมัดจำ ชวน 5–10 คนลองบิดของจริง 1 รอบ</li>
+</ul>
+<details class="fold"><summary>เทคโนโลยี (เลือกแบบง่ายสุด)</summary><div class="fold-body">
+<table>
+  <tr><th>ส่วน</th><th>ใช้อะไร</th><th>ทำไม</th></tr>
+  <tr><td>เว็บ + ฐานข้อมูล</td><td>Next.js + Supabase</td><td>มาตรฐาน หาคนช่วยง่าย มีของฟรี</td></tr>
+  <tr><td>ล็อกอิน + กระเป๋า</td><td>LINE Login + Privy</td><td>ระบบสร้างกระเป๋าให้เอง ไม่ต้องจำ seed</td></tr>
+  <tr><td>บัญชีกลาง</td><td>fork anchor-escrow</td><td>ไม่ต้องเขียน Solana เองจากศูนย์</td></tr>
+  <tr><td>เงิน</td><td>USDC บน Solana</td><td>มูลค่านิ่ง โอนเร็ว ค่าธรรมเนียมต่ำกว่าบาท</td></tr>
+  <tr><td>ใน LINE</td><td>LIFF</td><td>บิดจากในแชทได้เลย ไม่ต้องโหลดแอป</td></tr>
+</table>
+<p class="small">ต้นทุน: 0–1,500 บาท (subdomain BIDKan ไม่เสียเงิน เหลือแค่ค่า API ทดสอบ)</p>
+</div></details>
+<details class="fold"><summary>รายได้ + ลูกค้า 3 กลุ่มแรก</summary><div class="fold-body">
+<p><b>คนขาย</b> 2%/บิล (min 10 / max 150) ฟรีถึงสิ้น ต.ค. · <b>แอดมิน</b> รายเดือน 990–4,900 + ส่วนแบ่ง 20% · <b>คนซื้อฟรี</b> — ตัวอย่าง: รอบละ 10,000 × 20 รอบ/เดือน × 2.5% = 5,000 บาท/เดือนจากกลุ่มเดียว</p>
+<p><b>กลุ่มแรก:</b> (1) แอดมินกลุ่มพระ/การ์ด (โดนบิดลมหนักสุด) (2) ร้านเครื่องมือช่าง + ลูกค้าเก่าของคุณ (3) เต็นท์รถ 2–3 เจ้า (ยอดต่อรอบสูง)</p>
+</div></details>
+<details class="fold"><summary>เข้า track ไหนได้บ้าง (ปิดรับ 13 ต.ค.)</summary><div class="fold-body">
+<table>
+  <tr><th>Track</th><th style="width:12%">โอกาส</th><th>ยื่นด้วยอะไร</th></tr>
+  <tr><td><b>Colosseum หลัก + Thailand</b></td><td>หลัก</td><td>Consumer/Payments: escrow ใช้จริง crypto=0 ใช้ได้ เดโม่ 3 นาทีจบ</td></tr>
+  <tr><td><b>AI × Solana ($10,000)</b></td><td>สูง</td><td>AI ราคากลาง + เขียนโพสต์ขาย + จับหน้าม้า</td></tr>
+  <tr><td><b>RPC Fast ($10,474)</b></td><td>สูง</td><td>รันบน RPC Fast + โพสต์ engagement 2 เดือน</td></tr>
+  <tr><td><b>Solami ($3,000)</b></td><td>สูง</td><td>ฟีดบิด live + repo public</td></tr>
+  <tr><td><b>Meteora ($20,000)</b></td><td>ข้าม</td><td>ต้องเป็น token launch — ไม่ฝืน</td></tr>
+</table>
+</div></details>
+<details class="fold"><summary>ความเสี่ยง + วิธีลด</summary><div class="fold-body">
+<div class="risk">
+  <p style="margin-top:0"><b>1. กฎหมายยึดมัดจำ:</b> ต้องมีข้อตกลงยินยอมก่อนวาง (ติ๊กยอมรับ) + เริ่มยอดเล็ก + มีปุ่มอุทธรณ์</p>
+  <p><b>2. เงินบาทเข้าออก:</b> หน้าจอแสดงบาทเสมอ รับบาทแล้วระบบแปลงเป็น USDC เอง</p>
+  <p style="margin-bottom:0"><b>3. เวลา:</b> ยึด scope เฟส 0–1 ห้ามเพิ่มฟีเจอร์ระหว่างทาง Panta/Meteora ตัดออก</p>
+</div>
+</div></details>
+<h3>ต้องการการตัดสินใจจากคุณ 3 ข้อ</h3>
+<ul class="check">
+  <li><b>ไฟเขียว “บิดชัวร์ + ลำดับเฟส 0→1” หรือไม่?</b> ถ้าโอเค ผมจะร่างแผน hand-run เฟส 0 (ข้อความชวนแอดมิน + กติการอบทดลอง) ให้ทันที</li>
+  <li><b>มีกลุ่มไหนในมือพร้อมเป็นสนามทดลองเฟส 0?</b> (กลุ่มช่าง/พระ/การ์ดที่รู้จัก) — มี 1 กลุ่มก็เริ่มได้</li>
+  <li><b>BIDKan ตอนนั้นมีของกี่รายการ + ทราฟฟิกแค่ไหน?</b> จะได้รู้ว่าปัญหาอยู่ที่ของน้อย คนไม่เห็น หรือเห็นแล้วไม่บิด</li>
+</ul>
+</section>
+
+<div class="pager"><button id="pgPrev">← ก่อนหน้า</button><button id="pgNext">ถัดไป →</button></div>
+
+<div class="cta-strip"><span>→ ตอบในแชทได้เลย เช่น: <strong>“ลุยเฟส 0 เลย”</strong> <strong>“ขอร่างแผน hand-run”</strong> <strong>“เล่าตัวเลข BIDKan ให้ฟังก่อน”</strong></span></div>
+
+<footer>
+  <p>จัดทำโดย: ทีมวิจัย 5 สาย + กรรมการ 2 ท่าน (2 รอบ) · 25 ก.ย. 2026 · ไฟล์นี้: plan-bidsure.html</p>
+</footer>
+
+<script>
+(function(){
+  var tabs=Array.prototype.slice.call(document.querySelectorAll('.tabbar button'));
+  var panels={};
+  tabs.forEach(function(b){panels[b.getAttribute('data-tab')]=document.getElementById('panel-'+b.getAttribute('data-tab'));});
+  var prev=document.getElementById('pgPrev'),next=document.getElementById('pgNext');
+  function idx(){for(var i=0;i<tabs.length;i++){if(tabs[i].getAttribute('aria-selected')==='true')return i;}return 0;}
+  function show(id,scroll){
+    if(!panels[id])return;
+    tabs.forEach(function(b){b.setAttribute('aria-selected',b.getAttribute('data-tab')===id?'true':'false');});
+    Object.keys(panels).forEach(function(k){panels[k].classList.toggle('active',k===id);});
+    var i=idx();prev.disabled=(i===0);next.disabled=(i===tabs.length-1);
+    try{history.replaceState(null,'','#'+id);}catch(e){location.hash=id;}
+    if(scroll){document.querySelector('.tabbar').scrollIntoView();}
+  }
+  tabs.forEach(function(b){b.addEventListener('click',function(){show(b.getAttribute('data-tab'),true);});});
+  prev.addEventListener('click',function(){var i=idx();if(i>0)show(tabs[i-1].getAttribute('data-tab'),true);});
+  next.addEventListener('click',function(){var i=idx();if(i<tabs.length-1)show(tabs[i+1].getAttribute('data-tab'),true);});
+  window.addEventListener('hashchange',function(){var h=(location.hash||'').replace('#','');show(h,false);});
+  var h0=(location.hash||'').replace('#','');
+  show(panels[h0]?h0:'summary',false);
+})();
+</script>
+</div>
+</body>
+</html>

@@ -136,6 +136,18 @@ a{color:var(--acc)}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
 </style>
+<link rel="stylesheet" href="/theme.css">
+<style>
+/* sticker-pop upgrades (shared base in /theme.css) */
+.wrap{max-width:1060px}
+.panel{border-width:2px;box-shadow:var(--sh)}
+.live-pill{border:2px solid var(--line);box-shadow:var(--sh-sm)}
+.band-shell{background:var(--cream);border:2px solid var(--line);border-radius:22px;box-shadow:var(--sh)}
+.band{border:2px solid var(--line)}
+.frow{border:2px solid transparent;border-radius:10px}
+.frow:hover{background:var(--cream);border-color:var(--line)}
+.vslot{border:2px solid var(--line)}
+</style>
 </head>
 <body data-page="home">
 <div class="topbar"><div class="in">
@@ -174,7 +186,8 @@ a{color:var(--acc)}
     <a class="plink" href="/board.html" data-i18n="boardLink">Open the full board →</a>
   </div>
   <div class="tracks" data-i18n="tracks"></div>
-  <footer><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
+  <p class="risk" data-i18n-html="riskD"></p>
+  <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
 <script>
 (function(){
@@ -186,7 +199,7 @@ h1:'Check before you buy<span class="rd">.</span>',
 sub:"FlagKan watches newly boosted Solana tokens and gives each one a risk light — red, yellow, or green. Six hours later the chain itself grades every verdict.",
 ctaBoard:"Open the board",ctaProof:"How we judge",
 sAcc:"accuracy",sRes:"coins judged",sRed:"red precision",
-bandLine:"<b>Dead means down 90%+ or liquidity under $1,000.</b> The scoreboard counts every resolved coin — nothing cherry-picked.",
+bandLine:"<b>Dead means down 90%+, liquidity under $1,000, or price frozen with zero trading.</b> The scoreboard counts every resolved coin — nothing cherry-picked.",
 bandLink:"See how every coin resolved",
 vidT:"Watch the demo",vidSub:"90 seconds: a live verdict, then the chain grades it.",vidSoon:"Demo video coming soon",
 howT:"How it works",
@@ -196,14 +209,15 @@ s3t:"Judge",s3d:"The Jev AI judge issues red / yellow / green with written reaso
 freshT:"Fresh verdicts",freshSub:"The newest coins on the radar — click through to the board for the full story.",
 boardLink:"Open the full board →",
 dead:"dead",alive:"alive",h:"h",
-tracks:"Built for Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami"},
+tracks:"Built for Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami",
+riskD:"<b>Not financial advice.</b> FlagKan flags risk patterns — it can't see private chats, planned unlocks, or off-chain deals. Past accuracy doesn't promise future results. Never bet more than you can lose."},
 th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
 liveA:"สด",liveB:"ติดตาม",
 h1:'เช็กก่อนซื้อ<span class="rd">.</span>',
 sub:"FlagKan เฝ้าเหรียญ Solana น้องใหม่ที่ถูกบูสต์ แล้วติดไฟให้ทุกเหรียญ — แดง เหลือง หรือเขียว อีก 6 ชั่วโมงต่อมาเชนจะตัดสินเองว่าคำชี้ถูกหรือผิด",
 ctaBoard:"เปิดกระดาน",ctaProof:"ดูวิธีตัดสิน",
 sAcc:"ความแม่น",sRes:"เหรียญที่ชี้แล้ว",sRed:"แดงแม่น",
-bandLine:"<b>พังคือร่วงเกิน 90% หรือสภาพคล่องต่ำกว่า $1,000</b> ตารางคะแนนนับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
+bandLine:"<b>พังคือร่วงเกิน 90% สภาพคล่องต่ำกว่า $1,000 หรือราคานิ่งไม่มีเทรดเลย</b> ตารางคะแนนนับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
 bandLink:"ดูทุกเหรียญที่ตัดสินแล้ว",
 vidT:"ดูวิดีโอสาธิต",vidSub:"90 วินาที: คำชี้สด แล้วดูเชนตัดสิน",vidSoon:"วิดีโอสาธิตกำลังมา",
 howT:"ทำงานยังไง",
@@ -213,7 +227,8 @@ s3t:"ชี้",s3d:"AI Jev ชี้แดง / เหลือง / เขี�
 freshT:"คำชี้ล่าสุด",freshSub:"เหรียญใหม่สุดบนเรดาร์ — กดไปดูเรื่องเต็มที่กระดาน",
 boardLink:"เปิดกระดานเต็ม →",
 dead:"พัง",alive:"รอด",h:" ชม.",
-tracks:"สร้างเพื่อ Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami"}};
+tracks:"สร้างเพื่อ Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami",
+riskD:"<b>ไม่ใช่คำแนะนำการลงทุน</b> FlagKan จับแพทเทิร์นความเสี่ยง — มองไม่เห็นแชทส่วนตัว ปลดล็อกที่วางแผนไว้ หรือดีลนอกเชน ความแม่นในอดีตไม่รับประกันอนาคต อย่าลงเกินกว่าที่เสียได้"}};
 var L="en",REDUCED=false;
 try{REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}

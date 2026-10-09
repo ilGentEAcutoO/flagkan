@@ -14,7 +14,7 @@ FlagKan watches newly boosted Solana tokens and gives each one a risk light:
 ## How it works
 
 ```
-DexScreener boosts ──► top Solana mints ──► cron every minute
+DexScreener boosts + GeckoTerminal new pools ──► new Solana mints ──► cron
 Solami RPC ──► on-chain signals (top holders, early buys, coin age)
 TypeSafe Jev ──► risk verdict: choice + probabilities + coordination + severity
 Cloudflare D1 ──► rounds / snapshots / signals / verdicts / outcomes
@@ -22,7 +22,12 @@ Cloudflare D1 ──► rounds / snapshots / signals / verdicts / outcomes
 
 - Market data: DexScreener (`/tokens/v1/solana`, `/token-boosts/top/v1`)
 - On-chain data: Solami RPC (`getTokenSupply`, `getTokenLargestAccounts`,
-  `getSignaturesForAddress`) — the only data path for holder signals
+  `getSignaturesForAddress`, `getAccountInfo`) — holder spread, early buys,
+  coin age, plus mint/freeze authority flags (live authority = rug risk)
+- Momentum: h1 price change, h1 volume, pair age from DexScreener/GeckoTerminal
+- Model: edge-trained logistic regression (15 features) demotes shaky greens
+  and calls red itself when P(dead) ≥ 0.85; champion only promotes on measured
+  test-split improvement
 - Judge: Jev (`jev-latest`) with explicit numeric criteria per light
 - Board lifecycle: unresolved coins count down to their outcome; resolved
   coins stay 7 days then drop off (history kept for proof stats)
@@ -47,12 +52,13 @@ See `/../.env.example` for the full variable list.
 
 | Endpoint | What |
 |---|---|
-| `GET /api/rounds?limit=50` | board: verdict + last price/liq/top1 + outcome |
+| `GET /api/rounds?limit=&offset=` | board page (newest first) + `total`; `resolved=1` → newest settled (proof table) |
 | `GET /api/coin?mint=` | everything for one coin (signals, verdict, outcome, history) |
 | `GET /api/verdict?mint=` | stored Jev verdict |
-| `GET /api/proof` | resolved count, accuracy, red precision |
+| `GET /api/proof` | resolved count, accuracy, red precision, upgrade precision, shadow-green survival |
 | `POST /api/verdict-now?mint=` | judge any mint on demand |
 | `POST /api/signals-now?mint=` | recompute on-chain signals + verdict |
+| `POST /api/backfill-now?key=` | judge resolved-but-unverdict coins from stored first-seen state (training only, excluded from proof) |
 | `GET /health` `GET /api/diag` | status |
 
 ## Project layout
