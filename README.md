@@ -33,7 +33,7 @@ Public /proof page + /api/proof: every number next to its baseline
   `getAccountInfo`) gives holder concentration, early buy pressure, coin age and authority flags.
   Market fields (liquidity, FDV, volume, trades) come from GeckoTerminal / DexScreener.
 - **Judge.** A model trained on FlagKan's own graded history combines with explicit rules.
-  LightGBM (27 leak-free first-sight features) decides the light since 2026-10-12, after an out-of-sample test on 357 resolved coins neither model had seen beat the logistic regression (AUC 0.776 vs 0.736; the confidence intervals overlap, so the edge is real but modest). The LR stays as the automatic fallback and as the live comparison; live head-to-head numbers are in [`/api/proof`](https://flag.sornkan.com/api/proof). The LR (feature list in
+  LightGBM (27 leak-free first-sight features) decides the light since 2026-10-12, after an out-of-sample test on 357 resolved coins neither model had seen ranked better than the logistic regression (AUC 0.776 vs 0.736 — suggestive, not statistically significant: the confidence intervals overlap heavily with only 21 surviving coins). The LR stays as the automatic fallback and as the live comparison; live head-to-head numbers are in [`/api/proof`](https://flag.sornkan.com/api/proof). The LR (feature list in
   [`radar/src/ml/train.ts`](radar/src/ml/train.ts)) is still retrained on the edge, and a challenger
   is only promoted on a measured test-split improvement. The Jev judge from
   TypeSafe scores wallet coordination and writes the reasons you see. The six checks shown in the UI
