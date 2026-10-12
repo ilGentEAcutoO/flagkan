@@ -48,8 +48,11 @@ export class LiveFeed extends DurableObject<unknown> {
 
 	private async spend(units: number): Promise<LiveBudget> {
 		if (!this.budget) this.budget = (await this.ctx.storage.get<LiveBudget>(K_BUDGET)) ?? null;
+		const wasOver = budgetOver(this.budget, Date.now());
 		this.budget = budgetAdd(this.budget, Date.now(), units);
-		await this.ctx.storage.put(K_BUDGET, this.budget);
+		// Once over the line the state cannot change until next month: stop
+		// writing (keeps storage row writes bounded too).
+		if (!wasOver) await this.ctx.storage.put(K_BUDGET, this.budget);
 		return this.budget;
 	}
 
@@ -131,6 +134,7 @@ export class LiveFeed extends DurableObject<unknown> {
 		try { ws.close(1008, tooBig ? "too big" : "read-only"); } catch { /* already closed */ }
 	}
 
+	// close/error events are pre-paid by LIVE_COST.upgrade (no storage write here).
 	async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
 		try { ws.close(code === 1000 || (code >= 3000 && code <= 4999) ? code : 1000, String(reason ?? "").slice(0, 60)); } catch { /* already closed */ }
 	}

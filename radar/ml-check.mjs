@@ -774,7 +774,7 @@ try {
 	let b = lc.budgetAdd(null, T0, lc.LIVE_COST.upgrade);
 	b = lc.budgetAdd(b, T0, lc.LIVE_COST.broadcast);
 	b = lc.budgetAdd(b, T0, lc.LIVE_COST.clientMsg);
-	check("budget: units = upgrade 20 + broadcast 20 + client frame 1 (1/20 request)", b.units === 41 && b.month === "2026-10" && lc.LIVE_UNITS_PER_REQUEST === 20);
+	check("budget: units = upgrade 60 (pre-pays close+error) + broadcast 20 + client frame 1 (1/20 request)", b.units === 81 && b.month === "2026-10" && lc.LIVE_UNITS_PER_REQUEST === 20 && lc.LIVE_COST.upgrade === 3 * lc.LIVE_UNITS_PER_REQUEST);
 	check("budget: under line not over", !lc.budgetOver(b, T0));
 	const atLine = { month: "2026-10", units: lc.LIVE_MONTH_BUDGET_UNITS };
 	check("budget: line = 800,000 requests; over only past it", lc.LIVE_MONTH_BUDGET_REQ === 800000 && !lc.budgetOver(atLine, T0) && lc.budgetOver(lc.budgetAdd(atLine, T0, 1), T0));
@@ -841,9 +841,22 @@ try {
 	check("shouldBroadcast: 0 sockets + recent connect (<5 min) -> broadcast", lc.shouldBroadcast({ sockets: 0, last_connect: NOW - 60_000 }, NOW) === true);
 	check("shouldBroadcast: 0 sockets + connect older than 5 min / never -> SKIP", lc.shouldBroadcast({ sockets: 0, last_connect: NOW - 6 * 60_000 }, NOW) === false && lc.shouldBroadcast({ sockets: 0, last_connect: null }, NOW) === false && lc.LIVE_IDLE_SKIP_MS === 300000);
 	check("pushTick: idle gate + heartbeat fallback before the single RPC", pt.indexOf("shouldBroadcast(") > 0 && pt.indexOf("shouldBroadcast(") < pt.indexOf(".broadcast(") && /evt \?\? heartbeatEvent\(/.test(pt) && (pt.match(/\.broadcast\(/g) || []).length === 1 && !/touched\.size === 0 && resolved === 0\) return/.test(pt));
-	check("liveUpgrade: stamps last_connect on 101, flips stash on DO 'budget', fresh D1 read per attempt", /res\.status === 101\) await liveStampConnect\(env\)/.test(up) && /liveStampOver\(env\)/.test(up) && /liveStashRead\(env, 0\)/.test(up));
+	check("liveUpgrade: stamps last_connect on 101, flips stash on DO 'budget'", /res\.status === 101\) \{\s*try \{ await liveStampConnect\(env\)/.test(up) && /liveStampOver\(env\)/.test(up));
 	check("LiveFeed: every client frame counted BEFORE ping/close handling; heartbeats not stored for replay; stale replay suppressed",
 		/webSocketMessage[\s\S]{0,200}this\.spend\(LIVE_COST\.clientMsg\)[\s\S]{0,200}LIVE_PING/.test(live) && /startsWith\('\{"type":"hb"'\)/.test(live) && /LIVE_REPLAY_MAX_AGE_MS/.test(live));
+	// fail-closed gate + in-isolate trip + close/error pre-pay
+	check("monthEndMs: first ms of next UTC month", lc.monthEndMs(Date.UTC(2026, 9, 15, 12)) === Date.UTC(2026, 10, 1) && lc.monthEndMs(Date.UTC(2026, 11, 31, 23, 59)) === Date.UTC(2027, 0, 1));
+	check("isNoTableError: only 'no such table' is treated as safe", lc.isNoTableError(new Error("D1_ERROR: no such table: live_state: SQLITE_ERROR")) && !lc.isNoTableError(new Error("D1_ERROR: Network connection lost")) && !lc.isNoTableError(new Error("timeout")) && !lc.isNoTableError(undefined));
+	const tryFn = idx.slice(idx.indexOf("async function liveStashTry("), idx.indexOf("async function liveStashRead("));
+	check("liveStashTry: errors return ok:false and are NOT memoized (except no-such-table)", /return \{ ok: false/.test(tryFn) && /isNoTableError\(e\)/.test(tryFn) && (tryFn.match(/liveStashMemo = /g) || []).length === 2 && tryFn.indexOf("return { ok: false") > tryFn.lastIndexOf("liveStashMemo = "));
+	const iOver = up.indexOf("Date.now() < liveOverUntil"), iTry = up.indexOf("liveStashTry(env, LIVE_STASH_CACHE_MS)"), iClosed = up.indexOf("if (!sr.ok) return new Response("), iDo = up.indexOf("liveStub(env).fetch(");
+	check("liveUpgrade order: overUntil -> cached stash (<=10s) -> fail closed 503 on error -> DO", iOver > 0 && iOver < iTry && iTry < iClosed && iClosed < iDo && /LIVE_STASH_CACHE_MS = 10_000/.test(idx) && /status: 503, headers: \{ "X-Live-State": "unknown" \}/.test(up));
+	check("liveUpgrade: DO 'budget' trips overUntil BEFORE the D1 stamp, returns 503 even if the stamp fails",
+		/X-Live-State"\) === "budget"\) \{\s*liveTrip\(Date\.now\(\)\);[^\n]*\n\s*try \{ await liveStampOver\(env\); \} catch/.test(up) && /return budgetRes\(\);\s*\}\s*if \(res\.status === 101\)/.test(up));
+	check("pushTick: overUntil short-circuit, fail closed on stash error, trips on broadcast over", pt.indexOf("liveOverUntil") < pt.indexOf("liveStashTry(") && /if \(!sr\.ok\) return;/.test(pt) && /if \(st\.over\) liveTrip/.test(pt));
+	check("LiveFeed.spend stops writing storage once over (bounded row writes); close/error carry no extra spend",
+		/if \(!wasOver\) await this\.ctx\.storage\.put\(K_BUDGET/.test(live) && !/webSocketClose[\s\S]{0,300}spend\(/.test(live) && !/webSocketError[\s\S]{0,200}spend\(/.test(live));
+	check("storage writes worst case 16,000,000 + 44,640 x 3 = 16,133,920 < 50M (documented)", lc.LIVE_MONTH_BUDGET_UNITS + 44640 * 3 === 16133920 && 16133920 < 50_000_000 && /16,133,920 < 50,000,000/.test(readFileSync(path.join(HERE, "src", "live-core.ts"), "utf8")));
 	check("worst case (documented in live-core): 800k + 44,640 broadcasts < 1M req; 31d x 86400 x 0.125 = 334,800 GB-s < 400k",
 		lc.LIVE_MONTH_BUDGET_REQ + 31 * 1440 === 844640 && 844640 < 1_000_000 && 31 * 86400 * 0.125 === 334800 && 334800 < 400000 &&
 		/total <= 800,000 \+ 44,640 = 844,640 < 1,000,000/.test(readFileSync(path.join(HERE, "src", "live-core.ts"), "utf8")));

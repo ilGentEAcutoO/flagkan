@@ -18,7 +18,7 @@ import { RESOLVE_FIRST_SQL, RESOLVE_LAST_SQL, RESOLVE_PRIOR_SQL } from "./ml/col
 import { collectLooks, collectDev, collectCounters } from "./dev";
 import { LiveFeed } from "./live";
 import type { LiveState } from "./live";
-import { buildTickEvent, heartbeatEvent, shouldBroadcast, originAllowed, proofSummaryOf, stashOver, monthKey, TouchSet, TICK_MAX_ROWS } from "./live-core";
+import { buildTickEvent, heartbeatEvent, shouldBroadcast, originAllowed, proofSummaryOf, stashOver, monthKey, monthEndMs, isNoTableError, TouchSet, TICK_MAX_ROWS } from "./live-core";
 export { LiveFeed };
 
 // LIVE-001: coins touched by the running cron(s), for the push tick. Each
@@ -1033,15 +1033,30 @@ async function liveStashEnsure(env: Env): Promise<void> {
 	liveTableReady = true;
 }
 type LiveStash = { month: string | null; requests: number | null; budget: number | null; over: number | null; sockets: number | null; sent: number | null; ts: number | null; last_connect: number | null };
+// Only SUCCESSFUL reads are memoized; an error is never cached as "not over".
 let liveStashMemo: { at: number; row: LiveStash | null } | null = null;
-async function liveStashRead(env: Env, maxAgeMs: number): Promise<LiveStash | null> {
-	if (liveStashMemo && Date.now() - liveStashMemo.at < maxAgeMs) return liveStashMemo.row;
-	let row: LiveStash | null = null;
+// In-isolate trip: set whenever the DO / stash says "budget"; checked before
+// any D1 read so a flood after the trip never reaches D1 or the DO.
+let liveOverUntil = 0;
+const LIVE_STASH_CACHE_MS = 10_000;
+async function liveStashTry(env: Env, maxAgeMs: number): Promise<{ ok: true; row: LiveStash | null } | { ok: false; err: string }> {
+	if (liveStashMemo && Date.now() - liveStashMemo.at < maxAgeMs) return { ok: true, row: liveStashMemo.row };
 	try {
-		row = await env.DB_MAIN.prepare("SELECT month, requests, budget, over, sockets, sent, ts, last_connect FROM live_state WHERE id = 1").first<LiveStash>();
-	} catch { row = null; /* table not created yet = nothing stashed */ }
-	liveStashMemo = { at: Date.now(), row };
-	return row;
+		const row = await env.DB_MAIN.prepare("SELECT month, requests, budget, over, sockets, sent, ts, last_connect FROM live_state WHERE id = 1").first<LiveStash>();
+		liveStashMemo = { at: Date.now(), row: row ?? null };
+		return { ok: true, row: row ?? null };
+	} catch (e) {
+		if (isNoTableError(e)) { liveStashMemo = { at: Date.now(), row: null }; return { ok: true, row: null }; } // never written yet
+		return { ok: false, err: String(e).slice(0, 120) };
+	}
+}
+/** Diag-only convenience: row or null (errors shown as null). */
+async function liveStashRead(env: Env, maxAgeMs: number): Promise<LiveStash | null> {
+	const r = await liveStashTry(env, maxAgeMs);
+	return r.ok ? r.row : null;
+}
+function liveTrip(now: number): void {
+	liveOverUntil = Math.max(liveOverUntil, monthEndMs(now));
 }
 async function liveStashWrite(env: Env, st: LiveState): Promise<void> {
 	await liveStashEnsure(env);
@@ -1087,8 +1102,11 @@ function liveStub(env: Env): DurableObjectStub<LiveFeed> {
 async function pushTick(env: Env, touched: TouchSet, resolved: number): Promise<void> {
 	try {
 		if (!liveEnabled(env)) return;
-		const stash = await liveStashRead(env, 0);
-		if (stashOver(stash, Date.now())) return; // monthly budget hit: no DO request at all
+		if (Date.now() < liveOverUntil) return; // tripped in this isolate
+		const sr = await liveStashTry(env, 0);
+		if (!sr.ok) return; // fail closed: unknown state = no DO request
+		const stash = sr.row;
+		if (stashOver(stash, Date.now())) { liveTrip(Date.now()); return; } // monthly budget hit: no DO request at all
 		if (!shouldBroadcast(stash, Date.now())) return; // nobody watching: an unused feed costs ~nothing
 		let evt: Record<string, unknown> | null = null;
 		if (touched.size > 0 || resolved > 0) {
@@ -1102,6 +1120,7 @@ async function pushTick(env: Env, touched: TouchSet, resolved: number): Promise<
 		}
 		const frame: Record<string, unknown> = evt ?? heartbeatEvent(Date.now());
 		const st = await liveStub(env).broadcast(JSON.stringify(frame));
+		if (st.over) liveTrip(Date.now());
 		await liveStashWrite(env, st);
 		console.log(JSON.stringify({ live: frame.type, rows: Array.isArray(frame.rounds) ? frame.rounds.length : 0, proof: !!frame.proof, sent: st.sent ?? 0, sockets: st.sockets, req_month: st.requests, over: st.over }));
 	} catch (e) {
@@ -1117,14 +1136,20 @@ async function liveUpgrade(request: Request, env: Env): Promise<Response> {
 	}
 	if (!originAllowed(request.headers.get("Origin"), new URL(request.url).host)) return new Response("forbidden origin", { status: 403 });
 	if (!request.headers.get("CF-Connecting-IP")) return new Response("missing client ip", { status: 400 });
-	if (stashOver(await liveStashRead(env, 0), Date.now())) { // fresh D1 read every attempt: no memo leak window
-		return new Response("live budget reached", { status: 503, headers: { "X-Live-State": "budget" } });
-	}
+	const budgetRes = () => new Response("live budget reached", { status: 503, headers: { "X-Live-State": "budget" } });
+	if (Date.now() < liveOverUntil) return budgetRes(); // in-isolate trip: no D1, no DO
+	const sr = await liveStashTry(env, LIVE_STASH_CACHE_MS);
+	if (!sr.ok) return new Response("live state unavailable", { status: 503, headers: { "X-Live-State": "unknown" } }); // FAIL CLOSED
+	if (stashOver(sr.row, Date.now())) { liveTrip(Date.now()); return budgetRes(); }
 	const res = await liveStub(env).fetch(request);
-	try {
-		if (res.status === 101) await liveStampConnect(env);
-		else if (res.headers.get("X-Live-State") === "budget") await liveStampOver(env);
-	} catch { /* stash is best-effort; the DO enforces caps and budget itself */ }
+	if (res.headers.get("X-Live-State") === "budget") {
+		liveTrip(Date.now()); // set BEFORE the D1 write: even if it fails, this isolate stays closed
+		try { await liveStampOver(env); } catch { /* overUntil already trips; other isolates learn from the DO's 503 */ }
+		return budgetRes();
+	}
+	if (res.status === 101) {
+		try { await liveStampConnect(env); } catch { /* idle-skip stamp is best-effort */ }
+	}
 	return res;
 }
 

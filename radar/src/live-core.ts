@@ -31,15 +31,22 @@ export const LIVE_CLOSE_REFUSED = 4429;
 // and 400,000 GB-s per month) ---------------------------------------------
 // Requests:
 //   broadcasts  <= 1 per cron minute = 30 d x 1,440 = 43,200 (31 d: 44,640)
-//   upgrades + client frames: counted by the kill-switch below; at
-//     800,000 the DO refuses and the Worker stops calling it (D1 stash
-//     read on every upgrade attempt; cron skips the RPC).
+//   upgrades: counted at 3 requests EACH (LIVE_COST.upgrade = 60 units):
+//     1 for the upgrade + pre-paid 1 for its webSocketClose + 1 for a
+//     possible webSocketError, so the bound holds even if both events bill.
 //   client frames bill at 20:1 and are counted at 1/20 EACH, pings included
 //     (no auto-response: every frame reaches webSocketMessage and is counted).
+//   At 800,000 counted the DO refuses everything and closes all sockets; the
+//     Worker stops calling it (in-isolate overUntil -> cached D1 stash, and
+//     FAILS CLOSED with 503 when the stash cannot be read); cron skips the RPC.
 //   Clients send no keepalive at all (server heartbeat), so idle viewers
-//     cost nothing but the 1/min broadcast already counted above.
+//     cost nothing but the 1/min broadcast.
 //   total <= 800,000 + 44,640 = 844,640 < 1,000,000 (the broadcasts are also
 //     inside the 800k counter, so this double-counts them on purpose).
+// DO SQLite storage row writes (Paid includes 50,000,000/month):
+//   one budget row write per counted event, none once over the line;
+//   the most events is 16,000,000 (all 1-unit client frames) + 44,640
+//   broadcasts x 3 rows (budget + last + last_at) = 16,133,920 < 50,000,000.
 // Duration: exactly ONE instance exists (idFromName("global"), only path);
 //   even awake every second of a month at the 128 MB billing size:
 //   31 d x 86,400 s x 0.125 GB = 334,800 GB-s < 400,000 (30 d: 324,000).
@@ -51,7 +58,7 @@ export const LIVE_CLOSE_REFUSED = 4429;
 export const LIVE_UNITS_PER_REQUEST = 20;
 export const LIVE_MONTH_BUDGET_REQ = 800_000;
 export const LIVE_MONTH_BUDGET_UNITS = LIVE_MONTH_BUDGET_REQ * LIVE_UNITS_PER_REQUEST;
-export const LIVE_COST = { upgrade: 20, broadcast: 20, clientMsg: 1 } as const;
+export const LIVE_COST = { upgrade: 60, broadcast: 20, clientMsg: 1 } as const; // upgrade pre-pays its close + error events
 
 export interface LiveBudget { month: string; units: number }
 
@@ -90,6 +97,17 @@ export function shouldBroadcast(stash: { sockets?: unknown; last_connect?: unkno
 	if (!Number.isFinite(socks) || socks > 0) return true;
 	const lc = Number(stash.last_connect);
 	return Number.isFinite(lc) && lc > 0 && now - lc <= LIVE_IDLE_SKIP_MS;
+}
+
+/** First ms of the next UTC month (how long a budget trip stays tripped). */
+export function monthEndMs(now: number): number {
+	const d = new Date(now);
+	return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
+}
+
+/** D1 error that only means "the worker never wrote the stash yet" (safe = not over). */
+export function isNoTableError(e: unknown): boolean {
+	return /no such table/i.test(String((e as { message?: unknown })?.message ?? e));
 }
 
 /** Worker-side view of the stashed state row: over only if it is THIS month's row. */
