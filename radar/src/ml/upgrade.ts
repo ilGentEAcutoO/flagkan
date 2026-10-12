@@ -137,3 +137,17 @@ export function resolveDeadV2(
 	const dead_v2: 0 | 1 = priceDead || liqDead || idle === 1 ? 1 : 0;
 	return { dead_v2, idle, why: priceDead ? "price" : liqDead ? "liq" : idle === 1 ? "idle" : "alive" };
 }
+
+// On-demand verdict guard (Oct 12 review): /api/verdict-now and
+// /api/signals-now judge the CURRENT market. Persisting that over (or in
+// place of) a first-sight verdict would put post-outcome information into
+// the v2 headline and training. Persist only when this call created the
+// round, or the round is < 10 min old and has no verdict yet; otherwise the
+// fresh answer is a preview and is never written.
+export const FIRST_SIGHT_WINDOW_MS = 10 * 60 * 1000;
+export function shouldPersistVerdict(o: { createdRound: boolean; firstSeen: number | null; hasVerdict: boolean; now: number }): boolean {
+	if (o.createdRound) return true;
+	if (o.hasVerdict) return false;
+	const fs = num(o.firstSeen);
+	return fs !== null && o.now - fs >= 0 && o.now - fs < FIRST_SIGHT_WINDOW_MS;
+}

@@ -395,5 +395,17 @@ try {
 	check("backfill-v9 parity (node:sqlite)", false, String(e).slice(0, 200));
 }
 
+// --- on-demand verdict guard: never overwrite first-sight verdicts ---
+{
+	const P = up.shouldPersistVerdict, now = 1_000_000_000;
+	check("persist when this call created the round", P({ createdRound: true, firstSeen: now, hasVerdict: false, now }) === true);
+	check("persist fresh round (<10 min) without verdict", P({ createdRound: false, firstSeen: now - 5 * 60e3, hasVerdict: false, now }) === true);
+	check("never overwrite existing verdict (fresh round)", P({ createdRound: false, firstSeen: now - 60e3, hasVerdict: true, now }) === false);
+	check("never write late verdict for old coin", P({ createdRound: false, firstSeen: now - 3 * 3600e3, hasVerdict: false, now }) === false);
+	check("10 min boundary is preview", P({ createdRound: false, firstSeen: now - 10 * 60e3, hasVerdict: false, now }) === false);
+	check("unknown round -> preview", P({ createdRound: false, firstSeen: null, hasVerdict: false, now }) === false);
+	check("future first_seen -> preview", P({ createdRound: false, firstSeen: now + 60e3, hasVerdict: false, now }) === false);
+}
+
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }
 console.log(`ml-check: all green (${passes} passed)`);

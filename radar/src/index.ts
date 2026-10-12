@@ -8,7 +8,7 @@ interface Env {
 
 import { hardRed, shadowGreen, timeSplitValidateV2, RETRAIN_SQL_V2, rowFromDb, predict, buildFeatures, parseMintAuthorities, shouldPromote, FEATURES, LABEL_V, MODEL_V, POLICY_V, policyV2, BASE_RATE_P } from "./ml/train";
 import type { GoldModel, TrainRow } from "./ml/train";
-import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence, LABEL_V2 } from "./ml/upgrade";
+import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence, LABEL_V2, shouldPersistVerdict } from "./ml/upgrade";
 import type { SnapLite } from "./ml/upgrade";
 
 const DEX = "https://api.dexscreener.com";
@@ -210,6 +210,16 @@ async function decideV2(env: Env, a: any, vstate: Record<string, unknown>, mint:
 	(a.verdict as any).redSource = redSource;
 	(a.verdict as any).tier = tier;
 	console.log(JSON.stringify({ [tag]: "policy_v2", mint, tier, p: p === null ? null : Math.round(p * 1000) / 1000, rule, jev }));
+}
+
+// Today's verdict-now response shape (answers.verdict.*) rebuilt from a
+// stored verdict row, so clients render the first-sight verdict unchanged.
+function storedAnswers(v: Record<string, unknown>): Record<string, unknown> {
+	return {
+		verdict: { choice: v.choice, confidence: v.confidence, probabilities: { red: v.p_red, yellow: v.p_yellow, green: v.p_green }, tier: v.tier ?? null },
+		coordinated: { noul: v.coordinated }, severity: { score: v.severity },
+		f_whale: { noul: v.f_whale }, f_sell: { noul: v.f_sell }, f_struct: { noul: v.f_struct },
+	};
 }
 
 function tierOf(a: any): string | null {
@@ -1267,16 +1277,26 @@ export default {
 				const pairs = await jget(DEX + "/tokens/v1/solana/" + mint);
 				const m = dexPairToMarket(pickPair(pairs));
 				if (!m) return json({ error: "no pair data" }, 404);
-				await env.DB_MAIN.prepare(
+				const insR = await env.DB_MAIN.prepare(
 					"INSERT OR IGNORE INTO rounds (mint, first_seen, pair_address, name, source) VALUES (?, ?, ?, ?, 'dex')"
 				)
 					.bind(mint, now, m.pair, m.name)
 					.run();
+				// First-sight guard (review blocker): an already-tracked coin
+				// keeps its first-sight verdict; judging today's market is a
+				// preview only (never written — no verdict, signals, snapshot
+				// or outcome change), so the v2 headline and training never see
+				// post-outcome information.
+				const createdRound = Number((insR.meta as any)?.changes ?? 0) === 1;
+				const rnow = await env.DB_MAIN.prepare("SELECT first_seen, source FROM rounds WHERE mint = ?").bind(mint).first<{ first_seen: number | null; source: string | null }>();
+				const stored = await env.DB_MAIN.prepare("SELECT * FROM verdicts WHERE mint = ?").bind(mint).first<Record<string, unknown>>();
+				const persist = shouldPersistVerdict({ createdRound, firstSeen: rnow?.first_seen ?? null, hasVerdict: Boolean(stored), now });
+				if (!persist && stored) return json({ mint, stored: true, preview: false, verdict: stored, answers: storedAnswers(stored), note: "already tracked: showing the first-sight verdict (never overwritten)" });
 				let sig: Record<string, unknown> = {};
 				try {
 					const s = await computeSignals(env, mint);
 					sig = s as unknown as Record<string, unknown>;
-					await env.DB_MAIN.prepare(
+					if (persist) await env.DB_MAIN.prepare(
 						"INSERT OR REPLACE INTO signals (mint, ts, top1_pct, top10_pct, top2_11_pct, pool_suspect, early_buys, mint_age_min, mint_auth_live, freeze_auth_live, simpson) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					)
 						.bind(mint, now, s.top1_pct, s.top10_pct, s.top2_11_pct, s.pool_suspect, s.early_buys, s.mint_age_min, s.mint_auth_live, s.freeze_auth_live, s.simpson)
@@ -1285,17 +1305,17 @@ export default {
 					/* verdict falls back to market data only */
 				}
 				// First-seen snapshot: on-demand verdicts resolve like cron ones.
-				try {
+				if (persist) try {
 					await env.DB_MAIN.prepare(
 						"INSERT INTO snapshots (mint, ts, price_usd, liquidity_usd, fdv, txns_5m, buys_5m, sells_5m, price_chg_h1, vol_h1, pair_age_min, feed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'dex')"
 					)
 						.bind(mint, now, m.price, m.liq, m.fdv, m.tx5, m.buys5, m.sells5, m.chgH1, m.volH1, m.pairAgeMin)
 						.run();
 				} catch { /* resolution sampling stays best-effort */ }
-				const rsrc = await env.DB_MAIN.prepare("SELECT source FROM rounds WHERE mint = ?").bind(mint).first<{ source: string | null }>();
-				const state = marketToVstate(mint, m, sig, rsrc?.source ?? null);
+				const state = marketToVstate(mint, m, sig, rnow?.source ?? null);
 				const a = await jevVerdict(env, state);
 				await decideV2(env, a, state, mint, "verdict_now");
+				if (!persist) return json({ mint, state, answers: a, stored: false, preview: true, note: "preview of the current market: not stored, not graded" });
 				await env.DB_MAIN.prepare(
 					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
@@ -1320,7 +1340,7 @@ export default {
 						POLICY_V
 					)
 					.run();
-				return json({ mint, state, answers: a });
+				return json({ mint, state, answers: a, stored: true, preview: false });
 			} catch (e) {
 				return json({ mint, error: String(e).slice(0, 200) }, 500);
 			}
@@ -1344,10 +1364,18 @@ export default {
 					price: 0, liq: 0, fdv: 0, buys5: 0, sells5: 0, tx5: 0, sellRatio: 0,
 					name: "", pair: "", chgH1: null, volH1: null, pairAgeMin: null,
 				};
-				const rsrc3 = await env.DB_MAIN.prepare("SELECT source FROM rounds WHERE mint = ?").bind(mint).first<{ source: string | null }>();
+				const rsrc3 = await env.DB_MAIN.prepare("SELECT source, first_seen FROM rounds WHERE mint = ?").bind(mint).first<{ source: string | null; first_seen: number | null }>();
 				const vstate3 = marketToVstate(mint, m, s as unknown as Record<string, unknown>, rsrc3?.source ?? null);
 				const a = await jevVerdict(env, vstate3);
 				await decideV2(env, a, vstate3, mint, "signals_now");
+				// Same first-sight guard as verdict-now: signals may be
+				// recomputed (training nulls signals >10 min after first sight),
+				// but an existing verdict row is never replaced, and a late
+				// verdict for an old coin is never created.
+				const stored3 = await env.DB_MAIN.prepare("SELECT * FROM verdicts WHERE mint = ?").bind(mint).first<Record<string, unknown>>();
+				if (!shouldPersistVerdict({ createdRound: false, firstSeen: rsrc3?.first_seen ?? null, hasVerdict: Boolean(stored3), now })) {
+					return json({ mint, signals: s, answers: a, stored: false, preview: true, verdict: stored3 ?? null });
+				}
 				await env.DB_MAIN.prepare(
 					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
@@ -1372,7 +1400,7 @@ export default {
 						POLICY_V
 					)
 					.run();
-				return json({ mint, signals: s, answers: a });
+				return json({ mint, signals: s, answers: a, stored: true, preview: false });
 			} catch (e) {
 				return json({ mint, error: String(e).slice(0, 200) }, 500);
 			}
