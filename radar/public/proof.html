@@ -44,6 +44,40 @@ td{padding:8px 14px;border-bottom:1px solid #F4EEE2;font-family:var(--mono);font
 tbody tr:last-child td{border-bottom:none}
 td.num{text-align:right;font-variant-numeric:tabular-nums}
 .coinname{font-family:var(--font);font-weight:700;color:var(--ink);font-size:13px}
+/* label v2 — headline score with baselines, collecting state, definition box */
+[hidden]{display:none!important}
+.cap{margin-top:8px;font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.cmp{margin-top:12px;display:grid;gap:5px}
+.cmp .cr{display:grid;grid-template-columns:minmax(64px,auto) 1fr 36px;align-items:center;gap:8px;font-size:11.5px;color:var(--faint);line-height:1.2}
+.cmp .cr.me{color:var(--ink);font-weight:700}
+.cmp .bar{height:6px;background:var(--cream);border-radius:99px;overflow:hidden}
+.cmp .bar i{display:block;height:100%;background:var(--line2);border-radius:99px}
+.cmp .cr.me .bar i{background:var(--ink)}
+.cmp .pv{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.lift{margin-top:14px;display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;font-size:14px;color:var(--dim)}
+.lift .x{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--grn);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.lift b{color:var(--ink)}
+.tiers td.num{width:1%}
+.tiers .tbar{display:inline-block;vertical-align:middle;width:90px;height:6px;background:var(--cream);border-radius:99px;overflow:hidden;margin-right:8px}
+.tiers .tbar i{display:block;height:100%;background:var(--red);border-radius:99px}
+.collect{margin-top:22px;padding:18px 22px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.collect .ct{font-weight:800;font-size:16px}
+.collect .cs{color:var(--dim);font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
+.collect .pbar{margin-top:12px;height:6px;background:var(--cream);border-radius:99px;overflow:hidden;max-width:420px}
+.collect .pbar i{display:block;height:100%;background:var(--yeldot);border-radius:99px;transition:width .6s var(--ease)}
+details.legacy{margin-top:14px;font-size:13px;color:var(--faint)}
+details.legacy summary{cursor:pointer;font-weight:700;color:var(--dim)}
+details.legacy .lgn{display:flex;gap:6px 22px;flex-wrap:wrap;margin-top:8px;font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+details.legacy .lgn b{color:var(--dim);font-weight:700}
+details.legacy p{margin-top:6px;max-width:68ch}
+.defbox{margin-top:22px;background:var(--cream);border-radius:12px;padding:14px 18px;font-size:14px;max-width:760px}
+.defbox .dk{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+.defbox p{margin-top:3px;color:var(--ink)}
+.defbox details{margin-top:8px;font-size:13px;color:var(--dim)}
+.defbox summary{cursor:pointer;font-weight:700;color:var(--ink)}
+.defbox details p{color:var(--dim);margin-top:6px}
+.defbox .rg{font-family:var(--mono);font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.rnote{font-size:12.5px;color:var(--faint);margin:-4px 0 14px;max-width:68ch}
 @media(max-width:760px){#rules{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){
   .wrap{padding-top:22px}
@@ -53,6 +87,12 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   .stat .k{font-size:10px;letter-spacing:.06em}
   .stat .s{font-size:11px;line-height:1.35;margin-top:2px}
   #rules{grid-template-columns:1fr;gap:16px}
+  .score.v2{grid-template-columns:1fr}
+  .score.v2 .stat{padding:14px 16px}
+  .score.v2 .stat+.stat{border-left:none;border-top:1px solid var(--line)}
+  .score.v2 .stat .v{font-size:30px}
+  .collect{padding:16px}
+  .tiers .tbar{width:48px}
   .sec{margin-top:36px}
   th,td{padding-left:10px;padding-right:10px}
 }
@@ -67,12 +107,20 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 <div class="wrap">
   <h1 data-i18n="h1">Proof, not promises.</h1>
   <p class="lead" data-i18n="sub"></p>
-  <div class="score">
+  <div class="score" id="legacyScore">
     <div class="stat"><div class="v green" id="sAcc">–</div><div class="k" data-i18n="sAcc">accuracy</div><div class="s" data-i18n="sAccS"></div></div>
     <div class="stat"><div class="v" id="sRes">–</div><div class="k" data-i18n="sRes">coins judged</div><div class="s" data-i18n="sResS"></div></div>
     <div class="stat"><div class="v red" id="sRed">–</div><div class="k" data-i18n="sRed">red precision</div><div class="s" data-i18n="sRedS"></div></div>
   </div>
-  <section class="sec"><h2 data-i18n="ruleT">The 6 checks</h2><div id="rules"></div></section>
+  <div id="v2box" hidden></div>
+  <div id="defbox" class="defbox" hidden></div>
+  <section class="sec" id="tierSec" hidden><h2 data-i18n="tierT">By confidence tier</h2>
+    <div class="tcard"><div class="tscroll"><table class="tiers">
+      <thead><tr><th data-i18n="cTier">tier</th><th style="text-align:right" data-i18n="cN">coins</th><th data-i18n="cDead">died within 6h</th></tr></thead>
+      <tbody id="tierRows"></tbody>
+    </table></div></div>
+  </section>
+  <section class="sec"><h2 data-i18n="ruleT">The 6 checks</h2><p class="rnote" data-i18n="ruleNote"></p><div id="rules"></div></section>
   <section class="sec"><h2 data-i18n="aiT">The AI judge</h2><div class="prose"><p data-i18n-html="aiD"></p><details><summary data-i18n="outT">How outcomes are settled</summary><p data-i18n-html="outD"></p></details></div></section>
   <section class="sec"><h2 data-i18n="tabT">Every resolved coin</h2>
     <div class="tcard"><div class="tscroll"><table>
@@ -91,33 +139,79 @@ h1:"Proof, not promises.",
 sub:"Every verdict is graded by what actually happened 6 hours after first sight. This page shows the live score and every resolved coin — nothing cherry-picked.",
 sAcc:"accuracy",sAccS:"red+dead or other+alive",sRes:"coins judged",sResS:"resolved with a verdict",sRed:"red precision",sRedS:"red verdicts that died",
 ruleT:"The 6 checks",
-r1t:"Whale concentration",r1d:"Share held by the single largest wallet.",r1l:"red ≥ 30%",
-r2t:"Top holders 2–11",r2d:"Share held by wallets ranked 2 to 11 combined.",r2l:"red ≥ 40%",
-r3t:"First-minute buys",r3d:"Buy pressure in the first minute of the tracked window.",r3l:"red ≥ 300",
-r4t:"Pool liquidity",r4d:"USD liquidity in the pool at verdict time.",r4l:"red < $10k",
-r5t:"Coin age",r5d:"Minutes since the mint was created on-chain.",r5l:"warn < 15 min",
-r6t:"Linked wallets · AI",r6d:"Jev estimates how coordinated the holder wallets look.",r6l:"red ≥ 70%",
+ruleNote:"These are reference levels that explain a verdict, not switches. The final light comes from the model + rules, with crash re-checks before grading.",
+r1t:"Whale concentration",r1d:"Share held by the single largest wallet.",r1l:"watch ≥ 30%",
+r2t:"Top holders 2–11",r2d:"Share held by wallets ranked 2 to 11 combined.",r2l:"watch ≥ 40%",
+r3t:"First-minute buys",r3d:"Buy pressure in the first minute of the tracked window.",r3l:"watch ≥ 300",
+r4t:"Pool liquidity",r4d:"USD liquidity in the pool at verdict time.",r4l:"watch < $10k",
+r5t:"Coin age",r5d:"Minutes since the mint was created on-chain.",r5l:"watch < 15 min",
+r6t:"Linked wallets · AI",r6d:"Jev estimates how coordinated the holder wallets look.",r6l:"watch ≥ 70%",
 aiT:"The AI judge",outT:"How outcomes are settled",
-aiD:"The <b>Jev judge (jev-latest)</b> reads all six checks plus wallet-coordination signals and issues <b>red / yellow / green</b> with probabilities, a coordination score, and a severity rating. Single weak signals no longer mean red by themselves: low-evidence reds become calibrated yellow, and only measured crashes re-arm red before the outcome. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.",
-outD:"Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight, liquidity drained under $1,000, or the price sat frozen with zero trading</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.",
+aiD:"The light comes from a <b>leak-free logistic-regression model plus explicit rules</b>, trained only on what was visible at first sight. The <b>Jev judge (jev-latest)</b> adds a wallet-coordination score and writes the reasons you see. Single weak signals don't mean red by themselves, and a measured crash before grading re-arms red.",
+outD:"Outcomes settle automatically about 6 hours after first sight, from the same market feed the coin was first seen on (see <b>what counts as dead</b> above). Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b>.",
+outDv1:"Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight, liquidity drained under $1,000, or the price sat frozen with zero trading</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.",
 tabT:"Every resolved coin",cCoin:"coin",cLight:"light",cMove:"6h move",cOut:"outcome",
-dead:"dead",alive:"alive",loading:"loading…"},
+dead:"dead",alive:"alive",loading:"loading…",
+hAcc:"accuracy",hRed:"red precision",hBase:"base dead rate",
+hBaseS:"of all new coins were dead within 6 hours",
+me:"FlagKan",bAllRed:"all red",bAllYel:"all yellow",bRand:"pick at random",
+hRecall:"catches {r} of the coins that died",
+hCap:"{n} coins graded under the new definition since {since}",
+hCapN:"{n} coins graded under the new definition",
+liftT:"Survivor lift",
+liftD:"Coins we did <b>not</b> flag red survived <b>{a}</b> of the time, vs <b>{b}</b> for all new coins.",
+tierT:"By confidence tier",cTier:"tier",cN:"coins",cDead:"died within 6h",
+tier_red_sure:"Red · high confidence",tier_red:"Red",tier_yellow:"Yellow",tier_green:"Green",
+colT:"Collecting results under the new definition",
+colS:"since {since} · {n} / 100 coins graded",colSN:"{n} / 100 coins graded",
+colD:"Headline numbers appear once 100 coins have been graded under label v2.",
+lgT:"Old definition (had a flaw)",
+lgD:"These numbers used the old label, which counted many coins that simply stopped trading as alive. Kept for transparency; don't compare them with the new numbers.",
+lgAcc:"accuracy",lgRed:"red precision",lgN:"coins",
+defK:"What counts as dead (v2)",
+defFb:"Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
+whyT:"Why we changed it",
+whyD:"Under the old definition, coins that simply stopped trading were often counted as alive, because the 6-hour sample came from a different data source than first sight. That made our accuracy look better than doing nothing deserved. We also fixed a training leak: a stored value was overwritten after crashes and could reach the model. From now on every number on this page sits next to the do-nothing baseline it has to beat.",
+rgT:"All past coins regraded under v2: {n} coins · base dead rate {b} · accuracy {a} · red precision {r}"},
 th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
 h1:"วัดผลจริง ไม่ใช่คำคุย",
 sub:"ทุกคำชี้ถูกตัดสินจากสิ่งที่เกิดขึ้นจริง 6 ชั่วโมงหลังเจอเหรียญ หน้านี้โชว์คะแนนสดกับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
 sAcc:"ความแม่น",sAccS:"แดง+พัง หรือ อื่น+รอด",sRes:"เหรียญที่ชี้แล้ว",sResS:"รู้ผลพร้อมคำชี้",sRed:"แดงแม่น",sRedS:"ชี้แดงแล้วพังจริง",
 ruleT:"เกณฑ์ 6 ข้อ",
-r1t:"รายใหญ่สุดถือ",r1d:"สัดส่วนที่กระเป๋าใหญ่อันดับ 1 ถือ",r1l:"แดง ≥ 30%",
-r2t:"รายใหญ่อันดับ 2–11",r2d:"สัดส่วนรวมของกระเป๋าอันดับ 2 ถึง 11",r2l:"แดง ≥ 40%",
-r3t:"ยอดซื้อ 1 นาทีแรก",r3d:"แรงซื้อในนาทีแรกของช่วงที่ติดตาม",r3l:"แดง ≥ 300",
-r4t:"สภาพคล่องพูล",r4d:"สภาพคล่องดอลลาร์ในพูลตอนชี้",r4l:"แดง < $10k",
-r5t:"อายุเหรียญ",r5d:"นาทีตั้งแต่ mint ถูกสร้างบนเชน",r5l:"เตือน < 15 นาที",
-r6t:"กระเป๋าโยงกัน · AI",r6d:"Jev ประเมินว่ากระเป๋าผู้ถือดูประสานกันแค่ไหน",r6l:"แดง ≥ 70%",
+ruleNote:"ตัวเลขเหล่านี้เป็นระดับอ้างอิงเพื่ออธิบายคำชี้ ไม่ใช่สวิตช์ ไฟสุดท้ายมาจากโมเดล + กฎ และมีการเช็ก crash ซ้ำก่อนตัดสินผล",
+r1t:"รายใหญ่สุดถือ",r1d:"สัดส่วนที่กระเป๋าใหญ่อันดับ 1 ถือ",r1l:"เฝ้าระวัง ≥ 30%",
+r2t:"รายใหญ่อันดับ 2–11",r2d:"สัดส่วนรวมของกระเป๋าอันดับ 2 ถึง 11",r2l:"เฝ้าระวัง ≥ 40%",
+r3t:"ยอดซื้อ 1 นาทีแรก",r3d:"แรงซื้อในนาทีแรกของช่วงที่ติดตาม",r3l:"เฝ้าระวัง ≥ 300",
+r4t:"สภาพคล่องพูล",r4d:"สภาพคล่องดอลลาร์ในพูลตอนชี้",r4l:"เฝ้าระวัง < $10k",
+r5t:"อายุเหรียญ",r5d:"นาทีตั้งแต่ mint ถูกสร้างบนเชน",r5l:"เฝ้าระวัง < 15 นาที",
+r6t:"กระเป๋าโยงกัน · AI",r6d:"Jev ประเมินว่ากระเป๋าผู้ถือดูประสานกันแค่ไหน",r6l:"เฝ้าระวัง ≥ 70%",
 aiT:"AI ผู้ชี้",outT:"ตัดสินผลยังไง",
-aiD:"<b>Jev (jev-latest)</b> อ่านเกณฑ์ทั้ง 6 ข้อบวกสัญญาณกระเป๋าโยงกัน แล้วชี้ <b>แดง / เหลือง / เขียว</b> พร้อมความน่าจะเป็น คะแนนโยงกัน และระดับความรุนแรง สัญญาณอ่อนอย่างเดียวไม่เท่ากับแดงอีกต่อไป: ใบแดงหลักฐานน้อยกลายเป็นเหลืองคาลิเบรต จะกลับแดงต้องมี crash ที่วัดได้จริงก่อนรู้ผล เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที",
-outD:"ผลตัดสินอัตโนมัติ: <b>พังคือราคาหลุดเกิน 90% จากตอนเจอ สภาพคล่องต่ำกว่า $1,000 หรือราคานิ่งไม่มีเทรดเลย</b> เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b> — ช่องทางเดียว",
+aiD:"ไฟมาจาก <b>โมเดล logistic regression ที่ไม่มีข้อมูลรั่ว + กฎที่เขียนชัด</b> ฝึกจากสิ่งที่เห็นได้ตอนเจอเหรียญครั้งแรกเท่านั้น <b>Jev (jev-latest)</b> ให้คะแนนกระเป๋าโยงกันและเขียนเหตุผลที่คุณเห็น สัญญาณอ่อนข้อเดียวไม่ทำให้เป็นแดง และถ้าวัด crash ได้จริงก่อนตัดสินผล ไฟจะกลับเป็นแดง",
+outD:"ผลตัดสินอัตโนมัติราว 6 ชั่วโมงหลังเจอ จากแหล่งข้อมูลตลาดเดียวกับตอนเจอครั้งแรก (ดู <b>นิยาม \"ตาย\"</b> ด้านบน) เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b>",
+outDv1:"ผลตัดสินอัตโนมัติ: <b>พังคือราคาหลุดเกิน 90% จากตอนเจอ สภาพคล่องต่ำกว่า $1,000 หรือราคานิ่งไม่มีเทรดเลย</b> เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b> — ช่องทางเดียว",
 tabT:"ทุกเหรียญที่รู้ผลแล้ว",cCoin:"เหรียญ",cLight:"ไฟ",cMove:"6 ชม.",cOut:"ผล",
-dead:"พัง",alive:"รอด",loading:"กำลังโหลด…"}};
+dead:"พัง",alive:"รอด",loading:"กำลังโหลด…",
+hAcc:"ความแม่น",hRed:"แดงแม่น",hBase:"อัตราตายพื้นฐาน",
+hBaseS:"ของเหรียญใหม่ทั้งหมดตายภายใน 6 ชั่วโมง",
+me:"FlagKan",bAllRed:"ชี้แดงหมด",bAllYel:"ชี้เหลืองหมด",bRand:"สุ่มชี้",
+hRecall:"จับได้ {r} ของเหรียญที่ตายจริง",
+hCap:"ตัดสินแล้ว {n} เหรียญด้วยนิยามใหม่ ตั้งแต่ {since}",
+hCapN:"ตัดสินแล้ว {n} เหรียญด้วยนิยามใหม่",
+liftT:"โอกาสรอดที่เพิ่มขึ้น",
+liftD:"เหรียญที่เรา<b>ไม่</b>ชี้แดงรอด <b>{a}</b> เทียบกับ <b>{b}</b> ของเหรียญใหม่ทั้งหมด",
+tierT:"แยกตามระดับความมั่นใจ",cTier:"ระดับ",cN:"เหรียญ",cDead:"ตายใน 6 ชม.",
+tier_red_sure:"แดง · มั่นใจสูง",tier_red:"แดง",tier_yellow:"เหลือง",tier_green:"เขียว",
+colT:"กำลังเก็บผลด้วยนิยามใหม่",
+colS:"ตั้งแต่ {since} · ตัดสินแล้ว {n} / 100 เหรียญ",colSN:"ตัดสินแล้ว {n} / 100 เหรียญ",
+colD:"ตัวเลขหลักจะขึ้นเมื่อตัดสินครบ 100 เหรียญด้วย label v2",
+lgT:"นิยามเดิม (มีจุดบกพร่อง)",
+lgD:"ตัวเลขชุดนี้ใช้นิยามเดิม ซึ่งนับเหรียญที่แค่หยุดเทรดว่า \"รอด\" อยู่บ่อย ๆ เก็บไว้เพื่อความโปร่งใส อย่าเอาไปเทียบกับตัวเลขชุดใหม่",
+lgAcc:"ความแม่น",lgRed:"แดงแม่น",lgN:"เหรียญ",
+defK:"นิยาม \"ตาย\" (v2)",
+defFb:"ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
+whyT:"ทำไมเราเปลี่ยน",
+whyD:"นิยามเดิมมักนับเหรียญที่แค่หยุดเทรดว่า \"รอด\" เพราะค่าที่วัดตอน 6 ชั่วโมงมาจากคนละแหล่งข้อมูลกับตอนเจอครั้งแรก ทำให้ความแม่นดูดีกว่าการไม่ทำอะไรเลยเกินจริง เรายังแก้ข้อมูลรั่วในการเทรนด้วย: มีค่าหนึ่งถูกเขียนทับหลังเหรียญ crash แล้วหลุดเข้าไปถึงโมเดล ต่อจากนี้ทุกตัวเลขในหน้านี้จะแสดงคู่กับ baseline แบบไม่ทำอะไรเลยที่ต้องชนะให้ได้",
+rgT:"ตัดสินเหรียญย้อนหลังทั้งหมดใหม่ด้วย v2: {n} เหรียญ · อัตราตายพื้นฐาน {b} · ความแม่น {a} · แดงแม่น {r}"}};
 var L="en";
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
@@ -128,11 +222,57 @@ document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 (function(){var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")==="proof")as[i].className="on"}})();
 function renderRules(){var h="";for(var i=1;i<=6;i++){h+='<div class="rule"><span class="n">0'+i+'</span><span class="t">'+esc(t("r"+i+"t"))+'</span><span class="d">'+esc(t("r"+i+"d"))+'</span><span class="lim">'+esc(t("r"+i+"l"))+"</span></div>"}document.getElementById("rules").innerHTML=h}
-function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
+var PROOF=null;
+function isNum(x){return x!=null&&x!==""&&!isNaN(Number(x))}
+function fmtInt(x){return isNum(x)?Number(x).toLocaleString("en-US"):"—"}
+function fill(s,o){return String(s).replace(/\{(\w+)\}/g,function(_,k){return o[k]==null?"":o[k]})}
+function fmtWhen(ts){try{return new Date(Number(ts)).toLocaleString(L==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}catch(e){return ""}}
+// one comparison bar row; w in 0..1
+function cmpRow(label,v,me){var w=isNum(v)?Math.max(0,Math.min(1,Number(v))):0;return '<div class="cr'+(me?" me":"")+'"><span>'+esc(label)+'</span><span class="bar"><i style="width:'+(w*100).toFixed(1)+'%"></i></span><span class="pv">'+pct(v)+"</span></div>"}
+function proofMode(d){var hd=d&&d.headline;if(!hd||typeof hd!=="object")return "legacy";return (hd.ready&&isNum(hd.accuracy))?"ready":"collecting"}
+function renderProof(d){if(!d)return;
+var mode=proofMode(d),hd=d.headline||{},isV2=mode!=="legacy"||!!d.label_def;
+var box=document.getElementById("v2box"),leg=document.getElementById("legacyScore");
+// legacy (current production, no v2 fields): exactly the old score card
 document.getElementById("sAcc").textContent=pct(d.accuracy);
-document.getElementById("sRes").textContent=d.resolved_with_verdict==null?"—":Number(d.resolved_with_verdict).toLocaleString("en-US");
+document.getElementById("sRes").textContent=fmtInt(d.resolved_with_verdict);
 document.getElementById("sRed").textContent=pct(d.red_precision);
-}).catch(function(){})}
+leg.hidden=mode!=="legacy";
+var oP=document.querySelector('[data-i18n-html="outD"]');if(oP)oP.innerHTML=isV2?t("outD"):t("outDv1");
+var h="";
+if(mode==="ready"){
+var base=hd.base_dead_rate;
+h+='<div class="score v2">';
+h+='<div class="stat"><div class="v green">'+pct(hd.accuracy)+'</div><div class="k">'+esc(t("hAcc"))+'</div><div class="cmp">'+cmpRow(t("me"),hd.accuracy,1)+(isNum(hd.baseline_all_red_accuracy)?cmpRow(t("bAllRed"),hd.baseline_all_red_accuracy):"")+(isNum(hd.baseline_all_yellow_accuracy)?cmpRow(t("bAllYel"),hd.baseline_all_yellow_accuracy):"")+"</div></div>";
+h+='<div class="stat"><div class="v red">'+pct(hd.red_precision)+'</div><div class="k">'+esc(t("hRed"))+'</div><div class="cmp">'+cmpRow(t("me"),hd.red_precision,1)+(isNum(base)?cmpRow(t("bAllRed"),base):"")+"</div>"+(isNum(hd.red_recall)?'<div class="s" style="margin-top:6px">'+esc(fill(t("hRecall"),{r:pct(hd.red_recall)}))+"</div>":"")+"</div>";
+h+='<div class="stat"><div class="v">'+pct(base)+'</div><div class="k">'+esc(t("hBase"))+'</div><div class="s">'+esc(t("hBaseS"))+"</div></div>";
+h+="</div>";
+h+='<p class="cap">'+esc(hd.since?fill(t("hCap"),{n:fmtInt(hd.n),since:fmtWhen(hd.since)}):fill(t("hCapN"),{n:fmtInt(hd.n)}))+"</p>";
+var baseAlive=isNum(base)?1-Number(base):null;
+var lift=isNum(hd.lift_non_red)?Number(hd.lift_non_red):(isNum(hd.alive_rate_non_red)&&baseAlive>0?Number(hd.alive_rate_non_red)/baseAlive:null);
+if(isNum(hd.alive_rate_non_red)&&baseAlive!=null){h+='<div class="lift">'+(lift!=null?'<span class="x">×'+lift.toFixed(1)+"</span>":"")+"<span>"+fill(t("liftD"),{a:pct(hd.alive_rate_non_red),b:pct(baseAlive)})+"</span></div>"}
+}else if(mode==="collecting"){
+var n=isNum(hd.n)?Number(hd.n):0,w=Math.max(0,Math.min(1,n/100));
+h+='<div class="collect"><div class="ct">'+esc(t("colT"))+'</div><div class="cs">'+esc(hd.since?fill(t("colS"),{since:fmtWhen(hd.since),n:fmtInt(n)}):fill(t("colSN"),{n:fmtInt(n)}))+'</div><div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.min(100,n)+'"><i style="width:'+(w*100).toFixed(1)+'%"></i></div><p class="cs" style="margin-top:10px">'+esc(t("colD"))+"</p></div>";
+}
+if(mode!=="legacy"){
+var lg=d.legacy_v1||{resolved_with_verdict:d.resolved_with_verdict,accuracy:d.accuracy,red_precision:d.red_precision};
+h+='<details class="legacy"><summary>'+esc(t("lgT"))+'</summary><div class="lgn"><span>'+esc(t("lgAcc"))+" <b>"+pct(lg.accuracy)+"</b></span><span>"+esc(t("lgRed"))+" <b>"+pct(lg.red_precision)+"</b></span><span>"+esc(t("lgN"))+" <b>"+fmtInt(lg.resolved_with_verdict)+"</b></span></div><p>"+esc(t("lgD"))+"</p></details>";
+}
+box.innerHTML=h;box.hidden=!h;
+// definition + why-we-changed fold (only once the backend speaks label v2)
+var db=document.getElementById("defbox");
+if(isV2){var ld=d.label_def||{};var dt=(L==="th"?ld.text_th:ld.text_en)||t("defFb");
+var rg=d.v2_history_regrade,rgh="";
+if(rg&&isNum(rg.n)){rgh='<p class="rg">'+esc(fill(t("rgT"),{n:fmtInt(rg.n),b:pct(rg.base_dead_rate),a:pct(rg.accuracy),r:pct(rg.red_precision)}))+"</p>"+(L==="en"&&rg.note?'<p class="rg">'+esc(rg.note)+"</p>":"")}
+db.innerHTML='<div class="dk">'+esc(t("defK"))+"</div><p>"+esc(dt)+'</p><details><summary>'+esc(t("whyT"))+"</summary><p>"+esc(t("whyD"))+"</p>"+rgh+"</details>";db.hidden=false}else{db.hidden=true;db.innerHTML=""}
+// tiers table (ready only)
+var ts=document.getElementById("tierSec"),tiers=(mode==="ready"&&Array.isArray(hd.tiers))?hd.tiers:[];
+if(tiers.length){var th="";for(var i=0;i<tiers.length;i++){var r=tiers[i]||{},k=String(r.tier||"");var lab=T.en["tier_"+k]?t("tier_"+k):k;var bc=(k==="red_sure"||k==="red")?"red":(k==="yellow"||k==="green")?k:"none";var dr=isNum(r.dead_rate)?Math.max(0,Math.min(1,Number(r.dead_rate))):null;
+th+='<tr><td><span class="badge '+bc+'">'+esc(lab)+'</span></td><td class="num">'+fmtInt(r.n)+'</td><td><span class="tbar"><i style="width:'+(dr==null?0:dr*100).toFixed(1)+'%"></i></span>'+pct(r.dead_rate)+"</td></tr>"}
+document.getElementById("tierRows").innerHTML=th;ts.hidden=false}else{ts.hidden=true}
+}
+function loadProof(){if(PROOF){renderProof(PROOF);return}fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderProof(d)}).catch(function(){})}
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
 function loadRows(){fetch("/api/rounds?limit=100&resolved=1").then(function(r){return r.json()}).then(function(d){
 var h="",n=0;

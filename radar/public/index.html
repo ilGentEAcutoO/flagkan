@@ -31,6 +31,9 @@
 .bstat .v{font-family:var(--mono);font-size:clamp(36px,4.6vw,50px);font-weight:800;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .bstat .v.green{color:#34D399}.bstat .v.red{color:#F87171}
 .bstat .k{font-family:var(--mono);font-size:11px;color:rgba(255,253,247,.6);text-transform:uppercase;letter-spacing:.14em;font-weight:700;margin-top:8px}
+.bstat .bs{font-size:12px;color:rgba(255,253,247,.55);margin-top:3px;font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+.btag{display:inline-block;margin-bottom:14px;font-family:var(--mono);font-size:11px;color:rgba(255,253,247,.62);border:1px solid rgba(255,253,247,.2);border-radius:99px;padding:3px 11px;font-variant-numeric:tabular-nums}
 .bfoot{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,253,247,.14);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
 .bfoot p{font-size:13.5px;color:rgba(255,253,247,.78);max-width:620px}
 .bfoot p b{color:#fff}
@@ -88,12 +91,13 @@
     <div class="cta"><a class="btn primary" href="/board.html"><span data-i18n="ctaBoard">Open the board</span><span class="arr">↗</span></a><a class="btn ghost" href="/proof.html"><span data-i18n="ctaProof">How we judge</span><span class="arr">→</span></a></div>
   </div>
   <div class="band" id="bandShell">
+    <span class="btag" id="bTag" hidden></span>
     <div class="bstats">
-      <div class="bstat"><div class="v green" id="sAcc">–</div><div class="k" data-i18n="sAcc">accuracy</div></div>
-      <div class="bstat"><div class="v" id="sRes">–</div><div class="k" data-i18n="sRes">coins judged</div></div>
-      <div class="bstat"><div class="v red" id="sRed">–</div><div class="k" data-i18n="sRed">red precision</div></div>
+      <div class="bstat"><div class="v green" id="sAcc">–</div><div class="k" id="kAcc" data-i18n="sAcc">accuracy</div><div class="bs" id="bsAcc" hidden></div></div>
+      <div class="bstat"><div class="v" id="sRes">–</div><div class="k" id="kRes" data-i18n="sRes">coins judged</div><div class="bs" id="bsRes" hidden></div></div>
+      <div class="bstat"><div class="v red" id="sRed">–</div><div class="k" id="kRed" data-i18n="sRed">red precision</div><div class="bs" id="bsRed" hidden></div></div>
     </div>
-    <div class="bfoot"><p data-i18n-html="bandLine"></p><a href="/proof.html" data-i18n="bandLink">See how every coin resolved</a></div>
+    <div class="bfoot"><p id="bandLine"></p><a href="/proof.html" data-i18n="bandLink">See how every coin resolved</a></div>
   </div>
   <!-- Demo video: the whole section stays hidden until data-video holds an embed URL,
        e.g. https://www.youtube.com/embed/VIDEO_ID (youtube / youtube-nocookie / vimeo player only) -->
@@ -122,16 +126,19 @@ var T={
 en:{navBoard:"Board",navProof:"Proof",navAbout:"About",
 liveA:"live",liveB:"tracked",
 h1:'Check before you buy<span class="rd">.</span>',
-sub:"FlagKan watches newly boosted Solana tokens and gives each one a risk light — red, yellow, or green. Six hours later the chain itself grades every verdict.",
+sub:"FlagKan watches brand-new Solana tokens and gives each one a risk light — red, yellow, or green. Six hours later we grade every verdict against what actually happened.",
 ctaBoard:"Open the board",ctaProof:"How we judge",
 sAcc:"accuracy",sRes:"coins judged",sRed:"red precision",
-bandLine:"<b>Dead means down 90%+, liquidity under $1,000, or price frozen with zero trading.</b> The scoreboard counts every resolved coin — nothing cherry-picked.",
+defFb:"Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
+bandRest:"The scoreboard counts every graded coin and shows the do-nothing baseline next to each number — nothing cherry-picked.",
+sBase:"die within 6h",bsBase:"of all new coins",bsVs:"do-nothing: {b}",bsGraded:"{n} coins graded",
+tagOld:"old definition · new results collecting {n}/100",
 bandLink:"See how every coin resolved",
 vidT:"Watch the demo",vidSub:"90 seconds: a live verdict, then the chain grades it.",vidSoon:"Demo video coming soon",
 howT:"How it works",
-s1t:"Spot",s1d:"Every few minutes we pull the newest boosted Solana tokens off the launchpad firehose.",
+s1t:"Spot",s1d:"Every minute we pull the newest Solana pools (GeckoTerminal) and boosted tokens (DexScreener).",
 s2t:"Inspect",s2d:"Solami RPC reads the chain: top holders, early buys, coin age. Same chain anyone can read — no insider data.",
-s3t:"Judge",s3d:"The Jev AI judge issues red / yellow / green with written reasons, then the outcome settles on-chain.",
+s3t:"Judge",s3d:"A model + rules set the light, the Jev AI judge writes the reasons, and ~6 hours later the outcome is graded in public.",
 freshT:"Fresh verdicts",freshSub:"The newest coins on the radar — click through to the board for the full story.",
 boardLink:"Open the full board →",
 dead:"dead",alive:"alive",h:"h",
@@ -140,16 +147,19 @@ riskD:"<b>Not financial advice.</b> FlagKan flags risk patterns — it can't see
 th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
 liveA:"สด",liveB:"ติดตาม",
 h1:'เช็กก่อนซื้อ<span class="rd">.</span>',
-sub:"FlagKan เฝ้าเหรียญ Solana น้องใหม่ที่ถูกบูสต์ แล้วติดไฟให้ทุกเหรียญ — แดง เหลือง หรือเขียว อีก 6 ชั่วโมงต่อมาเชนจะตัดสินเองว่าคำชี้ถูกหรือผิด",
+sub:"FlagKan เฝ้าเหรียญ Solana ที่เพิ่งเกิด แล้วติดไฟให้ทุกเหรียญ — แดง เหลือง หรือเขียว อีก 6 ชั่วโมงต่อมาเราตัดสินทุกคำชี้จากสิ่งที่เกิดขึ้นจริง",
 ctaBoard:"เปิดกระดาน",ctaProof:"ดูวิธีตัดสิน",
 sAcc:"ความแม่น",sRes:"เหรียญที่ชี้แล้ว",sRed:"แดงแม่น",
-bandLine:"<b>พังคือร่วงเกิน 90% สภาพคล่องต่ำกว่า $1,000 หรือราคานิ่งไม่มีเทรดเลย</b> ตารางคะแนนนับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
+defFb:"ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
+bandRest:"ตารางคะแนนนับทุกเหรียญที่ตัดสินแล้ว และแสดง baseline แบบไม่ทำอะไรเลยคู่กับทุกตัวเลข — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
+sBase:"ตายใน 6 ชม.",bsBase:"ของเหรียญใหม่ทั้งหมด",bsVs:"ไม่ทำอะไรเลย: {b}",bsGraded:"ตัดสินแล้ว {n} เหรียญ",
+tagOld:"นิยามเดิม · กำลังเก็บผลนิยามใหม่ {n}/100",
 bandLink:"ดูทุกเหรียญที่ตัดสินแล้ว",
 vidT:"ดูวิดีโอสาธิต",vidSub:"90 วินาที: คำชี้สด แล้วดูเชนตัดสิน",vidSoon:"วิดีโอสาธิตกำลังมา",
 howT:"ทำงานยังไง",
-s1t:"จับ",s1d:"ทุกไม่กี่นาทีเราดึงเหรียญ Solana น้องใหม่ที่ถูกบูสต์ล่าสุด",
+s1t:"จับ",s1d:"ทุกนาทีเราดึงพูล Solana ใหม่ล่าสุด (GeckoTerminal) และเหรียญที่ถูกบูสต์ (DexScreener)",
 s2t:"ตรวจ",s2d:"Solami RPC อ่านเชน: รายใหญ่ ยอดซื้อแรก อายุเหรียญ เชนเดียวกับที่ทุกคนอ่านได้ — ไม่มีข้อมูลวงใน",
-s3t:"ชี้",s3d:"AI Jev ชี้แดง / เหลือง / เขียว พร้อมเหตุผลเป็นข้อ ๆ แล้วผลตัดสินจริงบนเชน",
+s3t:"ชี้",s3d:"โมเดล + กฎ ติดไฟ AI Jev เขียนเหตุผลเป็นข้อ ๆ แล้วราว 6 ชั่วโมงต่อมาผลถูกตัดสินแบบเปิดเผย",
 freshT:"คำชี้ล่าสุด",freshSub:"เหรียญใหม่สุดบนเรดาร์ — กดไปดูเรื่องเต็มที่กระดาน",
 boardLink:"เปิดกระดานเต็ม →",
 dead:"พัง",alive:"รอด",h:" ชม.",
@@ -160,18 +170,36 @@ try{REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduc
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";loadFresh()}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderBand();loadFresh()}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 function countUp(el,target,fmt){if(REDUCED||target==null||isNaN(target)){el.textContent=fmt(target);return}var t0=Date.now(),D=1100;var iv=setInterval(function(){var p=Math.min(1,(Date.now()-t0)/D);var e=1-Math.pow(1-p,3);el.textContent=fmt(target*e);if(p>=1)clearInterval(iv)},40)}
 function fmtPct(v){return (v==null||isNaN(v))?"—":Math.round(v)+"%"}
 function fmtInt(v){return (v==null||isNaN(v))?"—":Math.round(v).toLocaleString("en-US")}
 var ROUNDS=[];
-fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
-countUp(document.getElementById("sAcc"),d.accuracy==null?null:d.accuracy*100,fmtPct);
-countUp(document.getElementById("sRes"),d.resolved_with_verdict,fmtInt);
-countUp(document.getElementById("sRed"),d.red_precision==null?null:d.red_precision*100,fmtPct);
-}).catch(function(){});
+var PROOF=null,COUNTED=false;
+function isNum(x){return x!=null&&x!==""&&!isNaN(Number(x))}
+function fill(s,o){return String(s).replace(/\{(\w+)\}/g,function(_,k){return o[k]==null?"":o[k]})}
+function p100(x){return isNum(x)?Number(x)*100:null}
+function setBs(id,txt){var e=document.getElementById(id);e.textContent=txt||"";e.hidden=!txt}
+// band: v2 headline when ready; legacy numbers otherwise (tagged "old definition" while v2 collects)
+function renderBand(){var d=PROOF||{},hd=(d.headline&&typeof d.headline==="object")?d.headline:null;
+var ready=!!(hd&&hd.ready&&isNum(hd.accuracy));
+var ld=d.label_def||{};var def=(L==="th"?ld.text_th:ld.text_en)||t("defFb");
+document.getElementById("bandLine").innerHTML="<b>"+esc(def)+"</b> "+esc(t("bandRest"));
+var tag=document.getElementById("bTag");
+if(hd&&!ready){tag.textContent=fill(t("tagOld"),{n:isNum(hd.n)?Number(hd.n):0});tag.hidden=false}else{tag.hidden=true}
+var bestBase=ready?Math.max(isNum(hd.baseline_all_red_accuracy)?Number(hd.baseline_all_red_accuracy):0,isNum(hd.baseline_all_yellow_accuracy)?Number(hd.baseline_all_yellow_accuracy):0):0;
+document.getElementById("kRes").textContent=ready?t("sBase"):t("sRes");
+setBs("bsAcc",ready&&bestBase>0?fill(t("bsVs"),{b:fmtPct(bestBase*100)}):"");
+setBs("bsRed",ready&&isNum(hd.base_dead_rate)?fill(t("bsVs"),{b:fmtPct(p100(hd.base_dead_rate))}):"");
+setBs("bsRes",ready?(isNum(hd.n)?fill(t("bsGraded"),{n:fmtInt(hd.n)}):t("bsBase")):"");
+var vA=ready?p100(hd.accuracy):p100(d.accuracy),vR=ready?p100(hd.red_precision):p100(d.red_precision);
+var e1=document.getElementById("sAcc"),e2=document.getElementById("sRes"),e3=document.getElementById("sRed");
+if(!PROOF)return;
+if(!COUNTED){COUNTED=true;countUp(e1,vA,fmtPct);if(ready)countUp(e2,p100(hd.base_dead_rate),fmtPct);else countUp(e2,d.resolved_with_verdict,fmtInt);countUp(e3,vR,fmtPct)}
+else{e1.textContent=fmtPct(vA);e2.textContent=ready?fmtPct(p100(hd.base_dead_rate)):fmtInt(d.resolved_with_verdict);e3.textContent=fmtPct(vR)}}
+fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d||{};renderBand()}).catch(function(){});
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
 function dot(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="fdot '+c+'"></span>'}
 function hoursLeft(x){return Math.max(0,Math.ceil((Number(x.first_seen)+21600000-Date.now())/3600000))}

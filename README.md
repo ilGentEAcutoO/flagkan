@@ -1,50 +1,142 @@
-# hack — Crypto World's Fair 2026 war room
+# FlagKan — a red / yellow / green light for new Solana tokens
 
-Repo เตรียมตัวแข่งแฮกกาธอน **Crypto World's Fair** (Colosseum, 14 ก.ย. – 12 ต.ค. 2026)
-เก็บข้อมูล deep-research ไว้เป็น knowledge ก่อนลงมือสร้างโปรเจกต์
+**Live:** https://flag.sornkan.com · **Proof (live numbers):** https://flag.sornkan.com/proof · **API:** https://flag.sornkan.com/api/proof
 
-## เวลาที่เหลือ (ณ 23 ก.ย. 2026)
+Thousands of Solana tokens launch every day and most of them are dead within hours.
+FlagKan looks at every new token as soon as it appears, gives it a **RED (don't buy) /
+YELLOW (caution) / GREEN (looks OK)** light with written reasons, and then **grades its
+own verdict ~6 hours later** against what actually happened. Every graded coin is public,
+and every headline number is shown next to the "do-nothing" baseline it has to beat.
 
-- ส่งงานหลัก Colosseum: **13 ต.ค. 2026 13:59 น. เวลาไทย** (12 Oct 23:59 PT ≈ 13 Oct 06:59 UTC) — เหลือ ~19 วัน
-- ส่ง side track บน Superteam Earn: **deadline เดียวกันทุก track**
-- ประกาศผล track ไทย: ~27 ต.ค. 2026 / ผลหลัก Colosseum: ~1 เดือนหลังปิดรับ (~กลาง พ.ย.)
+> FlagKan flags risk patterns. It is not financial advice.
 
-## โครง repo
+## How it works
 
-```text
-research/   บทสรุปอ่านก่อน (เริ่มตรงนี้)
-tracks/     บรีฟฉบับเต็มราย track ที่เราสมัครได้ (7 ไฟล์)
-data/       raw JSON ดิบจาก API + หน้าเว็บ (31 tracks ครบ)
+```
+GeckoTerminal new pools (~98% of coins) ─┐
+DexScreener boosts ──────────────────────┴─► new Solana mints (cron, every minute)
+                                              │
+Solami RPC ──► on-chain signals: whale share, top-holder spread, early buys,
+               coin age, mint/freeze authority
+                                              │
+Leak-free logistic-regression model + explicit rules ──► the light
+TypeSafe Jev (jev-latest) ──► AI judge: wallet coordination + human-readable reasons
+Crash re-checks ──► a coin that measurably crashes before grading is re-armed red
+                                              │
+~6h later: graded from the same market feed (label v2) ──► Cloudflare D1
+                                              │
+Public /proof page + /api/proof: every number next to its baseline
 ```
 
-## track ที่คนไทย (บุคคลทั่วไป, ไม่ใช่นักศึกษา) สมัครได้ — 6 อัน
+- **Spot.** A Cloudflare Worker cron pulls GeckoTerminal's new-pool feed and DexScreener boosts.
+- **Inspect.** Solami RPC (`getTokenSupply`, `getTokenLargestAccounts`, `getSignaturesForAddress`,
+  `getAccountInfo`) gives holder concentration, early buy pressure, coin age and authority flags.
+  Market fields (liquidity, FDV, volume, trades) come from GeckoTerminal / DexScreener.
+- **Judge.** A logistic-regression model trained on FlagKan's own graded history (feature list in
+  [`radar/src/ml/train.ts`](radar/src/ml/train.ts); retrained on the edge, a challenger is only
+  promoted on a measured test-split improvement) combines with explicit rules. The Jev judge from
+  TypeSafe scores wallet coordination and writes the reasons you see. The six checks shown in the UI
+  are reference levels that explain the verdict — the light itself comes from model + rules.
+- **Grade.** About 6 hours after first sight the outcome is settled from market data and the verdict
+  is scored. Resolved coins stay on the board for 7 days; history is kept for the proof stats.
 
-| # | Track | Pool | ส่งอะไร |
-|---|---|---|---|
-| 1 | [AI × Solana — Thailand](tracks/ai-solana-track.md) | $10,000 | โปรดักต์ AI + Solana ใช้งานจริง |
-| 2 | [Meteora DBC](tracks/meteora-dbc.md) | $20,000 USDC | launchpad / token launch บน DBC + DAMM v2 |
-| 3 | [RPC Fast Infra](tracks/colosseum-crypto-worlds-fair-hackathon-rpc-fast-infrastructure-sidetrack.md) | $10,474 USDC | ใช้ RPC Fast + โพสต์ engagement 2 เดือน |
-| 4 | [Panta API](tracks/panta-api-side-track.md) | $5,000 | สินค้าที่ฝัง prediction market ผ่าน Panta API |
-| 5 | [Solami data](tracks/build-something-live-on-solana-data.md) | $3,000 | ของที่รัน live บน Solana data (RPC/gRPC/Blur/Beam) + repo public |
-| 6 | [Adevar pre-audit](tracks/pre-audit-credits-adevarlabs.md) | $20,000 credits | โปรเจกต์ Solana/Rust + ทวีต (รางวัลเป็น pre-audit ไม่ใช่เงินสด) |
+## What counts as "dead" (label v2)
 
-กลยุทธ์ซ้อนรางวัล: โปรเจกต์เดียวส่งได้ทั้ง Colosseum หลัก + side track หลายอันพร้อมกัน
-(เช่น AI agent บน Solana ที่ใช้ Meteora DBC + อ่านข้อมูลผ่าน Solami + รันบน RPC Fast = ลุ้น 4–5 กองพร้อมกัน)
-รายละเอียดใน [research/02-eligible-sidetracks.md](research/02-eligible-sidetracks.md)
+A coin is **dead** if, within 6 hours of first sight, **any** of these happens:
 
-## เช็กลิสต์ก่อนส่ง
+1. the price fell **90% or more**, or
+2. liquidity dropped **under $1,000** — measured from the same data source as first sight, or
+3. **nobody traded it in the final hour**.
 
-- [ ] สมัคร Colosseum + เลือกประเทศ **Thailand** (https://colosseum.com/worldsfair)
-- [ ] สร้างโปรไฟล์ Superteam Earn + เลือก region Thailand (**ห้ามย้าย region บ่อย** — มี cooldown 21 วัน)
-- [ ] ส่งโปรเจกต์บน Colosseum (ชื่อ, คำอธิบาย, GitHub, วิดีโอ pitch 2–3 นาที, วิดีโอ demo ≤3 นาที, GTM)
-- [ ] ส่งแยกบน Superteam Earn ทุก side track ที่เล็ง (ฟอร์มถามชื่อโปรเจกต์, GitHub, เว็บ, X, pitch deck/วิดีโอ, ลิงก์ Colosseum)
-- [ ] อัปเดตรายสัปดาห์ (คลิป 1 นาที — ไม่บังคับแต่แนะนำ)
-- [ ] เปิดเผย pre-existing code ในฟอร์มส่งงาน (ถ้ามี)
+Otherwise it is **alive**. The exact parameters are published in `label_def` on
+[`/api/proof`](https://flag.sornkan.com/api/proof).
 
-## อ่านต่อ
+## Honesty notes
 
-1. [research/00-overview.md](research/00-overview.md) — ภาพรวมงาน รางวัล กำหนดการ
-2. [research/01-colosseum-rules.md](research/01-colosseum-rules.md) — กติกาหลัก เกณฑ์ตัดสิน สิ่งที่ต้องส่ง
-3. [research/02-eligible-sidetracks.md](research/02-eligible-sidetracks.md) — 6 track ที่สมัครได้ + track ที่อด
-4. [research/03-thailand-support.md](research/03-thailand-support.md) — Build Station, Office Hours, ช่องทาง Superteam TH
-5. [research/04-sources.md](research/04-sources.md) — แหล่งข้อมูล + วิธีดึงข้อมูล
+- **Baselines are always shown.** Most new coins die, so "call everything red" or "call everything
+  yellow" already scores well. Every accuracy / precision number on /proof sits next to the
+  baseline it has to beat, plus the base dead rate itself.
+- **The old label had a flaw (fixed 2026-10-12).** Coins that simply stopped trading were often
+  counted as *alive*, because the 6h sample came from a different data source than first sight.
+  That made the old accuracy look better than a trivial strategy deserved. Label v2 grades from the
+  same feed and treats "no trades in the final hour" as dead.
+- **A training leak was fixed** at the same time: a stored value that was overwritten after a crash
+  could reach the model's training data. The model is now trained only on first-sight state.
+- **Legacy numbers are kept.** The old (v1) figures stay in `legacy_v1` on /api/proof, and a regrade
+  of the history under v2 is published in `v2_history_regrade`, so nothing silently disappears.
+- **No cherry-picking.** The proof table lists every resolved coin, not a highlight reel.
+
+Live metrics are not hardcoded here on purpose — read them from
+[`/api/proof`](https://flag.sornkan.com/api/proof) or the [proof page](https://flag.sornkan.com/proof).
+
+## API
+
+All read endpoints are public `GET`s on `https://flag.sornkan.com`.
+
+| Endpoint | What |
+|---|---|
+| `GET /api/proof` | scoreboard: `headline` (label v2 metrics + baselines + tiers), `label_def`, `v2_history_regrade`, `legacy_v1`, plus calibration detail |
+| `GET /api/rounds?limit=&offset=` | board page, newest first, with `total`; `resolved=1` → newest graded coins |
+| `GET /api/coin?mint=` | everything for one coin: signals, verdict, outcome, price history |
+| `GET /api/verdict?mint=` | the stored verdict for a mint |
+| `POST /api/verdict-now?mint=` | judge any mint on demand (rate-limited by a daily budget) |
+| `GET /health` · `GET /api/diag` · `GET /api/cost` | status, diagnostics, cost watch |
+
+Maintenance endpoints (retrain, signal refresh, backfill) require an admin key and are not part of
+the public surface.
+
+## Run it yourself
+
+Requires Node 20+ and a Cloudflare account.
+
+```bash
+cd radar
+npm install
+npx wrangler d1 create radar-d1-main            # put the id in wrangler.jsonc
+npx wrangler d1 execute radar-d1-main --file=schema.sql
+npx wrangler secret put TYPESAFE_API_KEY        # https://console.typesafe.ai/keys
+npx wrangler secret put SOLAMI_API_KEY          # https://solami.dev/
+npx wrangler secret put ADMIN_KEY               # any long random string
+npm run dev       # worker + UI on http://localhost:8787
+npm run deploy    # cron + D1 + static assets
+```
+
+No secrets live in this repo; keys go through `wrangler secret put` only.
+Offline checks: `npm run mltest` (model unit checks), `npm run smoke` (endpoint guards).
+
+## Repo layout
+
+```text
+radar/                 the product (Cloudflare Worker + static UI)
+  src/index.ts         cron ingest, Solami signals, model + rules, Jev judge, grading, API
+  src/ml/              logistic-regression training + verdict upgrade logic (pure TS)
+  public/              UI: index (landing), board, proof, about — vanilla JS, TH/EN, no build
+  schema.sql, migrate-v*.sql   D1 schema and migrations
+  *.mjs                offline tools: backtest, calibration, challenger gate, sweeps
+videos/                pitch + demo video sources
+research/              hackathon homework (rules, eligible tracks) — Thai
+tracks/  data/         full track briefs + raw listings
+```
+
+## Built for
+
+**Colosseum Crypto World's Fair 2026** — AI × Solana (Thailand) and Solami (build something
+live on Solana data) tracks. Built solo by SORNKan in Thailand.
+
+---
+
+## สรุปภาษาไทย
+
+**FlagKan** ติดไฟ **แดง / เหลือง / เขียว** ให้เหรียญ Solana ที่เพิ่งเกิด ทันทีที่เจอ พร้อมเหตุผลเป็นข้อ ๆ
+แล้ว **ตรวจคำชี้ของตัวเองอีกครั้งราว 6 ชั่วโมงต่อมา** จากสิ่งที่เกิดขึ้นจริง ผลทุกเหรียญเปิดเผยที่
+[หน้า Proof](https://flag.sornkan.com/proof)
+
+- **ข้อมูล:** เหรียญใหม่จาก GeckoTerminal (ราว 98%) + DexScreener boosts → สัญญาณบนเชนผ่าน Solami RPC
+- **การชี้:** โมเดล logistic regression ที่ไม่มีข้อมูลรั่ว + กฎที่เขียนชัด + AI Jev (TypeSafe) ให้เหตุผล
+  และ re-check เมื่อราคาร่วงจริง
+- **นิยาม "ตาย" (label v2):** ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000
+  (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย
+- **ความซื่อตรง:** ทุกตัวเลขแสดงคู่กับ baseline แบบ "ไม่ทำอะไรเลย" เสมอ นิยามเดิมมีจุดบกพร่อง
+  (เหรียญที่แค่หยุดเทรดถูกนับว่ารอด) แก้แล้วเมื่อ 12 ต.ค. 2026 ตัวเลขเก่ายังเก็บไว้ใน `legacy_v1`
+- สร้างเพื่อ Colosseum Crypto World's Fair 2026 (track AI × Solana Thailand + Solami)
+- งานรีเสิร์ชแฮกกาธอนเดิมย้ายไปที่ [research/README.md](research/README.md)

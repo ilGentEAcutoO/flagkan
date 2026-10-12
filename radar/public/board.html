@@ -55,6 +55,11 @@ td.num .chg{font-size:11px;margin-left:4px}
 sub.z{font-size:.78em;vertical-align:-.25em;line-height:0;color:var(--dim)}
 .coinname{font-family:var(--font);font-weight:700;color:var(--ink);font-size:13px}
 .coinmint{font-size:10px;color:var(--faint);margin-left:4px}
+.sure{display:inline-block;margin-left:5px;font-family:var(--font);font-size:10.5px;font-weight:800;color:var(--red);background:var(--redbg);border-radius:99px;padding:1px 7px;vertical-align:1px;white-space:nowrap}
+.bstat .old{color:var(--faint);font-size:11.5px;margin-left:4px}
+.vline .vsure{display:inline-block;margin-left:8px;font-size:11px;font-weight:800;background:#fff;color:var(--red);border-radius:99px;padding:1px 8px;vertical-align:2px;white-space:nowrap}
+.refnote{font-size:11.5px;color:var(--faint);margin-top:4px;line-height:1.5}
+.refnote a{color:var(--dim);font-weight:700}
 .star{background:none;border:none;cursor:pointer;font-size:15px;color:#D9CDB6;padding:6px;margin:-6px;line-height:1;transition:color .15s}
 .star:hover{color:var(--yeldot)}
 .star.lit{color:var(--yeldot)}
@@ -127,6 +132,7 @@ details.meth p.raw{font-family:var(--mono);font-size:11px;color:var(--faint)}
   th:first-child,td:first-child{padding-left:12px}
   th:last-child,td:last-child{padding-right:12px}
   .coinmint{display:none}
+  .sure{display:none}
   .pager{justify-content:center}
   .modal{padding:12px 8px}
   .mcard{padding:16px 16px 14px}
@@ -144,7 +150,7 @@ details.meth p.raw{font-family:var(--mono);font-size:11px;color:var(--faint)}
   <div class="bhead">
     <div>
       <h1 data-i18n="boardT">Live board</h1>
-      <p class="bstat"><b id="cAcc">–</b> <span data-i18n="acc">accuracy</span><span class="sep">·</span><b id="cN">–</b> <span data-i18n="res">resolved</span><span class="sep">·</span><b id="cT">–</b> <span data-i18n="trk">tracked</span><span class="hint"><span class="sep">·</span><span data-i18n="hint">click a row for details</span></span></p>
+      <p class="bstat"><b id="cAcc">–</b> <span data-i18n="acc">accuracy</span><span class="old" id="cOld" hidden></span><span class="sep">·</span><b id="cN">–</b> <span data-i18n="res">resolved</span><span class="sep">·</span><b id="cT">–</b> <span data-i18n="trk">tracked</span><span class="hint"><span class="sep">·</span><span data-i18n="hint">click a row for details</span></span></p>
     </div>
     <div class="check"><input id="mint" data-i18n-ph="mintph" placeholder="Paste a mint address…" autocomplete="off" spellcheck="false" aria-label="Mint address"><button id="go" type="button" data-i18n="gobtn">Check</button></div>
   </div>
@@ -168,7 +174,7 @@ details.meth p.raw{font-family:var(--mono);font-size:11px;color:var(--faint)}
   <div id="dProbs" class="prob" style="display:none"></div>
   <div id="dProbCap" class="probcap" hidden></div>
   <div id="dFacts" class="facts"></div>
-  <h3 class="mh3" data-i18n="why">Why</h3><div id="sigs"></div>
+  <h3 class="mh3" data-i18n="why">Why</h3><div id="sigs"></div><p class="refnote"><span data-i18n="refnote">Watch levels are reference points. The final light comes from the model + rules.</span> <a href="/proof.html" data-i18n="seeproof">See proof</a></p>
   <div id="dPx" hidden><h3 class="mh3" data-i18n="px">Price</h3><canvas id="chart" width="1152" height="192"></canvas></div>
   <div class="mlinks"><a id="dEv" href="#" target="_blank" rel="noopener">↗ <span data-i18n="evidence">Verify on explorer</span></a><a id="dDx" href="#" target="_blank" rel="noopener">↗ <span data-i18n="dxs">Chart</span></a></div>
   <details class="meth"><summary data-i18n="methT">Our rules</summary><p data-i18n="methB"></p><p class="raw" id="dRaw"></p></details>
@@ -178,8 +184,8 @@ details.meth p.raw{font-family:var(--mono);font-size:11px;color:var(--faint)}
 (function(){
 "use strict";
 var T={
-en:{navBoard:"Board",navProof:"Proof",navAbout:"About",gobtn:"Check",acc:"accuracy",boardT:"Live board",hint:"click a row for details",mintph:"Paste a mint address…",close:"Close",watch:"★ Watch",watched:"★ Watched",res:"resolved",trk:"tracked",tracked:"Tracked — click a row",fall:"All",fred:"Red",fyel:"Yellow",fgrn:"Green",fstar:"★",coin:"coin",light:"light",conf:"conf",price:"price $",liq:"liq $",top1:"top1 %",out:"outcome",red:"RED — do not buy",yellow:"YELLOW — caution",green:"GREEN — looks OK",dead:"dead",alive:"alive",na:"—",why:"Why",px:"Price",copy:"Copy verdict",copied:"Copied!",r1:"Whale concentration",r2:"Top holders 2-11",r3:"First-minute buys",r4:"Pool liquidity",r5:"Coin age",limit:"limit",failn:"Failed checks",warnn:"Warnings",allpass:"All checks pass",rawv:"Raw rules say",evidence:"Verify on explorer",methT:"Our rules",methB:"6 checks: whale share, holder spread, early buys, liquidity, age, pool flags. Single weak signals no longer mean RED by themselves — low-evidence reds become calibrated yellow; only measured crashes re-arm red before the outcome. Yellow means caution: small size, set a stop. Green needs ALL at once: whale under 15%, liquidity over $100k, age over 15 min. AI also scores wallet coordination.",h:"h",d:"d",min:"m",entered:"On board since",ageNow:"Chain age now",resolvesIn:"Result in",resolvedDrop:"Drops off",r6:"Linked wallets · AI",sev:"severity",dxs:"DexScreener chart",entry:"entry",act:"trades/5m",qph:"Filter name or mint…",clear:"Clear",nomatch:"No coins match — try another name or mint",loading:"loading…",pend:"left",perpage:"per page",ofP:"of",prevP:"Previous page",nextP:"Next page"},
-th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",gobtn:"ตรวจ",acc:"ความแม่น",boardT:"กระดานสด",hint:"กดแถวดูรายละเอียด",mintph:"วาง mint address…",close:"ปิด",watch:"★ ติดตาม",watched:"★ ติดตามแล้ว",res:"ตัดสิน",trk:"ติดตาม",tracked:"กำลังติดตาม — กดแถวดูรายละเอียด",fall:"ทั้งหมด",fred:"แดง",fyel:"เหลือง",fgrn:"เขียว",fstar:"★",coin:"เหรียญ",light:"ไฟ",conf:"มั่นใจ",price:"ราคา $",liq:"liq $",top1:"top1 %",out:"ผล",red:"แดง — อย่าซื้อ",yellow:"เหลือง — ระวัง",green:"เขียว — พอได้",dead:"พัง",alive:"รอด",na:"—",why:"ทำไม",px:"ราคา",copy:"คัดลอกคำชี้",copied:"คัดลอกแล้ว!",r1:"รายใหญ่สุดถือ",r2:"รายใหญ่ลำดับ 2-11",r3:"ยอดซื้อ 1 นาทีแรก",r4:"สภาพคล่องพูล",r5:"อายุเหรียญ",limit:"เกณฑ์",failn:"ข้อที่ไม่ผ่าน",warnn:"ข้อที่เตือน",allpass:"ผ่านทุกข้อ",rawv:"เกณฑ์ดิบชี้ว่า",evidence:"ตรวจเองบน explorer",methT:"เกณฑ์ 6 ข้อของเรา",methB:"ตรวจ 6 ข้อ: รายใหญ่สุด การกระจาย ยอดซื้อแรก สภาพคล่อง อายุ และพูลน่าสงสัย สัญญาณอ่อนอย่างเดียวไม่เท่ากับไฟแดงอีกต่อไป — ใบแดงหลักฐานน้อยกลายเป็นเหลือง จะกลับแดงต้องมี crash ที่วัดได้จริงก่อนรู้ผล เหลืองแปลว่าระวัง ลงน้อย ตั้งจุดตัดขาดทุน เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที AI ให้คะแนนกระเป๋าโยงกันเพิ่มอีกข้อ",h:" ชม.",d:" วัน",min:" นาที",entered:"เข้าบอร์ด",ageNow:"อายุตอนนี้",resolvesIn:"รู้ผลใน",resolvedDrop:"หลุดบอร์ด",r6:"กระเป๋าโยงกัน · AI",sev:"ความรุนแรง",dxs:"กราฟ DexScreener",entry:"เข้า",act:"เทรด/5นาที",qph:"กรองชื่อหรือ mint…",clear:"ล้าง",nomatch:"ไม่เจอเหรียญที่ตรง — ลองชื่อหรือ mint อื่น",loading:"กำลังโหลด…",pend:"เหลือ",perpage:"ต่อหน้า",ofP:"จาก",prevP:"ก่อนหน้า",nextP:"ถัดไป"}};
+en:{navBoard:"Board",navProof:"Proof",navAbout:"About",gobtn:"Check",acc:"accuracy",boardT:"Live board",hint:"click a row for details",mintph:"Paste a mint address…",close:"Close",watch:"★ Watch",watched:"★ Watched",res:"resolved",trk:"tracked",tracked:"Tracked — click a row",fall:"All",fred:"Red",fyel:"Yellow",fgrn:"Green",fstar:"★",coin:"coin",light:"light",conf:"conf",price:"price $",liq:"liq $",top1:"top1 %",out:"outcome",red:"RED — do not buy",yellow:"YELLOW — caution",green:"GREEN — looks OK",dead:"dead",alive:"alive",na:"—",why:"Why",px:"Price",copy:"Copy verdict",copied:"Copied!",r1:"Whale concentration",r2:"Top holders 2-11",r3:"First-minute buys",r4:"Pool liquidity",r5:"Coin age",limit:"watch",failn:"Past watch level",warnn:"Near watch level",allpass:"All checks under watch levels",refnote:"Watch levels are reference points. The final light comes from the model + rules.",seeproof:"See proof",sure:"high confidence",sureS:"high conf",oldDef:"(old definition)",vsBase:"vs {b} do-nothing",rawv:"Raw rules say",evidence:"Verify on explorer",methT:"Our rules",methB:"6 checks: whale share, holder spread, early buys, liquidity, age, pool flags. Single weak signals no longer mean RED by themselves — low-evidence reds become calibrated yellow; only measured crashes re-arm red before the outcome. Yellow means caution: small size, set a stop. Green needs ALL at once: whale under 15%, liquidity over $100k, age over 15 min. AI also scores wallet coordination.",h:"h",d:"d",min:"m",entered:"On board since",ageNow:"Chain age now",resolvesIn:"Result in",resolvedDrop:"Drops off",r6:"Linked wallets · AI",sev:"severity",dxs:"DexScreener chart",entry:"entry",act:"trades/5m",qph:"Filter name or mint…",clear:"Clear",nomatch:"No coins match — try another name or mint",loading:"loading…",pend:"left",perpage:"per page",ofP:"of",prevP:"Previous page",nextP:"Next page"},
+th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",gobtn:"ตรวจ",acc:"ความแม่น",boardT:"กระดานสด",hint:"กดแถวดูรายละเอียด",mintph:"วาง mint address…",close:"ปิด",watch:"★ ติดตาม",watched:"★ ติดตามแล้ว",res:"ตัดสิน",trk:"ติดตาม",tracked:"กำลังติดตาม — กดแถวดูรายละเอียด",fall:"ทั้งหมด",fred:"แดง",fyel:"เหลือง",fgrn:"เขียว",fstar:"★",coin:"เหรียญ",light:"ไฟ",conf:"มั่นใจ",price:"ราคา $",liq:"liq $",top1:"top1 %",out:"ผล",red:"แดง — อย่าซื้อ",yellow:"เหลือง — ระวัง",green:"เขียว — พอได้",dead:"พัง",alive:"รอด",na:"—",why:"ทำไม",px:"ราคา",copy:"คัดลอกคำชี้",copied:"คัดลอกแล้ว!",r1:"รายใหญ่สุดถือ",r2:"รายใหญ่ลำดับ 2-11",r3:"ยอดซื้อ 1 นาทีแรก",r4:"สภาพคล่องพูล",r5:"อายุเหรียญ",limit:"เฝ้าระวัง",failn:"เกินระดับเฝ้าระวัง",warnn:"ใกล้ระดับเฝ้าระวัง",allpass:"ทุกข้อต่ำกว่าระดับเฝ้าระวัง",refnote:"ระดับเฝ้าระวังเป็นจุดอ้างอิง ไฟสุดท้ายมาจากโมเดล + กฎ",seeproof:"ดูหลักฐาน",sure:"มั่นใจสูง",sureS:"มั่นใจสูง",oldDef:"(นิยามเดิม)",vsBase:"เทียบ {b} ถ้าไม่ทำอะไร",rawv:"เกณฑ์ดิบชี้ว่า",evidence:"ตรวจเองบน explorer",methT:"เกณฑ์ 6 ข้อของเรา",methB:"ตรวจ 6 ข้อ: รายใหญ่สุด การกระจาย ยอดซื้อแรก สภาพคล่อง อายุ และพูลน่าสงสัย สัญญาณอ่อนอย่างเดียวไม่เท่ากับไฟแดงอีกต่อไป — ใบแดงหลักฐานน้อยกลายเป็นเหลือง จะกลับแดงต้องมี crash ที่วัดได้จริงก่อนรู้ผล เหลืองแปลว่าระวัง ลงน้อย ตั้งจุดตัดขาดทุน เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที AI ให้คะแนนกระเป๋าโยงกันเพิ่มอีกข้อ",h:" ชม.",d:" วัน",min:" นาที",entered:"เข้าบอร์ด",ageNow:"อายุตอนนี้",resolvesIn:"รู้ผลใน",resolvedDrop:"หลุดบอร์ด",r6:"กระเป๋าโยงกัน · AI",sev:"ความรุนแรง",dxs:"กราฟ DexScreener",entry:"เข้า",act:"เทรด/5นาที",qph:"กรองชื่อหรือ mint…",clear:"ล้าง",nomatch:"ไม่เจอเหรียญที่ตรง — ลองชื่อหรือ mint อื่น",loading:"กำลังโหลด…",pend:"เหลือ",perpage:"ต่อหน้า",ofP:"จาก",prevP:"ก่อนหน้า",nextP:"ถัดไป"}};
 var L="en",WATCH={},FILTER="all",LAST=null,ROUNDS=[],QUERY="",SORT={key:"",dir:1},LOADED=false,PAGE=1,PER=20,OFFSET=0,TOTAL=null,LOADING=false;
 var SORTDEF={coin:1,light:1,conf:-1,price:-1,liq:-1,top1:-1,outcome:1};
 try{WATCH=JSON.parse(localStorage.getItem("flagkan_watch")||"{}")}catch(e){WATCH={}}
@@ -201,7 +207,7 @@ if(z<3)return String(Number(n.toPrecision(4)));
 var d=Math.round(n*Math.pow(10,z+4));if(d>=10000){d=Math.round(d/10);z--}
 var ds=String(d);
 return html?'0.0<sub class="z">'+z+"</sub>"+ds:"0.0"+subNum(z)+ds}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var ph=document.querySelectorAll("[data-i18n-ph]");for(var p=0;p<ph.length;p++){ph[p].placeholder=t(ph[p].getAttribute("data-i18n-ph"))}var ti=document.querySelectorAll("[data-i18n-t]");for(var q2=0;q2<ti.length;q2++){ti[q2].title=t(ti[q2].getAttribute("data-i18n-t"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";loadProof();renderRows();if(LAST)openModal(LAST)}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var ph=document.querySelectorAll("[data-i18n-ph]");for(var p=0;p<ph.length;p++){ph[p].placeholder=t(ph[p].getAttribute("data-i18n-ph"))}var ti=document.querySelectorAll("[data-i18n-t]");for(var q2=0;q2<ti.length;q2++){ti[q2].title=t(ti[q2].getAttribute("data-i18n-t"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";if(PROOF)renderProofLine();else loadProof();renderRows();if(LAST)openModal(LAST)}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 function setFilter(f){FILTER=f;PAGE=1;document.getElementById("fAll").className=f==="all"?"on":"";document.getElementById("fRed").className=f==="red"?"on":"";document.getElementById("fYel").className=f==="yellow"?"on":"";document.getElementById("fGrn").className=f==="green"?"on":"";document.getElementById("fStar").className=f==="star"?"on":"";renderRows()}
@@ -210,10 +216,18 @@ document.getElementById("fRed").onclick=function(){setFilter("red")};
 document.getElementById("fYel").onclick=function(){setFilter("yellow")};
 document.getElementById("fGrn").onclick=function(){setFilter("green")};
 document.getElementById("fStar").onclick=function(){setFilter("star")};
-function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
-document.getElementById("cAcc").textContent=d.accuracy==null?"—":pct(d.accuracy);
-document.getElementById("cN").textContent=d.resolved_with_verdict==null?"—":Number(d.resolved_with_verdict).toLocaleString("en-US");
-}).catch(function(){})}
+var PROOF=null;
+function fill(s,o){return String(s).replace(/\{(\w+)\}/g,function(_,k){return o[k]==null?"":o[k]})}
+// stat line: v2 headline when ready; legacy numbers otherwise (marked "old definition" while v2 collects)
+function renderProofLine(){var d=PROOF;if(!d)return;var hd=(d.headline&&typeof d.headline==="object")?d.headline:null;
+var ready=!!(hd&&hd.ready&&hd.accuracy!=null&&!isNaN(Number(hd.accuracy)));
+var acc=ready?hd.accuracy:d.accuracy,n=ready?hd.n:d.resolved_with_verdict;
+document.getElementById("cAcc").textContent=acc==null?"—":pct(acc);
+document.getElementById("cN").textContent=n==null?"—":Number(n).toLocaleString("en-US");
+var o=document.getElementById("cOld"),txt="";
+if(ready){var b=Math.max(Number(hd.baseline_all_red_accuracy)||0,Number(hd.baseline_all_yellow_accuracy)||0);if(b>0)txt=fill(t("vsBase"),{b:pct(b)})}else if(hd){txt=t("oldDef")}
+o.textContent=txt;o.hidden=!txt}
+function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderProofLine()}).catch(function(){})}
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
 function lightRank(c){return c==="red"?0:c==="yellow"?1:c==="green"?2:3}
 function numOrNull(v){if(v==null)return null;var n=Number(v);return isNaN(n)?null:n}
@@ -239,7 +253,7 @@ var out;if(x.dead==null){out='<span class="oc pend"><i></i>'+hoursLeft(x)+t("h")
 var nm=esc((x.name||x.mint.slice(0,8))+"").slice(0,18);
 var star=WATCH[x.mint]?"lit":"";
 var chg="";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;chg='<span class="chg '+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}
-h+='<tr data-m="'+esc(x.mint)+'"><td><button class="star '+star+'" data-s="'+esc(x.mint)+'" type="button">★</button></td><td><span class="coinname">'+nm+'</span> <span class="coinmint">'+esc(x.mint.slice(0,6))+"</span></td><td>"+badge(x.choice)+"</td><td class=\"num\">"+(x.confidence==null?"—":Math.round(x.confidence*100)+"%")+'</td><td class="num hideS">'+fmtPrice(x.last_price,true)+chg+'</td><td class="num hideS">'+(x.last_liq==null?"—":"$"+num(x.last_liq))+'</td><td class="num hideS">'+(x.top1==null||isNaN(Number(x.top1))?"—":Math.round(Number(x.top1))+"%")+'</td><td class="num">'+out+"</td></tr>"}
+h+='<tr data-m="'+esc(x.mint)+'"><td><button class="star '+star+'" data-s="'+esc(x.mint)+'" type="button">★</button></td><td><span class="coinname">'+nm+'</span> <span class="coinmint">'+esc(x.mint.slice(0,6))+"</span></td><td>"+badge(x.choice)+(x.tier==="red_sure"?'<span class="sure" title="'+esc(t("sure"))+'">'+esc(t("sureS"))+"</span>":"")+"</td><td class=\"num\">"+(x.confidence==null?"—":Math.round(x.confidence*100)+"%")+'</td><td class="num hideS">'+fmtPrice(x.last_price,true)+chg+'</td><td class="num hideS">'+(x.last_liq==null?"—":"$"+num(x.last_liq))+'</td><td class="num hideS">'+(x.top1==null||isNaN(Number(x.top1))?"—":Math.round(Number(x.top1))+"%")+'</td><td class="num">'+out+"</td></tr>"}
 document.getElementById("rows").innerHTML=h||'<tr><td colspan="8" class="mut">'+esc(LOADED?t("nomatch"):t("loading"))+"</td></tr>";
 var trs=document.querySelectorAll("#rows tr[data-m]");
 for(var j=0;j<trs.length;j++){trs[j].onclick=function(ev){if(ev.target&&ev.target.className&&String(ev.target.className).indexOf("star")>=0)return;openModal(this.getAttribute("data-m"))}}
@@ -293,10 +307,10 @@ function pct1(v){return v==null||isNaN(Number(v))?"?":Number(Number(v).toFixed(1
 var liq=Number(last.liquidity_usd);
 var liqSt=(last.liquidity_usd==null||isNaN(liq))?"na":liq<10000?"fail":liq<100000?"warn":"pass";
 var rules=[
-{rn:t("r1"),rv:pct1(s.top1_pct)+" · "+t("limit")+" 30%"+(s.pool_suspect?" · (pool?)":""),st:stOf(flag(s.top1_pct,30,15))},
-{rn:t("r2"),rv:pct1(s.top2_11_pct)+" · "+t("limit")+" 40%",st:stOf(flag(s.top2_11_pct,40,20))},
-{rn:t("r3"),rv:(s.early_buys==null?"?":String(s.early_buys))+" · "+t("limit")+" 300",st:stOf(flag(s.early_buys,300,50))},
-{rn:t("r4"),rv:"$"+num(last.liquidity_usd)+" · "+t("limit")+" $10k",st:liqSt},
+{rn:t("r1"),rv:pct1(s.top1_pct)+" · "+t("limit")+" ≥ 30%"+(s.pool_suspect?" · (pool?)":""),st:stOf(flag(s.top1_pct,30,15))},
+{rn:t("r2"),rv:pct1(s.top2_11_pct)+" · "+t("limit")+" ≥ 40%",st:stOf(flag(s.top2_11_pct,40,20))},
+{rn:t("r3"),rv:(s.early_buys==null?"?":String(s.early_buys))+" · "+t("limit")+" ≥ 300",st:stOf(flag(s.early_buys,300,50))},
+{rn:t("r4"),rv:"$"+num(last.liquidity_usd)+" · "+t("limit")+" < $10k",st:liqSt},
 {rn:t("r5"),rv:(s.mint_age_min==null?"?":fmtAge(s.mint_age_min)),st:(s.mint_age_min||99)<15?"warn":"pass"},
 {rn:t("r6"),rv:(vv.coordinated==null?"?":Math.round(vv.coordinated*100)+"%"),st:(function(){var c=Number(vv.coordinated);if(vv.coordinated==null||isNaN(c))return "na";if(c>=0.7)return "fail";if(c>=0.4)return "warn";return "pass"})(),skip:1}];
 var fails=[],warns=[],h="";
@@ -305,7 +319,8 @@ document.getElementById("sigs").innerHTML=h;
 // one verdict banner: light + plain sentence + which checks drove it + confidence
 var sub=fails.length>0?t("failn")+" "+fails.join(", "):warns.length>0?t("warnn")+" "+warns.join(", "):t("allpass");
 var vl=document.getElementById("dVerdict");vl.className="vline "+ch;
-vl.innerHTML='<span class="vm"><span class="vt">'+esc(t(ch))+'</span><span class="vs">'+esc(sub)+'</span></span><span class="cf">'+esc(t("conf"))+" "+Math.round((vv.confidence||0)*100)+"%</span>";
+var sureB=(vv.tier==="red_sure"&&ch==="red")?'<span class="vsure">'+esc(t("sure"))+"</span>":"";
+vl.innerHTML='<span class="vm"><span class="vt">'+esc(t(ch))+sureB+'</span><span class="vs">'+esc(sub)+'</span></span><span class="cf">'+esc(t("conf"))+" "+Math.round((vv.confidence||0)*100)+"%</span>";
 // raw-rules vs AI agreement lives in the "Our rules" fold
 var raw=fails.length>0?"red":warns.length>=2?"yellow":"green";
 document.getElementById("dRaw").textContent=t("rawv")+": "+t(raw)+" · AI: "+t(lch)+(vv.severity!=null?" · "+t("sev")+" "+Number(vv.severity).toFixed(1)+"/3":"");
