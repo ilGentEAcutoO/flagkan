@@ -886,5 +886,27 @@ try {
 	check("wilson 10/100 = [0.0552, 0.1744]", approx(w[0], 0.0552, 5e-4) && approx(w[1], 0.1744, 5e-4));
 }
 
+// INGEST-STALL (12 Oct): Cloudflare fires the minutely cron ~0.6s BEFORE the
+// minute (scheduledTime itself reads :59), so the full-round gate must key on
+// the trigger minute (scheduledTime rounded), not the wall-clock minute.
+{
+	try {
+		execSync(`"${process.execPath}" "${TSC}" src/cron-tick.ts --outDir "${path.join(CACHE, "tick")}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`, { cwd: HERE, stdio: "pipe" });
+	} catch (e) {
+		console.error("FAIL tsc compile cron-tick:", String(e.stdout ?? e.message).slice(0, 400));
+		process.exit(1);
+	}
+	const ct = await import(pathToFileURL(path.join(CACHE, "tick", "cron-tick.js")).href);
+	const at = (hms) => Date.parse("2026-10-12T" + hms + "Z");
+	check("cron-tick: early fire 17:44:59.000 is the 17:45 tick -> full round", ct.isFullRound(at("17:44:59.000")) === true);
+	check("cron-tick: on-time 17:45:00.000 -> full round", ct.isFullRound(at("17:45:00.000")) === true);
+	check("cron-tick: late-ish 17:45:20 still the 17:45 tick -> full round", ct.isFullRound(at("17:45:20.000")) === true);
+	check("cron-tick: 17:45:59.000 is the 17:46 tick -> not full", ct.isFullRound(at("17:45:59.000")) === false);
+	check("cron-tick: 17:49:59.000 is the 17:50 tick -> full round", ct.isFullRound(at("17:49:59.000")) === true);
+	let fulls = 0;
+	for (let m = 0; m < 60; m++) if (ct.isFullRound(at("17:00:59.000") + m * 60000)) fulls++;
+	check("cron-tick: :59 early fires still give exactly 12 full rounds/hour", fulls === 12);
+}
+
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }
 console.log(`ml-check: all green (${passes} passed)`);

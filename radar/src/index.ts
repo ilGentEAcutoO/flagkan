@@ -18,6 +18,7 @@ import GBM_MODEL from "./ml/gbm-model.json";
 import { RESOLVE_FIRST_SQL, RESOLVE_LAST_SQL, RESOLVE_PRIOR_SQL } from "./ml/collect";
 import { collectLooks, collectDev, collectCounters } from "./dev";
 import { LiveFeed } from "./live";
+import { isFullRound } from "./cron-tick";
 import type { LiveState } from "./live";
 import { buildTickEvent, heartbeatEvent, shouldBroadcast, originAllowed, proofSummaryOf, stashOver, monthKey, monthEndMs, isNoTableError, TouchSet, TICK_MAX_ROWS } from "./live-core";
 export { LiveFeed };
@@ -749,11 +750,12 @@ async function snapshotMint(
 	}
 }
 
-async function ingest(env: Env, forceRefresh = false): Promise<Record<string, number>> {
+async function ingest(env: Env, forceRefresh = false, tickMs?: number): Promise<Record<string, number>> {
 	const now = Date.now();
 	const stats = { mints: 0, snapshots: 0, verdicts: 0, resolved: 0, errors: 0, refreshed: 0, gecko: 0 };
 	let geckoIntakeOk = true;
-	const fullRound = forceRefresh || new Date(now).getUTCMinutes() % 5 === 0;
+	// Trigger minute, not wall clock: the cron fires ~0.6s early (see cron-tick).
+	const fullRound = forceRefresh || isFullRound(tickMs ?? now);
 	let mints: string[] = [];
 	if (fullRound) {
 		const dayStart = now - 24 * 3600 * 1000;
@@ -1373,7 +1375,7 @@ export default {
 				const touched = new TouchSet();
 				ACTIVE_TOUCH.add(touched);
 				try {
-					const stats = await ingest(env);
+					const stats = await ingest(env, false, controller.scheduledTime);
 					console.log(JSON.stringify({ cron: "ok", ...stats }));
 					ACTIVE_TOUCH.delete(touched);
 					await pushTick(env, touched, Number(stats.resolved ?? 0)); // never throws
