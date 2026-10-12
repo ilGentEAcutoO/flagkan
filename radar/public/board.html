@@ -53,7 +53,7 @@ tbody tr:hover{background:var(--hover)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 td.num .chg{font-size:11px;margin-left:4px}
 sub.z{font-size:.78em;vertical-align:-.25em;line-height:0;color:var(--dim)}
-.coinname{font-family:var(--font);font-weight:700;color:var(--ink);font-size:13px}
+.coinname{font-family:var(--font);font-weight:700;color:var(--ink);font-size:13px;unicode-bidi:isolate}
 .coinmint{font-size:10px;color:var(--faint);margin-left:4px}
 .sure{display:inline-block;margin-left:5px;font-family:var(--font);font-size:10.5px;font-weight:800;color:var(--red);background:var(--redbg);border-radius:99px;padding:1px 7px;vertical-align:1px;white-space:nowrap}
 .bstat .old{color:var(--faint);font-size:11.5px;margin-left:4px}
@@ -79,7 +79,7 @@ sub.z{font-size:.78em;vertical-align:-.25em;line-height:0;color:var(--dim)}
 .modal.open{display:flex}
 .mcard{background:var(--card);border:1px solid var(--line);border-radius:18px;max-width:620px;width:100%;padding:20px 22px 18px;box-shadow:0 30px 70px -24px rgba(38,33,27,.45)}
 .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.mhead .nm{font-size:20px;font-weight:800;line-height:1.2}
+.mhead .nm{font-size:20px;font-weight:800;line-height:1.2;unicode-bidi:isolate}
 .mhead .mt{font-family:var(--mono);font-size:10.5px;color:var(--faint);word-break:break-all;margin-top:2px}
 .x{flex:none;background:#fff;border:1px solid var(--line2);border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:14px;color:var(--dim);transition:border-color .15s,color .15s}
 .x:hover{border-color:var(--ink);color:var(--ink)}
@@ -195,7 +195,9 @@ try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}cat
 (function(){var here="board";var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")===here)as[i].className="on"}})();
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function clean(s){return String(s==null?"":s).replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g,"")}
+/* untrusted on-chain names: strip all format (Cf: bidi, zero-width, tags, BOM...), controls (Cc), line/para separators, invisible fillers and supplementary variation selectors; collapse whitespace; cut by code point; never return blank */
+function clean(s){return String(s==null?"":s).replace(/[\p{Cf}\p{Cc}\p{Zl}\p{Zp}\u034F\u115F\u1160\u17B4\u17B5\u3164\uFFA0\u{E0100}-\u{E01EF}]/gu,"").replace(/\s+/g," ").trim()}
+function nameOf(n,mint,k,max){var c=clean(n);if(!c)c=clean(String(mint||"").slice(0,k));var a=Array.from(c);return max&&a.length>max?a.slice(0,max).join(""):c}
 function pct(x){return (x==null||isNaN(Number(x)))?t("na"):Math.round(Number(x)*100)+"%"}
 function trim1(v){return v.toFixed(1).replace(/\.0$/,"")}
 function num(x){if(x==null||x===""||isNaN(Number(x)))return "—";var n=Number(x);if(n>=1e9)return trim1(n/1e9)+"B";if(n>=1e6)return trim1(n/1e6)+"M";if(n>=1e3)return trim1(n/1e3)+"K";return String(Math.round(n))}
@@ -244,7 +246,7 @@ var q=QUERY.toLowerCase();
 var list=ROUNDS.filter(function(x){
 if(FILTER==="star"&&!WATCH[x.mint])return false;
 if((FILTER==="red"||FILTER==="yellow"||FILTER==="green")&&x.choice!==FILTER)return false;
-if(q){var hay=((x.name||"")+" "+x.mint).toLowerCase();if(hay.indexOf(q)<0)return false}
+if(q){var hay=(clean(x.name)+" "+x.mint).toLowerCase();if(hay.indexOf(q)<0)return false}
 return true});
 if(SORT.key)list=list.slice().sort(cmpRows);
 var pages=Math.max(1,Math.ceil(list.length/PER));if(PAGE>pages)PAGE=pages;if(PAGE<1)PAGE=1;
@@ -253,7 +255,7 @@ renderPager(list.length,pages);
 var start=(PAGE-1)*PER,end=Math.min(start+PER,list.length),h="";
 for(var i=start;i<end;i++){var x=list[i];
 var out,dd=deadOf(x);if(dd==null){out='<span class="oc pend"><i></i>'+hoursLeft(x)+t("h")+"</span>"}else{out=dd?'<span class="oc dead"><i></i>'+t("dead")+"</span>":'<span class="oc alive"><i></i>'+t("alive")+"</span>"}
-var nm=esc(clean(x.name||x.mint.slice(0,8)).slice(0,18));
+var nm=esc(nameOf(x.name,x.mint,8,18));
 var star=WATCH[x.mint]?"lit":"";
 var chg="";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;chg='<span class="chg '+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}
 h+='<tr data-m="'+esc(x.mint)+'"><td><button class="star '+star+'" data-s="'+esc(x.mint)+'" type="button">★</button></td><td><span class="coinname">'+nm+'</span> <span class="coinmint">'+esc(x.mint.slice(0,6))+"</span></td><td>"+badge(x.choice)+(x.tier==="red_sure"?'<span class="sure" title="'+esc(t("sure"))+'">'+esc(t("sureS"))+"</span>":"")+"</td><td class=\"num\">"+(x.confidence==null?"—":Math.round(x.confidence*100)+"%")+'</td><td class="num hideS">'+fmtPrice(x.last_price,true)+chg+'</td><td class="num hideS">'+(x.last_liq==null?"—":"$"+num(x.last_liq))+'</td><td class="num hideS">'+(x.top1==null||isNaN(Number(x.top1))?"—":Math.round(Number(x.top1))+"%")+'</td><td class="num">'+out+"</td></tr>"}
@@ -299,7 +301,7 @@ function flag(v,red,yel){v=Number(v);if(isNaN(v))return "none";if(v>=red)return 
 function openModal(mint){fetch("/api/coin?mint="+encodeURIComponent(mint)).then(function(r){return r.json()}).then(function(d){
 if(d.error)return;LAST=mint;
 document.getElementById("modal").className="modal open";
-document.getElementById("dName").textContent=clean(d.coin&&d.coin.name)||mint.slice(0,10);
+document.getElementById("dName").textContent=nameOf(d.coin&&d.coin.name,mint,10,0);
 document.getElementById("dMint").textContent=mint;
 var ch=(d.verdict&&d.verdict.choice)||"none";if(ch!=="red"&&ch!=="yellow"&&ch!=="green")ch="none";
 var s=d.signals||{},last=d.last||{};

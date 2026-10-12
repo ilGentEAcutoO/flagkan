@@ -170,7 +170,9 @@ try{REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduc
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function clean(s){return String(s==null?"":s).replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g,"")}
+/* untrusted on-chain names: strip all format (Cf: bidi, zero-width, tags, BOM...), controls (Cc), line/para separators, invisible fillers and supplementary variation selectors; collapse whitespace; cut by code point; never return blank */
+function clean(s){return String(s==null?"":s).replace(/[\p{Cf}\p{Cc}\p{Zl}\p{Zp}\u034F\u115F\u1160\u17B4\u17B5\u3164\uFFA0\u{E0100}-\u{E01EF}]/gu,"").replace(/\s+/g," ").trim()}
+function nameOf(n,mint,k,max){var c=clean(n);if(!c)c=clean(String(mint||"").slice(0,k));var a=Array.from(c);return max&&a.length>max?a.slice(0,max).join(""):c}
 function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderBand();loadFresh()}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
@@ -206,7 +208,7 @@ function dot(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span 
 function hoursLeft(x){return Math.max(0,Math.ceil((Number(x.first_seen)+21600000-Date.now())/3600000))}
 function renderFresh(){var h="";for(var i=0;i<Math.min(6,ROUNDS.length);i++){var x=ROUNDS[i];
 var out=x.dead==null?'<span class="oc pend"><i></i>'+hoursLeft(x)+t("h")+"</span>":(x.dead?'<span class="oc dead"><i></i>'+t("dead")+"</span>":'<span class="oc alive"><i></i>'+t("alive")+"</span>");
-var nm=esc(clean(x.name||x.mint.slice(0,8)).slice(0,20));
+var nm="<bdi>"+esc(nameOf(x.name,x.mint,8,20))+"</bdi>";
 h+='<div class="frow" data-href="/board.html"><span class="fname">'+nm+' <span class="fmint">'+esc(x.mint.slice(0,6))+"</span></span>"+badge(x.choice)+'<span class="fconf">'+(x.confidence==null?"—":Math.round(x.confidence*100)+"%")+'</span><span class="fout">'+out+"</span></div>"}
 document.getElementById("fresh").innerHTML=h;
 var rs=document.querySelectorAll("#fresh .frow");for(var j=0;j<rs.length;j++){rs[j].onclick=function(){location.href="/board.html"}}}

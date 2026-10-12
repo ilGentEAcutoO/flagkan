@@ -43,7 +43,7 @@ th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--fain
 td{padding:8px 14px;border-bottom:1px solid #F4EEE2;font-family:var(--mono);font-size:12px;color:var(--ink);white-space:nowrap}
 tbody tr:last-child td{border-bottom:none}
 td.num{text-align:right;font-variant-numeric:tabular-nums}
-.coinname{font-family:var(--font);font-weight:700;color:var(--ink);font-size:13px}
+.coinname{font-family:var(--font);font-weight:700;color:var(--ink);font-size:13px;unicode-bidi:isolate}
 /* label v2 — headline score with baselines, collecting state, definition box */
 [hidden]{display:none!important}
 .cap{margin-top:8px;font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
@@ -216,7 +216,9 @@ var L="en";
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function clean(s){return String(s==null?"":s).replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g,"")}
+/* untrusted on-chain names: strip all format (Cf: bidi, zero-width, tags, BOM...), controls (Cc), line/para separators, invisible fillers and supplementary variation selectors; collapse whitespace; cut by code point; never return blank */
+function clean(s){return String(s==null?"":s).replace(/[\p{Cf}\p{Cc}\p{Zl}\p{Zp}\u034F\u115F\u1160\u17B4\u17B5\u3164\uFFA0\u{E0100}-\u{E01EF}]/gu,"").replace(/\s+/g," ").trim()}
+function nameOf(n,mint,k,max){var c=clean(n);if(!c)c=clean(String(mint||"").slice(0,k));var a=Array.from(c);return max&&a.length>max?a.slice(0,max).join(""):c}
 function pct(x){return (x==null||isNaN(Number(x)))?"—":Math.round(Number(x)*100)+"%"}
 function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderRules();loadProof();loadRows()}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
@@ -280,7 +282,7 @@ function loadRows(){fetch("/api/rounds?limit=100&resolved=1").then(function(r){r
 var h="",n=0;
 for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];if(x.resolved_at==null)continue;n++;
 var mv="—";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;var mp=Math.round(Math.abs(x.mult-1)*100),big=up&&mp>9999;mv='<span class="'+(up?"up":"down")+'"'+(big?' title="'+(up?"▲":"▼")+mp.toLocaleString("en-US")+"% (×"+esc(Number(x.mult).toFixed(1))+')"':"")+'>'+(up?"▲":"▼")+(big?"&gt;9,999":mp)+"%</span>"}
-var nm=esc(clean(x.name||x.mint.slice(0,8)).slice(0,18));
+var nm=esc(nameOf(x.name,x.mint,8,18));
 h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(deadOf(x)?'<span class="oc dead"><i></i>'+esc(t("dead"))+"</span>":'<span class="oc alive"><i></i>'+esc(t("alive"))+"</span>")+"</td></tr>"}
 document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="mut">'+esc(t("loading"))+"</td></tr>";
 }).catch(function(){})}
