@@ -10,6 +10,8 @@ import { hardRed, shadowGreen, timeSplitValidateV2, RETRAIN_SQL_V2, rowFromDb, p
 import type { GoldModel, TrainRow } from "./ml/train";
 import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence, LABEL_V2, shouldPersistVerdict } from "./ml/upgrade";
 import type { SnapLite } from "./ml/upgrade";
+import { scoreGbm, gbmModelOk, challengerStats } from "./ml/gbm";
+import GBM_MODEL from "./ml/gbm-model.json";
 
 const DEX = "https://api.dexscreener.com";
 const UA = { "User-Agent": "Mozilla/5.0 (radar proof-of-concept)" };
@@ -185,10 +187,16 @@ async function decideV2(env: Env, a: any, vstate: Record<string, unknown>, mint:
 	const jev = sanitizeJev(a);
 	const rule = hardRed(vstate);
 	let p: number | null = null;
+	let x: number[] | null = null;
 	try {
+		x = buildFeatures(liveRowFrom(a, vstate));
 		const champ = await loadChampion(env);
-		if (champ) p = predict(champ.model, buildFeatures(liveRowFrom(a, vstate)));
+		if (champ) p = predict(champ.model, x);
 	} catch { p = null; /* no model: base-rate all-red fallback */ }
+	// SHADOW (Oct 12): model-only first-sight P(dead) from the live LR and
+	// the LightGBM challenger on the SAME feature vector. Stored for the
+	// /api/proof head-to-head only; policyV2 below never sees p_gbm.
+	a.shadow_models = { p_lr: p, p_gbm: x ? scoreGbm(GBM_MODEL, x) : null, gbm_v: GBM_V };
 	const { choice, tier } = policyV2(p, rule, jev);
 	// p_red: model p when available; else the measured stamp of whatever
 	// called it (rule precision / base rate).
@@ -210,6 +218,20 @@ async function decideV2(env: Env, a: any, vstate: Record<string, unknown>, mint:
 	(a.verdict as any).redSource = redSource;
 	(a.verdict as any).tier = tier;
 	console.log(JSON.stringify({ [tag]: "policy_v2", mint, tier, p: p === null ? null : Math.round(p * 1000) / 1000, rule, jev }));
+}
+
+// LightGBM shadow model version (null = model failed the feature-order
+// guard: nothing is scored, nothing breaks).
+const GBM_V: string | null = gbmModelOk(GBM_MODEL) ? String((GBM_MODEL as any).meta?.gbm_v ?? "gbm27") : null;
+const GBM_T_SURE: number | null = typeof (GBM_MODEL as any).meta?.t_sure === "number" ? (GBM_MODEL as any).meta.t_sure : null;
+
+// First-sight shadow columns (p_lr_first, p_gbm_first, gbm_v), bound ONLY
+// by first-verdict INSERTs. The upgrade UPDATE never touches them.
+function shadowCols(a: any): [number | null, number | null, string | null] {
+	const sm = a?.shadow_models;
+	const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+	const pg = num(sm?.p_gbm);
+	return [num(sm?.p_lr), pg, pg === null ? null : (typeof sm?.gbm_v === "string" ? sm.gbm_v : null)];
 }
 
 // Today's verdict-now response shape (answers.verdict.*) rebuilt from a
@@ -638,7 +660,7 @@ async function recordMint(
 				await decideV2(env, a, vstate, mint, "cron");
 				const shadow = shadowGreen(vstate) && String(a.verdict?.choice ?? "") !== "green" ? "green" : null;
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, shadow, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, shadow, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -659,7 +681,8 @@ async function recordMint(
 						hardRed(vstate),
 						Number(a.verdict?.probabilities?.red ?? 0),
 						tierOf(a),
-						POLICY_V
+						POLICY_V,
+						...shadowCols(a)
 					)
 					.run();
 				doVerdict.budget--;
@@ -1167,6 +1190,31 @@ export default {
 				v2.headline = { policy: POLICY_V, since: null, n: 0, ready: false, base_dead_rate: null, accuracy: null, baseline_all_red_accuracy: null, baseline_all_yellow_accuracy: null, red_precision: null, red_recall: null, reds: 0, alive_rate_non_red: null, lift_non_red: null, tiers: (["red_sure", "red", "yellow", "green"] as const).map((t) => ({ tier: t, n: 0, dead_rate: null })) };
 				v2.v2_error = String(e).slice(0, 120);
 			}
+			// SHADOW challenger (Oct 12): LR vs LightGBM model-only first-sight
+			// P(dead) on the same graded live policy-v2 rows. Display only —
+			// it decides no light. Fenced: pre-migration (no columns) or any
+			// failure leaves every other field intact.
+			const chEmpty = { n: 0, auc_lr: null, auc_gbm: null, acc_lr: null, acc_gbm: null, baseline_all_red_accuracy: null, brier_lr: null, brier_gbm: null, survivor_top5_lr: null, survivor_top5_gbm: null };
+			try {
+				const cq = await env.DB_MAIN.prepare(
+					`SELECT v.p_lr_first AS pl, v.p_gbm_first AS pg, o.dead_v2 AS d
+					FROM verdicts v JOIN outcomes o ON o.mint = v.mint
+					WHERE v.source = 'live' AND v.policy_v = 2 AND o.dead_v2 IS NOT NULL
+					AND v.p_lr_first IS NOT NULL AND v.p_gbm_first IS NOT NULL
+					ORDER BY v.ts DESC LIMIT 20000`
+				).all<{ pl: number; pg: number; d: number }>();
+				const st = challengerStats((cq.results ?? []).map((r) => ({ pLr: Number(r.pl), pGbm: Number(r.pg), dead: Number(r.d) === 1 ? 1 : 0 })));
+				v2.challenger = {
+					model: "lightgbm-27", gbm_v: GBM_V, n: st.n, ready: st.n >= 100,
+					auc_lr: r3(st.auc_lr), auc_gbm: r3(st.auc_gbm), acc_lr: r3(st.acc_lr), acc_gbm: r3(st.acc_gbm),
+					baseline_all_red_accuracy: r3(st.baseline_all_red_accuracy),
+					brier_lr: r3(st.brier_lr), brier_gbm: r3(st.brier_gbm),
+					survivor_top5_lr: r3(st.survivor_top5_lr), survivor_top5_gbm: r3(st.survivor_top5_gbm),
+					t_sure_gbm: GBM_T_SURE,
+				};
+			} catch (e) {
+				v2.challenger = { model: "lightgbm-27", gbm_v: GBM_V, ...chEmpty, ready: false, t_sure_gbm: GBM_T_SURE, error: String(e).slice(0, 120) };
+			}
 			v2.legacy_v1 = {
 				resolved_with_verdict: n,
 				accuracy: n ? Number(row?.correct ?? 0) / n : null,
@@ -1317,7 +1365,7 @@ export default {
 				await decideV2(env, a, state, mint, "verdict_now");
 				if (!persist) return json({ mint, state, answers: a, stored: false, preview: true, note: "preview of the current market: not stored, not graded" });
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -1337,7 +1385,8 @@ export default {
 						hardRed(state),
 						Number(a.verdict?.probabilities?.red ?? 0),
 						tierOf(a),
-						POLICY_V
+						POLICY_V,
+						...shadowCols(a)
 					)
 					.run();
 				return json({ mint, state, answers: a, stored: true, preview: false });
@@ -1377,7 +1426,7 @@ export default {
 					return json({ mint, signals: s, answers: a, stored: false, preview: true, verdict: stored3 ?? null });
 				}
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -1397,7 +1446,8 @@ export default {
 						hardRed(vstate3),
 						Number(a.verdict?.probabilities?.red ?? 0),
 						tierOf(a),
-						POLICY_V
+						POLICY_V,
+						...shadowCols(a)
 					)
 					.run();
 				return json({ mint, signals: s, answers: a, stored: true, preview: false });
@@ -1499,7 +1549,7 @@ export default {
 					const a = await jevVerdict(env, vstate);
 					await decideV2(env, a, vstate, c.mint, "backfill");
 					await env.DB_MAIN.prepare(
-						"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, source, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'backfill', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+						"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, source, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'backfill', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					)
 						.bind(
 							c.mint,
@@ -1519,7 +1569,8 @@ export default {
 							hardRed(vstate),
 							Number(a.verdict?.probabilities?.red ?? 0),
 							tierOf(a),
-							POLICY_V
+							POLICY_V,
+							...shadowCols(a)
 						)
 						.run();
 					results.push({ mint: c.mint, choice: String(a.verdict?.choice ?? "yellow") });

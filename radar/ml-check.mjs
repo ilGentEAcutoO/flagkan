@@ -24,7 +24,7 @@ if (!existsSync(TSC)) { console.error("FAIL typescript not installed (run npm in
 rmSync(CACHE, { recursive: true, force: true });
 mkdirSync(CACHE, { recursive: true });
 try {
-	execSync(`"${process.execPath}" "${TSC}" src/ml/train.ts src/ml/upgrade.ts --outDir "${CACHE}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`,
+	execSync(`"${process.execPath}" "${TSC}" src/ml/train.ts src/ml/upgrade.ts src/ml/gbm.ts --outDir "${CACHE}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`,
 		{ cwd: HERE, stdio: "pipe" });
 } catch (e) {
 	console.error("FAIL tsc compile:", String(e.stdout ?? e.message).slice(0, 400));
@@ -32,6 +32,7 @@ try {
 }
 const ml = await import(pathToFileURL(path.join(CACHE, "train.js")).href);
 const up = await import(pathToFileURL(path.join(CACHE, "upgrade.js")).href);
+const gbm = await import(pathToFileURL(path.join(CACHE, "gbm.js")).href);
 
 // --- b64ToBytes ---
 {
@@ -405,6 +406,58 @@ try {
 	check("10 min boundary is preview", P({ createdRound: false, firstSeen: now - 10 * 60e3, hasVerdict: false, now }) === false);
 	check("unknown round -> preview", P({ createdRound: false, firstSeen: null, hasVerdict: false, now }) === false);
 	check("future first_seen -> preview", P({ createdRound: false, firstSeen: now + 60e3, hasVerdict: false, now }) === false);
+}
+
+// --- LightGBM shadow challenger (SHADOW-001) ---
+{
+	const { readFileSync } = await import("node:fs");
+	const model = JSON.parse(readFileSync(path.join(HERE, "src", "ml", "gbm-model.json"), "utf8"));
+	const fx = JSON.parse(readFileSync(path.join(HERE, "gbm-parity.json"), "utf8")).rows;
+	check("gbm model passes feature-order guard", gbm.gbmModelOk(model) === true);
+	check("gbm model features == train.ts FEATURES", JSON.stringify(model.features) === JSON.stringify([...ml.FEATURES]) && JSON.stringify(model.meta.features) === JSON.stringify([...ml.FEATURES]));
+	check("gbm meta has gbm_v + t_sure", model.meta.gbm_v === "gbm27-2026-10-12" && typeof model.meta.t_sure === "number" && model.meta.t_sure > 0.9 && model.meta.t_sure < 1);
+	let worst = 0;
+	for (const c of fx) worst = Math.max(worst, Math.abs(gbm.predictGbm(model, c.x) - c.p));
+	check(`gbm parity vs LightGBM (${fx.length} rows) <= 1e-9`, fx.length >= 20 && worst <= 1e-9, `max_abs_err=${worst}`);
+	check("scoreGbm == predictGbm on fixture", approx(gbm.scoreGbm(model, fx[0].x), fx[0].p, 1e-9));
+	// guard: any reorder / rename / wrong dims refuses to score
+	const swapped = { ...model, features: [model.features[1], model.features[0], ...model.features.slice(2)] };
+	check("gbm refuses swapped feature order", gbm.gbmModelOk(swapped) === false && gbm.scoreGbm(swapped, fx[0].x) === null);
+	const metaBad = { ...model, meta: { ...model.meta, features: model.features.slice(0, 26) } };
+	check("gbm refuses meta feature mismatch", gbm.scoreGbm(metaBad, fx[0].x) === null);
+	check("gbm refuses wrong dims", gbm.scoreGbm(model, fx[0].x.slice(0, 26)) === null);
+	check("gbm null on garbage model", gbm.scoreGbm(null, fx[0].x) === null && gbm.scoreGbm({ kind: "x" }, fx[0].x) === null);
+	const broken = { ...model, trees: [{ f: [0], t: [0], dl: [0], l: [0], r: [0], v: [0], root: 0 }] };
+	check("gbm null (no throw) on cyclic tree", gbm.scoreGbm(broken, fx[0].x) === null);
+	// live vector from buildFeatures scores to a probability
+	const row = { ts: 0, dead: 0, choice: "yellow", liq: 12000, top1: 12, t211: 25, fdv: 50000, early: 40, age: 30, txns: 120, buys: 70, sells: 50, pool: 0, mintLive: 0, freezeLive: 0, chgH1: 15, volH1: 9000, pairAge: 20, simpson: 0.8, fWhale: 0.3, fSell: 0.4, fStruct: 0.2, src: "gecko" };
+	const pg = gbm.scoreGbm(model, ml.buildFeatures(row));
+	check("gbm scores a buildFeatures vector in (0,1)", typeof pg === "number" && pg > 0 && pg < 1, String(pg));
+	// AUC (Mann-Whitney with ties)
+	check("auc perfect = 1", ml.aucOf([0.1, 0.2, 0.8, 0.9], [0, 0, 1, 1]) === 1);
+	check("auc inverted = 0", ml.aucOf([0.9, 0.8, 0.2, 0.1], [0, 0, 1, 1]) === 0);
+	check("auc all ties = 0.5", ml.aucOf([0.5, 0.5, 0.5, 0.5], [0, 1, 0, 1]) === 0.5);
+	// pos {0.6,0.4}, neg {0.4,0.2}: pairs (0.6>0.4)=1,(0.6>0.2)=1,(0.4=0.4)=.5,(0.4>0.2)=1 -> 3.5/4
+	check("auc partial ties = 0.875", approx(ml.aucOf([0.6, 0.4, 0.4, 0.2], [1, 1, 0, 0]), 0.875));
+	check("auc one class = null", ml.aucOf([0.1, 0.2], [1, 1]) === null);
+	// challengerStats
+	const rows = [];
+	for (let i = 0; i < 40; i++) rows.push({ pLr: i < 4 ? 0.3 : 0.9, pGbm: i < 4 ? 0.2 : 0.95, dead: i < 4 ? 0 : 1 });
+	const st = gbm.challengerStats(rows);
+	check("challenger n/acc/baseline", st.n === 40 && st.acc_lr === 1 && st.acc_gbm === 1 && approx(st.baseline_all_red_accuracy, 0.9), JSON.stringify(st));
+	check("challenger auc + brier", st.auc_lr === 1 && st.auc_gbm === 1 && approx(st.brier_lr, (4 * 0.09 + 36 * 0.01) / 40) && approx(st.brier_gbm, (4 * 0.04 + 36 * 0.0025) / 40));
+	check("challenger survivor_top5 (2 lowest of 40 alive)", st.survivor_top5_lr === 1 && st.survivor_top5_gbm === 1);
+	check("challenger survivor null under 20 rows", gbm.challengerStats(rows.slice(0, 19)).survivor_top5_lr === null);
+	check("challenger acc threshold strictly > 0.5", gbm.challengerStats([{ pLr: 0.5, pGbm: 0.51, dead: 1 }]).acc_lr === 0 && gbm.challengerStats([{ pLr: 0.5, pGbm: 0.51, dead: 1 }]).acc_gbm === 1);
+	check("challenger empty", gbm.challengerStats([]).n === 0 && gbm.challengerStats([]).auc_gbm === null);
+	// source guards: shadow columns written only by first-verdict INSERTs,
+	// never by an UPDATE; policyV2 never sees the GBM probability.
+	const src = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
+	const updates = src.match(/UPDATE verdicts[^"`]*/g) ?? [];
+	check("upgrade UPDATE never sets p_gbm_first/p_lr_first/gbm_v", updates.length > 0 && updates.every((u) => !/p_gbm_first|p_lr_first|gbm_v/.test(u)), updates.join(" | ").slice(0, 200));
+	const inserts = src.match(/INSERT OR REPLACE INTO verdicts \([^)]*\)/g) ?? [];
+	check("every verdict INSERT stores p_lr_first, p_gbm_first, gbm_v", inserts.length >= 4 && inserts.every((q) => /p_lr_first, p_gbm_first, gbm_v/.test(q)), String(inserts.length));
+	check("policyV2 call never takes the GBM p", /policyV2\(p, rule, jev\)/.test(src) && !/policyV2\([^)]*gbm/i.test(src));
 }
 
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }

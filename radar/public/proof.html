@@ -77,6 +77,14 @@ details.legacy p{margin-top:6px;max-width:68ch}
 .defbox summary{cursor:pointer;font-weight:700;color:var(--ink)}
 .defbox details p{color:var(--dim);margin-top:6px}
 .defbox .rg{font-family:var(--mono);font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+/* shadow challenger — calm side-by-side, decides nothing */
+.chal{padding:16px 20px}
+.chal .chs{color:var(--dim);font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
+.chal table{margin-top:10px}
+.chal td,.chal th{padding-left:0}
+.chal .pbar{margin-top:10px;height:6px;background:var(--cream);border-radius:99px;overflow:hidden;max-width:420px}
+.chal .pbar i{display:block;height:100%;background:var(--line2);border-radius:99px}
+.chal .chn{margin-top:10px;font-size:12px;color:var(--faint);max-width:68ch}
 .rnote{font-size:12.5px;color:var(--faint);margin:-4px 0 14px;max-width:68ch}
 @media(max-width:760px){#rules{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){
@@ -120,6 +128,7 @@ details.legacy p{margin-top:6px;max-width:68ch}
       <tbody id="tierRows"></tbody>
     </table></div></div>
   </section>
+  <section class="sec" id="chalSec" hidden><h2 data-i18n="chT">Challenger: LightGBM (shadow)</h2><div class="tcard chal" id="chal"></div></section>
   <section class="sec"><h2 data-i18n="ruleT">The 6 checks</h2><p class="rnote" data-i18n="ruleNote"></p><div id="rules"></div></section>
   <section class="sec"><h2 data-i18n="aiT">The AI judge</h2><div class="prose"><p data-i18n-html="aiD"></p><details><summary data-i18n="outT">How outcomes are settled</summary><p data-i18n-html="outD"></p></details></div></section>
   <section class="sec"><h2 data-i18n="tabT">Every resolved coin</h2>
@@ -172,7 +181,14 @@ defK:"What counts as dead (v2)",
 defFb:"Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
 whyT:"Why we changed it",
 whyD:"Under the old definition, coins that simply stopped trading were often counted as alive, because the 6-hour sample came from a different data source than first sight. That made our accuracy look better than doing nothing deserved. We also fixed a training leak: a stored value was overwritten after crashes and could reach the model. From now on every number on this page sits next to the do-nothing baseline it has to beat.",
-rgT:"All past coins regraded under v2: {n} coins · base dead rate {b} · accuracy {a} · red precision {r}"},
+rgT:"All past coins regraded under v2: {n} coins · base dead rate {b} · accuracy {a} · red precision {r}",
+chT:"Challenger: LightGBM (shadow)",
+chS:"Scored on every new coin next to the live model, from the same first-sight data. {n} coins graded.",
+chCol:"Collecting: {n} / 100 coins graded",
+chColD:"Side-by-side numbers appear once 100 coins have both scores and a result.",
+chNote:"Shadow only: it does not decide the light yet. Higher AUC and accuracy are better; lower Brier is better.",
+chM:"measure",chLr:"live model (LR)",chGbm:"LightGBM",chBase:"all red",
+chAuc:"AUC (ranking)",chAcc:"accuracy",chBrier:"Brier (error)",chSurv:"survived, safest 5%"},
 th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
 h1:"วัดผลจริง ไม่ใช่คำคุย",
 sub:"ทุกคำชี้ถูกตัดสินจากสิ่งที่เกิดขึ้นจริง 6 ชั่วโมงหลังเจอเหรียญ หน้านี้โชว์คะแนนสดกับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
@@ -211,7 +227,14 @@ defK:"นิยาม \"ตาย\" (v2)",
 defFb:"ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
 whyT:"ทำไมเราเปลี่ยน",
 whyD:"นิยามเดิมมักนับเหรียญที่แค่หยุดเทรดว่า \"รอด\" เพราะค่าที่วัดตอน 6 ชั่วโมงมาจากคนละแหล่งข้อมูลกับตอนเจอครั้งแรก ทำให้ความแม่นดูดีกว่าการไม่ทำอะไรเลยเกินจริง เรายังแก้ข้อมูลรั่วในการเทรนด้วย: มีค่าหนึ่งถูกเขียนทับหลังเหรียญ crash แล้วหลุดเข้าไปถึงโมเดล ต่อจากนี้ทุกตัวเลขในหน้านี้จะแสดงคู่กับ baseline แบบไม่ทำอะไรเลยที่ต้องชนะให้ได้",
-rgT:"ตัดสินเหรียญย้อนหลังทั้งหมดใหม่ด้วย v2: {n} เหรียญ · อัตราตายพื้นฐาน {b} · ความแม่น {a} · แดงแม่น {r}"}};
+rgT:"ตัดสินเหรียญย้อนหลังทั้งหมดใหม่ด้วย v2: {n} เหรียญ · อัตราตายพื้นฐาน {b} · ความแม่น {a} · แดงแม่น {r}",
+chT:"ผู้ท้าชิง: LightGBM (รันเงา)",
+chS:"ให้คะแนนทุกเหรียญใหม่คู่กับโมเดลที่ใช้จริง จากข้อมูลตอนเจอครั้งแรกชุดเดียวกัน ตัดสินแล้ว {n} เหรียญ",
+chCol:"กำลังเก็บผล: ตัดสินแล้ว {n} / 100 เหรียญ",
+chColD:"ตัวเลขเทียบกันจะขึ้นเมื่อครบ 100 เหรียญที่มีคะแนนทั้งสองแบบและรู้ผลแล้ว",
+chNote:"รันเงาเท่านั้น ยังไม่ได้เป็นตัวตัดสินไฟ AUC และความแม่นยิ่งสูงยิ่งดี Brier ยิ่งต่ำยิ่งดี",
+chM:"ตัววัด",chLr:"โมเดลที่ใช้จริง (LR)",chGbm:"LightGBM",chBase:"ชี้แดงหมด",
+chAuc:"AUC (การจัดอันดับ)",chAcc:"ความแม่น",chBrier:"Brier (ความคลาด)",chSurv:"รอด ใน 5% ที่ปลอดภัยสุด"}};
 var L="en";
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
@@ -274,7 +297,23 @@ var ts=document.getElementById("tierSec"),tiers=(mode==="ready"&&Array.isArray(h
 if(tiers.length){var th="";for(var i=0;i<tiers.length;i++){var r=tiers[i]||{},k=String(r.tier||"");var lab=T.en["tier_"+k]?t("tier_"+k):k;var bc=(k==="red_sure"||k==="red")?"red":(k==="yellow"||k==="green")?k:"none";var dr=isNum(r.dead_rate)?Math.max(0,Math.min(1,Number(r.dead_rate))):null;
 th+='<tr><td><span class="badge '+bc+'">'+esc(lab)+'</span></td><td class="num">'+fmtInt(r.n)+'</td><td><span class="tbar"><i style="width:'+(dr==null?0:dr*100).toFixed(1)+'%"></i></span>'+pct(r.dead_rate)+"</td></tr>"}
 document.getElementById("tierRows").innerHTML=th;ts.hidden=false}else{ts.hidden=true}
+try{renderChallenger(d.challenger)}catch(e){document.getElementById("chalSec").hidden=true}
 }
+function pct1(x){return isNum(x)?(Number(x)*100).toFixed(1)+"%":"—"}
+function num3(x){return isNum(x)?Number(x).toFixed(3):"—"}
+function renderChallenger(c){var sec=document.getElementById("chalSec"),el=document.getElementById("chal");
+if(!c||typeof c!=="object"){sec.hidden=true;el.innerHTML="";return}
+var n=isNum(c.n)?Math.max(0,Number(c.n)):0,h="";
+if(c.ready===true&&n>=100){
+var rows=[[t("chAuc"),num3(c.auc_lr),num3(c.auc_gbm),"0.500"],[t("chAcc"),pct1(c.acc_lr),pct1(c.acc_gbm),pct1(c.baseline_all_red_accuracy)],[t("chBrier"),num3(c.brier_lr),num3(c.brier_gbm),"—"]];
+if(isNum(c.survivor_top5_lr)||isNum(c.survivor_top5_gbm)){var br=isNum(c.baseline_all_red_accuracy)?1-Number(c.baseline_all_red_accuracy):null;rows.push([t("chSurv"),pct(c.survivor_top5_lr),pct(c.survivor_top5_gbm),pct(br)])}
+h+='<div class="chs">'+esc(fill(t("chS"),{n:fmtInt(n)}))+'</div><div class="tscroll"><table><thead><tr><th>'+esc(t("chM"))+'</th><th style="text-align:right">'+esc(t("chLr"))+'</th><th style="text-align:right">'+esc(t("chGbm"))+'</th><th style="text-align:right">'+esc(t("chBase"))+"</th></tr></thead><tbody>";
+for(var i=0;i<rows.length;i++){var r=rows[i];h+='<tr><td style="font-family:var(--font)">'+esc(r[0])+'</td><td class="num">'+esc(r[1])+'</td><td class="num">'+esc(r[2])+'</td><td class="num">'+esc(r[3])+"</td></tr>"}
+h+="</tbody></table></div>";
+}else{var w=Math.max(0,Math.min(1,n/100));
+h+='<div class="chs">'+esc(fill(t("chCol"),{n:fmtInt(n)}))+'</div><div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+esc(Math.min(100,Math.round(n)))+'"><i style="width:'+(w*100).toFixed(1)+'%"></i></div><p class="chn">'+esc(t("chColD"))+"</p>"}
+h+='<p class="chn">'+esc(t("chNote"))+"</p>";
+el.innerHTML=h;sec.hidden=false}
 function loadProof(){if(PROOF){renderProof(PROOF);return}fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderProof(d)}).catch(function(){})}
 function deadOf(x){var v=x&&x.dead_v2;if(v===0||v===1||v===true||v===false||v==="0"||v==="1")return Number(v)===1;return x?x.dead:null}
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
