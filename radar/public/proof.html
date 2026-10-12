@@ -10,78 +10,52 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>FlagKan — Proof</title>
-<style>
-:root{--bg:#f3f5f9;--card:#ffffff;--line:#e3e8f0;--line2:#cdd5e3;
---ink:#16233f;--dim:#475569;--faint:#64748b;
---red:#dc2626;--redbg:#fdecec;--yel:#9a6a00;--yelbg:#fdf3d7;--grn:#0e9d6e;--grnbg:#def7ec;
---acc:#1e40af;
---sans:'Sarabun',-apple-system,BlinkMacSystemFont,'Segoe UI','Sukhumvit Set','Noto Sans Thai',Arial,sans-serif;
---mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
-:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
-.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);border-bottom:1px solid var(--line)}
-.topbar .in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink)}
-.brand .f{color:var(--red)}
-.brand{display:inline-flex;align-items:center}
-.mark{display:inline-flex;gap:3px;margin-right:9px}
-.mark i{width:8px;height:8px;border-radius:50%}
-.mark .r{background:var(--red)}.mark .y{background:#d99a17}.mark .g{background:var(--grn)}
-.nav{display:flex;gap:2px;align-items:center}
-.nav a{padding:6px 12px;border-radius:8px;color:var(--dim);font-weight:700;font-size:12.5px;white-space:nowrap;text-decoration:none}
-.nav a:hover{background:var(--bg);color:var(--ink)}
-.nav a.on{background:var(--bg);color:var(--ink)}
-.lang{margin-left:auto}
-.lang button{background:transparent;color:var(--faint);border:1px solid var(--line);border-radius:99px;
-padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
-.lang button.on{color:var(--ink);border-color:var(--line2);background:var(--bg)}
-.wrap{max-width:1060px;margin:0 auto;padding:26px 16px 40px}
-h1{font-size:28px;letter-spacing:-.02em;font-weight:800}
-.lead{color:var(--dim);font-size:15px;max-width:680px;margin-top:6px}
-.score{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
-.stat .v{font-family:var(--mono);font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
-.stat .v.green{color:var(--grn)}.stat .v.red{color:var(--red)}
-.stat .k{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
-.stat .s{font-size:12px;color:var(--faint);margin-top:2px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-top:18px}
-.panel h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-bottom:10px}
-.rule{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
-.rule:last-child{border-bottom:none}
-.rule .n{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--acc)}
-.rule .t{font-weight:700;font-size:13.5px}
-.rule .t small{display:block;font-weight:400;color:var(--dim);font-size:12.5px}
-.rule .lim{font-family:var(--mono);font-size:11.5px;color:var(--dim);white-space:nowrap}
-.prose{font-size:13.5px;color:var(--dim);max-width:720px}
-.prose b{color:var(--ink)}
-.prose p+p{margin-top:8px}
-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
-th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:left;
-padding:7px 10px;border-bottom:1px solid var(--line);font-weight:700;white-space:nowrap}
-td{padding:7px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:#2b3346;white-space:nowrap}
-tbody tr:last-child td{border-bottom:none}
-td.num{text-align:right;font-variant-numeric:tabular-nums}
-.coinname{font-family:var(--sans);font-weight:700;color:var(--ink);font-size:12.5px}
-.badge{font-family:var(--mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;text-transform:uppercase}
-.badge.red{background:var(--redbg);color:var(--red)}
-.badge.yellow{background:var(--yelbg);color:var(--yel)}
-.badge.green{background:var(--grnbg);color:var(--grn)}
-.up{color:var(--grn)}.down{color:var(--red)}
-.mut{color:var(--faint)}
-footer{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);
-display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
-a{color:var(--acc)}
-@media(max-width:700px){.score{grid-template-columns:1fr}.rule{grid-template-columns:32px 1fr}.rule .lim{grid-column:2}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-</style>
 <link rel="stylesheet" href="/theme.css">
 <style>
-/* sticker-pop upgrades (shared base in /theme.css) */
-.wrap{max-width:1060px}
-.stat,.panel{border-width:2px;box-shadow:var(--sh)}
-.rule{border-bottom:2px dashed #E5DCC8}
-th{background:var(--cream)}
+/* proof — one score card, a flat rules grid, prose, and the table card */
+.topbar .in,.wrap{max-width:1060px}
+.wrap{padding-top:30px}
+h1{font-size:30px;letter-spacing:-.02em;font-weight:800;line-height:1.15}
+.lead{color:var(--dim);font-size:15px;max-width:640px;margin-top:6px}
+.score{display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.stat{padding:18px 22px}
+.stat+.stat{border-left:1px solid var(--line)}
+.stat .v{font-family:var(--mono);font-size:34px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .v.green{color:var(--grn)}.stat .v.red{color:var(--red)}
+.stat .k{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:800;margin-top:4px}
+.stat .s{font-size:12px;color:var(--faint)}
+.sec{margin-top:44px}
+.sec h2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:var(--dim);margin-bottom:12px}
+#rules{display:grid;grid-template-columns:repeat(3,1fr);gap:22px 28px}
+.rule .n{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--acc)}
+.rule .t{display:block;font-weight:800;font-size:14.5px;margin-top:1px}
+.rule .d{display:block;color:var(--dim);font-size:12.5px;margin-top:2px}
+.rule .lim{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:11px;color:var(--ink);background:var(--cream);border-radius:6px;padding:1px 7px;white-space:nowrap}
+.prose{font-size:14px;color:var(--dim);max-width:68ch}
+.prose b{color:var(--ink)}
+.prose details{margin-top:10px}
+.prose summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13.5px}
+.prose details p{margin-top:6px}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);font-weight:800;background:#FFFBF2;white-space:nowrap}
+td{padding:8px 14px;border-bottom:1px solid #F4EEE2;font-family:var(--mono);font-size:12px;color:var(--ink);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.coinname{font-family:var(--font);font-weight:700;color:var(--ink);font-size:13px}
+@media(max-width:760px){#rules{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){
+  .wrap{padding-top:22px}
+  h1{font-size:26px}
+  .stat{padding:12px 10px}
+  .stat .v{font-size:22px}
+  .stat .k{font-size:10px;letter-spacing:.06em}
+  .stat .s{font-size:11px;line-height:1.35;margin-top:2px}
+  #rules{grid-template-columns:1fr;gap:16px}
+  .sec{margin-top:36px}
+  th,td{padding-left:10px;padding-right:10px}
+}
 </style>
 </head>
 <body data-page="proof">
@@ -98,14 +72,14 @@ th{background:var(--cream)}
     <div class="stat"><div class="v" id="sRes">–</div><div class="k" data-i18n="sRes">coins judged</div><div class="s" data-i18n="sResS"></div></div>
     <div class="stat"><div class="v red" id="sRed">–</div><div class="k" data-i18n="sRed">red precision</div><div class="s" data-i18n="sRedS"></div></div>
   </div>
-  <div class="panel"><h2 data-i18n="ruleT">The 6 checks</h2><div id="rules"></div></div>
-  <div class="panel"><h2 data-i18n="aiT">The AI judge</h2><div class="prose"><p data-i18n-html="aiD"></p><p data-i18n-html="outD"></p></div></div>
-  <div class="panel"><h2 data-i18n="tabT">Every resolved coin</h2>
-    <div style="overflow-x:auto"><table>
+  <section class="sec"><h2 data-i18n="ruleT">The 6 checks</h2><div id="rules"></div></section>
+  <section class="sec"><h2 data-i18n="aiT">The AI judge</h2><div class="prose"><p data-i18n-html="aiD"></p><details><summary data-i18n="outT">How outcomes are settled</summary><p data-i18n-html="outD"></p></details></div></section>
+  <section class="sec"><h2 data-i18n="tabT">Every resolved coin</h2>
+    <div class="tcard"><div class="tscroll"><table>
       <thead><tr><th data-i18n="cCoin">coin</th><th data-i18n="cLight">light</th><th style="text-align:right" data-i18n="cMove">6h move</th><th style="text-align:right" data-i18n="cOut">outcome</th></tr></thead>
       <tbody id="rows"><tr><td colspan="4" class="mut">loading…</td></tr></tbody>
-    </table></div>
-  </div>
+    </table></div></div>
+  </section>
   <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
 <script>
@@ -123,7 +97,7 @@ r3t:"First-minute buys",r3d:"Buy pressure in the first minute of the tracked win
 r4t:"Pool liquidity",r4d:"USD liquidity in the pool at verdict time.",r4l:"red < $10k",
 r5t:"Coin age",r5d:"Minutes since the mint was created on-chain.",r5l:"warn < 15 min",
 r6t:"Linked wallets · AI",r6d:"Jev estimates how coordinated the holder wallets look.",r6l:"red ≥ 70%",
-aiT:"The AI judge",
+aiT:"The AI judge",outT:"How outcomes are settled",
 aiD:"The <b>Jev judge (jev-latest)</b> reads all six checks plus wallet-coordination signals and issues <b>red / yellow / green</b> with probabilities, a coordination score, and a severity rating. Single weak signals no longer mean red by themselves: low-evidence reds become calibrated yellow, and only measured crashes re-arm red before the outcome. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.",
 outD:"Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight, liquidity drained under $1,000, or the price sat frozen with zero trading</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.",
 tabT:"Every resolved coin",cCoin:"coin",cLight:"light",cMove:"6h move",cOut:"outcome",
@@ -139,7 +113,7 @@ r3t:"ยอดซื้อ 1 นาทีแรก",r3d:"แรงซื้อ�
 r4t:"สภาพคล่องพูล",r4d:"สภาพคล่องดอลลาร์ในพูลตอนชี้",r4l:"แดง < $10k",
 r5t:"อายุเหรียญ",r5d:"นาทีตั้งแต่ mint ถูกสร้างบนเชน",r5l:"เตือน < 15 นาที",
 r6t:"กระเป๋าโยงกัน · AI",r6d:"Jev ประเมินว่ากระเป๋าผู้ถือดูประสานกันแค่ไหน",r6l:"แดง ≥ 70%",
-aiT:"AI ผู้ชี้",
+aiT:"AI ผู้ชี้",outT:"ตัดสินผลยังไง",
 aiD:"<b>Jev (jev-latest)</b> อ่านเกณฑ์ทั้ง 6 ข้อบวกสัญญาณกระเป๋าโยงกัน แล้วชี้ <b>แดง / เหลือง / เขียว</b> พร้อมความน่าจะเป็น คะแนนโยงกัน และระดับความรุนแรง สัญญาณอ่อนอย่างเดียวไม่เท่ากับแดงอีกต่อไป: ใบแดงหลักฐานน้อยกลายเป็นเหลืองคาลิเบรต จะกลับแดงต้องมี crash ที่วัดได้จริงก่อนรู้ผล เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที",
 outD:"ผลตัดสินอัตโนมัติ: <b>พังคือราคาหลุดเกิน 90% จากตอนเจอ สภาพคล่องต่ำกว่า $1,000 หรือราคานิ่งไม่มีเทรดเลย</b> เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b> — ช่องทางเดียว",
 tabT:"ทุกเหรียญที่รู้ผลแล้ว",cCoin:"เหรียญ",cLight:"ไฟ",cMove:"6 ชม.",cOut:"ผล",
@@ -153,10 +127,10 @@ function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 (function(){var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")==="proof")as[i].className="on"}})();
-function renderRules(){var h="";for(var i=1;i<=6;i++){h+='<div class="rule"><span class="n">0'+i+'</span><span class="t">'+esc(t("r"+i+"t"))+"<small>"+esc(t("r"+i+"d"))+"</small></span>"+'<span class="lim">'+esc(t("r"+i+"l"))+"</span></div>"}document.getElementById("rules").innerHTML=h}
+function renderRules(){var h="";for(var i=1;i<=6;i++){h+='<div class="rule"><span class="n">0'+i+'</span><span class="t">'+esc(t("r"+i+"t"))+'</span><span class="d">'+esc(t("r"+i+"d"))+'</span><span class="lim">'+esc(t("r"+i+"l"))+"</span></div>"}document.getElementById("rules").innerHTML=h}
 function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
 document.getElementById("sAcc").textContent=pct(d.accuracy);
-document.getElementById("sRes").textContent=d.resolved_with_verdict==null?"—":d.resolved_with_verdict;
+document.getElementById("sRes").textContent=d.resolved_with_verdict==null?"—":Number(d.resolved_with_verdict).toLocaleString("en-US");
 document.getElementById("sRed").textContent=pct(d.red_precision);
 }).catch(function(){})}
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
@@ -165,7 +139,7 @@ var h="",n=0;
 for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];if(x.resolved_at==null)continue;n++;
 var mv="—";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;mv='<span class="'+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}
 var nm=esc((x.name||x.mint.slice(0,8))+"").slice(0,18);
-h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(x.dead?t("dead"):t("alive"))+"</td></tr>"}
+h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(x.dead?'<span class="oc dead"><i></i>'+esc(t("dead"))+"</span>":'<span class="oc alive"><i></i>'+esc(t("alive"))+"</span>")+"</td></tr>"}
 document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="mut">'+esc(t("loading"))+"</td></tr>";
 }).catch(function(){})}
 applyLang();

@@ -10,57 +10,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>FlagKan — About</title>
-<style>
-:root{--bg:#f3f5f9;--card:#ffffff;--line:#e3e8f0;--line2:#cdd5e3;
---ink:#16233f;--dim:#475569;--faint:#64748b;
---red:#dc2626;--acc:#1e40af;
---sans:'Sarabun',-apple-system,BlinkMacSystemFont,'Segoe UI','Sukhumvit Set','Noto Sans Thai',Arial,sans-serif;
---mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
-:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
-.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);border-bottom:1px solid var(--line)}
-.topbar .in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink)}
-.brand .f{color:var(--red)}
-.brand{display:inline-flex;align-items:center}
-.mark{display:inline-flex;gap:3px;margin-right:9px}
-.mark i{width:8px;height:8px;border-radius:50%}
-.mark .r{background:var(--red)}.mark .y{background:#d99a17}.mark .g{background:var(--grn)}
-.nav{display:flex;gap:2px;align-items:center}
-.nav a{padding:6px 12px;border-radius:8px;color:var(--dim);font-weight:700;font-size:12.5px;white-space:nowrap;text-decoration:none}
-.nav a:hover{background:var(--bg);color:var(--ink)}
-.nav a.on{background:var(--bg);color:var(--ink)}
-.lang{margin-left:auto}
-.lang button{background:transparent;color:var(--faint);border:1px solid var(--line);border-radius:99px;
-padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
-.lang button.on{color:var(--ink);border-color:var(--line2);background:var(--bg)}
-.wrap{max-width:1060px;margin:0 auto;padding:26px 16px 40px}
-h1{font-size:28px;letter-spacing:-.02em;font-weight:800}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-top:18px;max-width:760px}
-.panel h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-bottom:8px}
-.panel p{font-size:14px;color:var(--dim)}
-.panel p b{color:var(--ink)}
-.panel p+p{margin-top:8px}
-.panel ul{margin:8px 0 0 18px;font-size:14px;color:var(--dim)}
-.panel li+li{margin-top:4px}
-.links{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-.links a{display:inline-block;padding:8px 18px;border-radius:10px;font-weight:800;font-size:13.5px;
-text-decoration:none;background:var(--bg);color:var(--ink);border:1px solid var(--line2)}
-.links a:hover{border-color:var(--ink)}
-.links a.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-footer{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);
-display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
-a{color:var(--acc)}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-</style>
 <link rel="stylesheet" href="/theme.css">
 <style>
-/* sticker-pop upgrades (shared base in /theme.css) */
-.wrap{max-width:1060px}
-.panel{border-width:2px;box-shadow:var(--sh)}
-.links a{border:2px solid var(--line);box-shadow:var(--sh-sm)}
-.links a.primary{background:var(--red);color:#fff}
+/* about — plain reading column, no cards */
+.topbar .in,.wrap{max-width:1060px}
+.wrap{padding-top:30px}
+.col{max-width:680px}
+h1{font-size:30px;letter-spacing:-.02em;font-weight:800;line-height:1.15}
+.sec{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
+.sec:first-of-type{border-top:none;padding-top:0;margin-top:20px}
+.sec h2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:var(--dim);margin-bottom:8px}
+.sec p{font-size:15px;color:var(--dim);line-height:1.7}
+.sec p b{color:var(--ink)}
+.links{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.links a{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:10px;font-weight:800;font-size:13.5px;text-decoration:none;background:#fff;color:var(--ink);border:1px solid var(--line2);transition:border-color .15s,transform .15s,box-shadow .15s}
+.links a:hover{border-color:var(--ink)}
+.links a.primary{background:var(--red);color:#fff;border:2px solid var(--ink);box-shadow:var(--sh-hard)}
+.links a.primary:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.links a.api{background:none;border:none;padding:0 6px;color:var(--dim);font-family:var(--mono);font-size:12px;font-weight:700}
+.links a.api:hover{color:var(--ink);text-decoration:underline}
+@media(max-width:640px){.wrap{padding-top:22px}h1{font-size:26px}}
 </style>
 </head>
 <body data-page="about">
@@ -70,12 +39,14 @@ a{color:var(--acc)}
   <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
 </div></div>
 <div class="wrap">
-  <h1 data-i18n="h1">About FlagKan</h1>
-  <div class="panel"><h2 data-i18n="whyT">Why it exists</h2><p data-i18n-html="whyD"></p></div>
-  <div class="panel"><h2 data-i18n="whoT">Who builds it</h2><p data-i18n-html="whoD"></p></div>
-  <div class="panel"><h2 data-i18n="nextT">What's next</h2><p data-i18n-html="nextD"></p></div>
-  <div class="panel"><h2 data-i18n="linkT">Links</h2>
-    <div class="links"><a class="primary" href="/board.html" data-i18n="lBoard">Live board</a><a href="/proof.html" data-i18n="lProof">Proof &amp; rules</a><a href="https://github.com/ilGentEAcutoO/flagkan" target="_blank" rel="noopener">GitHub</a><a href="/api/proof">api/proof</a><a href="/api/rounds?limit=50">api/rounds</a></div>
+  <div class="col">
+    <h1 data-i18n="h1">About FlagKan</h1>
+    <section class="sec"><h2 data-i18n="whyT">Why it exists</h2><p data-i18n-html="whyD"></p></section>
+    <section class="sec"><h2 data-i18n="whoT">Who builds it</h2><p data-i18n-html="whoD"></p></section>
+    <section class="sec"><h2 data-i18n="nextT">What's next</h2><p data-i18n-html="nextD"></p></section>
+    <section class="sec"><h2 data-i18n="linkT">Links</h2>
+      <div class="links"><a class="primary" href="/board.html" data-i18n="lBoard">Live board</a><a href="/proof.html" data-i18n="lProof">Proof &amp; rules</a><a href="https://github.com/ilGentEAcutoO/flagkan" target="_blank" rel="noopener">GitHub</a><a class="api" href="/api/proof">api/proof</a><a class="api" href="/api/rounds?limit=50">api/rounds</a></div>
+    </section>
   </div>
   <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span>Colosseum Crypto World's Fair 2026</span></footer>
 </div>
