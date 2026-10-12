@@ -9,20 +9,23 @@
 --   prior  = earliest snapshot 55..120 min before last (gecko-feed idle check)
 --   no follow-up sample (last.ts <= first.ts) or no first price => dead_v2 NULL
 --   idle NULL when last is > 90 min older than resolved_at
+-- DATA-001: second-look samples (snapshots.look = 15/30) are EXCLUDED from
+-- first/last/prior (look IS NULL), so labels are identical with or without
+-- them. Requires migrate-v11.sql (snapshots.look) to have been applied.
 -- Idempotent: safe to re-run. Uses scratch tables _regrade_v9* (dropped at end).
 DROP TABLE IF EXISTS _regrade_v9a;
 DROP TABLE IF EXISTS _regrade_v9b;
 CREATE TABLE _regrade_v9a AS
 SELECT o.mint AS mint, o.resolved_at AS rat, r.source AS rsrc,
-	(SELECT s.id FROM snapshots s WHERE s.mint = o.mint ORDER BY s.ts ASC, s.id ASC LIMIT 1) AS fid,
-	(SELECT s.id FROM snapshots s WHERE s.mint = o.mint AND s.ts <= o.resolved_at ORDER BY s.ts DESC, s.id DESC LIMIT 1) AS lid
+	(SELECT s.id FROM snapshots s WHERE s.mint = o.mint AND s.look IS NULL ORDER BY s.ts ASC, s.id ASC LIMIT 1) AS fid,
+	(SELECT s.id FROM snapshots s WHERE s.mint = o.mint AND s.look IS NULL AND s.ts <= o.resolved_at ORDER BY s.ts DESC, s.id DESC LIMIT 1) AS lid
 FROM outcomes o LEFT JOIN rounds r ON r.mint = o.mint;
 CREATE TABLE _regrade_v9b AS
 SELECT a.mint AS mint, a.rat AS rat,
 	f.ts AS fts, f.price_usd AS fp, COALESCE(a.rsrc, f.feed) AS ffeed,
 	l.ts AS lts, l.price_usd AS lp, l.liquidity_usd AS ll, l.feed AS lfeed, l.txns_5m AS ltx, l.vol_h1 AS lvol,
-	(SELECT p.price_usd FROM snapshots p WHERE p.mint = a.mint AND p.ts >= l.ts - 7200000 AND p.ts <= l.ts - 3300000 ORDER BY p.ts ASC, p.id ASC LIMIT 1) AS pp,
-	(SELECT COUNT(*) FROM snapshots p WHERE p.mint = a.mint AND p.ts >= l.ts - 7200000 AND p.ts <= l.ts - 3300000) AS pn,
+	(SELECT p.price_usd FROM snapshots p WHERE p.mint = a.mint AND p.look IS NULL AND p.ts >= l.ts - 7200000 AND p.ts <= l.ts - 3300000 ORDER BY p.ts ASC, p.id ASC LIMIT 1) AS pp,
+	(SELECT COUNT(*) FROM snapshots p WHERE p.mint = a.mint AND p.look IS NULL AND p.ts >= l.ts - 7200000 AND p.ts <= l.ts - 3300000) AS pn,
 	CAST(NULL AS INTEGER) AS idle
 FROM _regrade_v9a a LEFT JOIN snapshots f ON f.id = a.fid LEFT JOIN snapshots l ON l.id = a.lid;
 UPDATE _regrade_v9b SET idle = CASE

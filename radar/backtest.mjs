@@ -5,24 +5,24 @@
 import { execSync } from "node:child_process";
 
 const SQL = `SELECT v.choice AS choice, o.dead AS dead,`
-	+ ` (SELECT liquidity_usd FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS liq1,`
-	+ ` (SELECT fdv FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS fdv1,`
-	+ ` (SELECT txns_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS tx1,`
-	+ ` (SELECT buys_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS b1,`
-	+ ` (SELECT sells_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS s1,`
-	+ ` (SELECT price_usd FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS p1,`
-	+ ` (SELECT ts FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS t1,`
-	+ ` (SELECT liquidity_usd FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1 OFFSET 1) AS liq2,`
-	+ ` (SELECT txns_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1 OFFSET 1) AS tx2,`
-	+ ` (SELECT buys_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1 OFFSET 1) AS b2,`
-	+ ` (SELECT sells_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1 OFFSET 1) AS s2,`
-	+ ` (SELECT price_usd FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1 OFFSET 1) AS p2,`
-	+ ` (SELECT ts FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1 OFFSET 1) AS t2,`
-+ ` (SELECT price_chg_h1 FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1 OFFSET 1) AS chg2,`
-+ ` (SELECT pair_age_min FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS pairAge,`
+	+ ` (SELECT liquidity_usd FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS liq1,`
+	+ ` (SELECT fdv FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS fdv1,`
+	+ ` (SELECT txns_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS tx1,`
+	+ ` (SELECT buys_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS b1,`
+	+ ` (SELECT sells_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS s1,`
+	+ ` (SELECT price_usd FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS p1,`
+	+ ` (SELECT ts FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS t1,`
+	+ ` (SELECT liquidity_usd FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1 OFFSET 1) AS liq2,`
+	+ ` (SELECT txns_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1 OFFSET 1) AS tx2,`
+	+ ` (SELECT buys_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1 OFFSET 1) AS b2,`
+	+ ` (SELECT sells_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1 OFFSET 1) AS s2,`
+	+ ` (SELECT price_usd FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1 OFFSET 1) AS p2,`
+	+ ` (SELECT ts FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1 OFFSET 1) AS t2,`
++ ` (SELECT price_chg_h1 FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1 OFFSET 1) AS chg2,`
++ ` (SELECT pair_age_min FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS pairAge,`
 	+ ` g.top1_pct AS top1, g.top2_11_pct AS t211, g.early_buys AS early, g.mint_age_min AS age, g.pool_suspect AS pool, g.mint_auth_live AS mauth, g.freeze_auth_live AS fauth, v.f_whale AS fWhale, v.f_sell AS fSell, v.f_struct AS fStruct,`
-+ ` (SELECT price_chg_h1 FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS chg1,`
-+ ` (SELECT vol_h1 FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS vol1,`
++ ` (SELECT price_chg_h1 FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS chg1,`
++ ` (SELECT vol_h1 FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS vol1,`
 	+ ` r.first_seen AS seen`
 	+ ` FROM verdicts v JOIN outcomes o ON o.mint=v.mint LEFT JOIN signals g ON g.mint=v.mint JOIN rounds r ON r.mint=v.mint WHERE v.source='live'`;
 

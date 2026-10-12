@@ -666,19 +666,20 @@ export function timeSplitValidateV2(rows: TrainRow[], champ: GoldModel | null, o
 // Shared retrain rowset (label v2, strictly first-sight features). Mirrored
 // by lib-local.mjs pullRows (offline gate/sweeps) — keep the two in sync.
 // - label = outcomes.dead_v2 (NULL = ungradeable, excluded);
-// - features from the FIRST snapshot, first-sight signals, and Jev factors;
+// - features from the FIRST non-look snapshot (look IS NULL: DATA-001 +15/+30m
+//   samples never stand in for first sight), first-sight signals, and Jev factors;
 //   NO verdicts.p_red (overwritten by upgrades = leak);
 // - signals recomputed >10 min after first sight (signals-now) are not
 //   first-sight: nulled (unknown) instead of leaking later holder data.
 export const RETRAIN_SQL_V2 = "SELECT v.ts AS ts, o.dead_v2 AS dead, v.choice AS choice, r.first_seen AS seen, g.ts AS sigTs, "
-	+ "(SELECT liquidity_usd FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS liq, "
-	+ "(SELECT fdv FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS fdv, "
-	+ "(SELECT txns_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS txns, "
-	+ "(SELECT buys_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS buys, "
-	+ "(SELECT sells_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS sells, "
-	+ "(SELECT price_chg_h1 FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS chgH1, "
-	+ "(SELECT vol_h1 FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS volH1, "
-	+ "(SELECT pair_age_min FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS pairAge, "
+	+ "(SELECT liquidity_usd FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS liq, "
+	+ "(SELECT fdv FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS fdv, "
+	+ "(SELECT txns_5m FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS txns, "
+	+ "(SELECT buys_5m FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS buys, "
+	+ "(SELECT sells_5m FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS sells, "
+	+ "(SELECT price_chg_h1 FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS chgH1, "
+	+ "(SELECT vol_h1 FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS volH1, "
+	+ "(SELECT pair_age_min FROM snapshots s WHERE s.mint = v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS pairAge, "
 	+ "g.top1_pct AS top1, g.top2_11_pct AS t211, g.early_buys AS early, g.mint_age_min AS age, "
 	+ "g.pool_suspect AS pool, g.mint_auth_live AS mintLive, g.freeze_auth_live AS freezeLive, "
 	+ "g.simpson AS simpson, "

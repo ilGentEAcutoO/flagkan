@@ -24,7 +24,7 @@ if (!existsSync(TSC)) { console.error("FAIL typescript not installed (run npm in
 rmSync(CACHE, { recursive: true, force: true });
 mkdirSync(CACHE, { recursive: true });
 try {
-	execSync(`"${process.execPath}" "${TSC}" src/ml/train.ts src/ml/upgrade.ts src/ml/gbm.ts --outDir "${CACHE}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`,
+	execSync(`"${process.execPath}" "${TSC}" src/ml/train.ts src/ml/upgrade.ts src/ml/gbm.ts src/ml/collect.ts --outDir "${CACHE}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`,
 		{ cwd: HERE, stdio: "pipe" });
 } catch (e) {
 	console.error("FAIL tsc compile:", String(e.stdout ?? e.message).slice(0, 400));
@@ -33,6 +33,7 @@ try {
 const ml = await import(pathToFileURL(path.join(CACHE, "train.js")).href);
 const up = await import(pathToFileURL(path.join(CACHE, "upgrade.js")).href);
 const gbm = await import(pathToFileURL(path.join(CACHE, "gbm.js")).href);
+const col = await import(pathToFileURL(path.join(CACHE, "collect.js")).href);
 
 // --- b64ToBytes ---
 {
@@ -376,6 +377,26 @@ try {
 		db.prepare("INSERT INTO outcomes (mint, resolved_at, dead) VALUES (?, ?, 0)").run(mint, RAT);
 		for (const [feed, dt, p, l, tx, vol] of ss) insS.run(mint, T0 + dt, p, l, tx, vol, feed);
 	}
+	// DATA-001 label isolation: every case also gets +15m and near-resolution
+	// look samples that WOULD flip labels if read (dust price, zero liq/vol,
+	// fresh). Parity + expected labels below must be unchanged.
+	const insL = db.prepare("INSERT INTO snapshots (mint, ts, price_usd, liquidity_usd, txns_5m, vol_h1, feed, look) VALUES (?, ?, ?, ?, ?, ?, 'gecko', ?)");
+	const LOOKS = [[15 * 60e3, 15], [6 * H + 30e3, 30]];
+	for (const mint of Object.keys(cases)) for (const [dt, lk] of LOOKS) insL.run(mint, T0 + dt, 1e-9, 0, 0, 0, lk);
+	{ // control: the look rows would matter if they were not excluded
+		let flips = 0;
+		for (const [, ss] of Object.entries(cases)) {
+			const lite = (s) => s ? { ts: T0 + s[1], price: s[2], liq: s[3], feed: s[0], tx5: s[4], volH1: s[5] } : null;
+			const all = [...ss, ...LOOKS.map(([dt]) => ["gecko", dt, 1e-9, 0, 0, 0])].sort((a, b) => a[1] - b[1]);
+			const inA = all.filter((x) => T0 + x[1] <= RAT), lastA = inA[inA.length - 1];
+			const inH = ss.filter((x) => T0 + x[1] <= RAT), lastH = inH[inH.length - 1];
+			const pr = (arr, l) => arr.find((x) => x[1] >= l[1] - 2 * H && x[1] <= l[1] - 55 * 60e3) ?? null;
+			const a = up.resolveDeadV2(lite(all[0]), lite(lastA), lite(pr(all, lastA)), "gecko", RAT);
+			const b = up.resolveDeadV2(lite(ss[0]), lite(lastH), lite(pr(ss, lastH)), "gecko", RAT);
+			if (a.dead_v2 !== b.dead_v2 || a.idle !== b.idle) flips++;
+		}
+		check("look-isolation control: look rows would flip labels if read", flips >= 3, String(flips));
+	}
 	db.exec(readFileSync(path.join(HERE, "backfill-v9.sql"), "utf8"));
 	let ok = 0; const bad = [];
 	for (const [mint, ss] of Object.entries(cases)) {
@@ -390,6 +411,19 @@ try {
 	check(`backfill-v9 parity (${Object.keys(cases).length} synthetic cases)`, bad.length === 0, bad.join("; "));
 	const exp = Object.fromEntries(db.prepare("SELECT mint, dead_v2 FROM outcomes").all().map((r) => [r.mint, r.dead_v2]));
 	check("backfill-v9 expected labels", exp.price === 1 && exp.liq === 1 && exp.idleDex === 1 && exp.aliveDex === 0 && exp.stale === 0 && exp.nosample === null && exp.geckoFrozen === 1 && exp.geckoMoved === 0 && exp.late === 0, JSON.stringify(exp));
+	// Live resolution SQL (index.ts imports these constants) ignores look rows.
+	{
+		const bad2 = [];
+		for (const [mint, ss] of Object.entries(cases)) {
+			const f = db.prepare(col.RESOLVE_FIRST_SQL).get(mint);
+			const l = db.prepare(col.RESOLVE_LAST_SQL).get(mint);
+			const want = ss[ss.length - 1];
+			const pr = ss.find((x) => x[1] >= want[1] - 2 * H && x[1] <= want[1] - 55 * 60e3) ?? null;
+			const p = db.prepare(col.RESOLVE_PRIOR_SQL).get(mint, l.ts - up.LABEL_V2.priorMaxMs, l.ts - up.LABEL_V2.priorMinMs);
+			if (f.ts !== T0 + ss[0][1] || l.ts !== T0 + want[1] || l.p !== want[2] || (p?.ts ?? null) !== (pr ? T0 + pr[1] : null)) bad2.push(mint);
+		}
+		check("resolution SQL (first/last/prior) ignores look snapshots", bad2.length === 0, bad2.join(","));
+	}
 	const leftover = db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name LIKE '_regrade_v9%'").get();
 	check("backfill-v9 drops scratch tables", Number(leftover.n) === 0);
 } catch (e) {
@@ -458,6 +492,81 @@ try {
 	const inserts = src.match(/INSERT OR REPLACE INTO verdicts \([^)]*\)/g) ?? [];
 	check("every verdict INSERT stores p_lr_first, p_gbm_first, gbm_v", inserts.length >= 4 && inserts.every((q) => /p_lr_first, p_gbm_first, gbm_v/.test(q)), String(inserts.length));
 	check("policyV2 call never takes the GBM p", /policyV2\(p, rule, jev\)/.test(src) && !/policyV2\([^)]*gbm/i.test(src));
+}
+
+// --- DATA-001: look-snapshot isolation (static) + dev/creator parsing ---
+{
+	const { readFileSync } = await import("node:fs");
+	const src = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
+	// Every snapshot SELECT in index.ts must exclude look samples, except the
+	// coin-detail chart (LIMIT 200, read-only display) and row counts.
+	const sel = (src.match(/["`][^"`]*FROM snapshots[^"`]*["`]/g) ?? []).flatMap((q) => q.split("(SELECT").filter((x) => /FROM snapshots/.test(x)));
+	const leaks = sel.filter((q) => !/look IS NULL/.test(q) && !/LIMIT 200/.test(q) && !/^\s*COUNT\(\*\) FROM snapshots\)/.test(q));
+	check("index.ts: every snapshot selection filters look IS NULL (chart/count exempt)", sel.length >= 11 && leaks.length === 0, `${sel.length} ` + leaks.join(" | ").slice(0, 300));
+	check("index.ts resolution uses the tested RESOLVE_* constants", /prepare\(\s*RESOLVE_FIRST_SQL/.test(src) && /prepare\(\s*RESOLVE_LAST_SQL/.test(src) && /prepare\(\s*RESOLVE_PRIOR_SQL/.test(src));
+	check("resolution constants filter look IS NULL", [col.RESOLVE_FIRST_SQL, col.RESOLVE_LAST_SQL, col.RESOLVE_PRIOR_SQL].every((q) => /look IS NULL/.test(q)));
+	const rsub = ml.RETRAIN_SQL_V2.split("(SELECT").filter((x) => /FROM snapshots/.test(x));
+	check("RETRAIN_SQL_V2 first-snapshot features skip look rows", rsub.length === 8 && rsub.every((q) => /look IS NULL/.test(q)));
+	const bf = readFileSync(path.join(HERE, "backfill-v9.sql"), "utf8").split("(SELECT").filter((x) => /FROM snapshots/.test(x));
+	check("backfill-v9.sql snapshot selections skip look rows", bf.length === 4 && bf.every((q) => /look IS NULL/.test(q)));
+	const dev = readFileSync(path.join(HERE, "src", "dev.ts"), "utf8");
+	check("dev.ts never touches verdicts/outcomes/upgrade", !/maybeUpgrade|recordMint|INTO verdicts|UPDATE verdicts|INTO outcomes|UPDATE outcomes/.test(dev));
+	check("look insert tags look and writes only snapshots", /^INSERT INTO snapshots \([^)]*, look\)/.test(col.LOOK_INSERT_SQL));
+
+	check("oldestSig picks last (oldest) entry", JSON.stringify(col.oldestSig([{ signature: "new", blockTime: 3 }, { signature: "old", blockTime: 2 }])) === JSON.stringify({ sig: "old", ts: 2000 }));
+	check("oldestSig full page -> unknown", col.oldestSig(new Array(1000).fill({ signature: "x" })).err === "sigs_ge_1000");
+	check("oldestSig empty -> no_sigs", col.oldestSig([]).err === "no_sigs");
+	// parseCreateTx: minimal jsonParsed pump.fun-style create+buy fixture
+	const MINT = "Mint111pump", DEV = "Dev1111", OTHER = "Curve111";
+	const tok = (idx, owner, ui) => ({ accountIndex: idx, mint: MINT, owner, uiTokenAmount: { uiAmount: ui, uiAmountString: String(ui), decimals: 6, amount: String(ui * 1e6) } });
+	const fx = {
+		blockTime: 1760000000, slot: 1,
+		meta: {
+			err: null, fee: 5000,
+			preBalances: [3_000_000_000, 0, 0], postBalances: [1_975_000_000, 0, 0],
+			preTokenBalances: [tok(2, OTHER, 0)],
+			postTokenBalances: [tok(1, DEV, 35_000_000), tok(2, OTHER, 965_000_000), { accountIndex: 3, mint: "OtherMint", owner: DEV, uiTokenAmount: { uiAmountString: "999" } }],
+		},
+		transaction: { message: { accountKeys: [{ pubkey: DEV, signer: true, writable: true }, { pubkey: "Ata1", signer: false, writable: true }, { pubkey: OTHER, signer: false, writable: true }] } },
+	};
+	const f = col.parseCreateTx(fx, MINT);
+	check("parseCreateTx creator = fee payer", f.creator === DEV, JSON.stringify(f));
+	check("parseCreateTx dev buy tokens = post - pre for this mint only", f.devBuyTokens === 35_000_000);
+	check("parseCreateTx dev SOL excludes fee", approx(f.devBuySol, 1.024995, 1e-12), String(f.devBuySol));
+	check("parseCreateTx create ts in ms", f.createTs === 1760000000000);
+	check("dev_share_initial = tokens / supply", col.shareOf(f.devBuyTokens, 1e9) === 0.035);
+	check("parseCreateTx missing tx -> err", col.parseCreateTx(null, MINT).err === "tx_missing");
+	check("parseCreateTx legacy string keys", col.parseCreateTx({ ...fx, transaction: { message: { accountKeys: [DEV] } } }, MINT).creator === DEV);
+	check("ownerBalance sums token accounts", col.ownerBalance({ value: [{ account: { data: { parsed: { info: { tokenAmount: { uiAmountString: "10.5" } } } } } }, { account: { data: { parsed: { info: { tokenAmount: { uiAmountString: "4.5" } } } } } }] }) === 15);
+	check("ownerBalance empty -> 0, malformed -> null", col.ownerBalance({ value: [] }) === 0 && col.ownerBalance(null) === null);
+	check("shareOf guards zero supply", col.shareOf(5, 0) === null && col.shareOf(null, 10) === null);
+	check("look windows +15/+30 min, 30 per batch", col.LOOKS.map((w) => w.look).join() === "15,30" && col.LOOK_BATCH === 30 && /LIMIT 30$/.test(col.LOOK_PICK_SQL));
+
+	try {
+		const { DatabaseSync } = await import("node:sqlite");
+		const db = new DatabaseSync(":memory:");
+		db.exec(readFileSync(path.join(HERE, "schema.sql"), "utf8"));
+		const NOW = 10_000_000;
+		const addR = db.prepare("INSERT INTO rounds (mint, first_seen) VALUES (?, ?)");
+		const addD = db.prepare("INSERT INTO dev_signals (mint, creator, fetched_at) VALUES (?, ?, ?)");
+		const addO = db.prepare("INSERT INTO outcomes (mint, resolved_at, dead, dead_v2) VALUES (?, ?, 0, ?)");
+		for (const [m, fs, cr] of [["a", 100, "C"], ["b", 200, "C"], ["c", 300, "C"], ["x", 150, "Z"], ["later", 900, "C"], ["me", 500, "C"]]) { addR.run(m, fs); addD.run(m, cr, fs); }
+		addO.run("a", 1000, 1); addO.run("b", 2000, 0); addO.run("c", NOW + 5, 1); addO.run("later", 1500, 1);
+		const h = db.prepare(col.CREATOR_HISTORY_SQL).get(NOW, "C", "me", 500);
+		check("creator history: strictly prior coins, future outcomes not counted", h.n === 3 && h.graded === 2 && h.dead === 1, JSON.stringify(h));
+		const addS = db.prepare("INSERT INTO snapshots (mint, ts, price_usd, look) VALUES (?, ?, 1, ?)");
+		const T = 50_000_000;
+		addR.run("w1", T - 15 * 60e3); addR.run("w2", T - 15 * 60e3); addR.run("old", T - 20 * 60e3);
+		addS.run("w2", T - 60e3, 15); addS.run("w1", T - 60e3, null);
+		const [fr, to] = col.lookWindow(T, col.LOOKS[0]);
+		const picked = db.prepare(col.LOOK_PICK_SQL).all(fr, to, 15).map((r) => r.mint);
+		check("look pick: in-window coins without that look only", picked.join() === "w1", picked.join());
+		addR.run("fresh1", T - 2 * 60e3); addR.run("zzpump", T - 60e3); addR.run("done1", T - 60e3); addD.run("done1", "Q", T);
+		const dp = db.prepare(col.DEV_PICK_SQL).all(T - col.DEV_WINDOW_MS, 10).map((r) => r.mint);
+		check("dev pick: first-sight window, no dev row yet, pump-style first", dp.join() === "zzpump,fresh1", dp.join());
+	} catch (e) {
+		check("DATA-001 sqlite checks", false, String(e).slice(0, 200));
+	}
 }
 
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }

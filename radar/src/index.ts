@@ -12,6 +12,8 @@ import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence, LABEL_
 import type { SnapLite } from "./ml/upgrade";
 import { scoreGbm, gbmModelOk, challengerStats } from "./ml/gbm";
 import GBM_MODEL from "./ml/gbm-model.json";
+import { RESOLVE_FIRST_SQL, RESOLVE_LAST_SQL, RESOLVE_PRIOR_SQL } from "./ml/collect";
+import { collectLooks, collectDev, collectCounters } from "./dev";
 
 const DEX = "https://api.dexscreener.com";
 const UA = { "User-Agent": "Mozilla/5.0 (radar proof-of-concept)" };
@@ -260,7 +262,7 @@ let rugCache: { at: number; vecs: Array<{ mint: string; v: number[] }> } | null 
 // memory vectors and live query vectors are directly comparable.
 async function vecForMint(env: Env, mint: string): Promise<number[] | null> {
 	const first = await env.DB_MAIN.prepare(
-		"SELECT liquidity_usd, fdv, txns_5m, buys_5m, sells_5m, price_chg_h1, vol_h1, pair_age_min FROM snapshots WHERE mint = ? ORDER BY ts ASC LIMIT 1"
+		"SELECT liquidity_usd, fdv, txns_5m, buys_5m, sells_5m, price_chg_h1, vol_h1, pair_age_min FROM snapshots WHERE mint = ? AND look IS NULL ORDER BY ts ASC LIMIT 1"
 	).bind(mint).first<any>();
 	if (!first) return null;
 	const sig = await env.DB_MAIN.prepare(
@@ -315,7 +317,7 @@ async function maybeUpgrade(env: Env, mint: string, m: Market, now: number, feed
 		const o = await env.DB_MAIN.prepare("SELECT mint FROM outcomes WHERE mint = ?").bind(mint).first();
 		if (o) return;
 		const first = await env.DB_MAIN.prepare(
-			"SELECT liquidity_usd AS l, price_usd AS p FROM snapshots WHERE mint = ? ORDER BY ts ASC LIMIT 1"
+			"SELECT liquidity_usd AS l, price_usd AS p FROM snapshots WHERE mint = ? AND look IS NULL ORDER BY ts ASC LIMIT 1"
 		).bind(mint).first<{ l: number; p: number }>();
 		const liq1 = Number(first?.l ?? 0);
 		const px1 = Number(first?.p ?? 0);
@@ -792,13 +794,13 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 		// skipped: maybeUpgrade's 5min guard would void them anyway.
 		const boostSet = new Set(mints);
 		const p0 = await env.DB_MAIN.prepare(
-			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN verdicts v ON v.mint = r.mint WHERE o.mint IS NULL AND v.choice IS NOT NULL AND v.choice != 'red' AND r.first_seen > ? AND r.first_seen < ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) ASC LIMIT 15"
+			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN verdicts v ON v.mint = r.mint WHERE o.mint IS NULL AND v.choice IS NOT NULL AND v.choice != 'red' AND r.first_seen > ? AND r.first_seen < ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL) ASC LIMIT 15"
 		)
 			.bind(now - RESOLVE_AFTER_MS, now - 5 * 60 * 1000)
 			.all<{ mint: string }>();
 		const p0set = new Set((p0.results ?? []).map((r) => r.mint));
 		const p1 = await env.DB_MAIN.prepare(
-			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN verdicts v ON v.mint = r.mint WHERE o.mint IS NULL AND (v.choice IS NULL OR v.choice != 'red') AND r.first_seen > ? AND r.first_seen < ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) ASC LIMIT 30"
+			"SELECT r.mint AS mint FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN verdicts v ON v.mint = r.mint WHERE o.mint IS NULL AND (v.choice IS NULL OR v.choice != 'red') AND r.first_seen > ? AND r.first_seen < ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL) ASC LIMIT 30"
 		)
 			.bind(now - 24 * 3600 * 1000, now - 5 * 60 * 1000)
 			.all<{ mint: string }>();
@@ -836,7 +838,7 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 		if (geckoIntakeOk) {
 			try {
 				const paced = await env.DB_MAIN.prepare(
-					"SELECT r.mint AS mint, r.pair_address AS pair FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN verdicts v ON v.mint = r.mint WHERE o.mint IS NULL AND r.source = 'gecko' AND r.pair_address IS NOT NULL AND v.choice IS NOT NULL AND v.choice != 'red' AND r.first_seen > ? AND r.first_seen < ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) ASC LIMIT 2"
+					"SELECT r.mint AS mint, r.pair_address AS pair FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN verdicts v ON v.mint = r.mint WHERE o.mint IS NULL AND r.source = 'gecko' AND r.pair_address IS NOT NULL AND v.choice IS NOT NULL AND v.choice != 'red' AND r.first_seen > ? AND r.first_seen < ? ORDER BY (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL) ASC LIMIT 2"
 				)
 					.bind(now - RESOLVE_AFTER_MS, now - 5 * 60 * 1000)
 					.all<{ mint: string; pair: string }>();
@@ -858,8 +860,12 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 		}
 	}
 
+	// DATA-001 data-only collectors (never throw; no verdict/upgrade/outcome code).
+	await collectLooks(env.DB_MAIN, dexBatchMarkets, now);
+	await collectDev(env.DB_MAIN, (m, p) => solamiRpc(env, m, p), Boolean((env.SOLAMI_API_KEY || "").trim()), now);
+
 	const stale = await env.DB_MAIN.prepare(
-		"SELECT r.mint AS mint, r.source AS source, (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint) AS last_ts FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint WHERE o.mint IS NULL AND r.first_seen < ? LIMIT 20"
+		"SELECT r.mint AS mint, r.source AS source, (SELECT MAX(ts) FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL) AS last_ts FROM rounds r LEFT JOIN outcomes o ON o.mint = r.mint WHERE o.mint IS NULL AND r.first_seen < ? LIMIT 20"
 	)
 		.bind(now - RESOLVE_AFTER_MS)
 		.all<{ mint: string; source: string | null; last_ts: number | null }>();
@@ -887,12 +893,12 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 	for (const row of stale.results ?? []) {
 		try {
 			const first = await env.DB_MAIN.prepare(
-				"SELECT ts, price_usd AS p, liquidity_usd AS l, txns_5m AS t, vol_h1 AS v, feed FROM snapshots WHERE mint = ? ORDER BY ts ASC LIMIT 1"
+				RESOLVE_FIRST_SQL
 			)
 				.bind(row.mint)
 				.first<{ ts: number; p: number; l: number | null; t: number; v: number | null; feed: string | null }>();
 			const last = await env.DB_MAIN.prepare(
-				"SELECT ts, price_usd AS p, liquidity_usd AS l, txns_5m AS t, vol_h1 AS v, feed FROM snapshots WHERE mint = ? ORDER BY ts DESC LIMIT 1"
+				RESOLVE_LAST_SQL
 			)
 				.bind(row.mint)
 				.first<{ ts: number; p: number; l: number; t: number; v: number | null; feed: string | null }>();
@@ -905,7 +911,7 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 			let prior: { ts: number; p: number } | null = null;
 			if (last && last.v == null) {
 				prior = await env.DB_MAIN.prepare(
-					"SELECT ts, price_usd AS p FROM snapshots WHERE mint = ? AND ts >= ? AND ts <= ? ORDER BY ts ASC LIMIT 1"
+					RESOLVE_PRIOR_SQL
 				).bind(row.mint, Number(last.ts) - LABEL_V2.priorMaxMs, Number(last.ts) - LABEL_V2.priorMinMs).first<{ ts: number; p: number }>();
 			}
 			const lite = (x: any): SnapLite | null => (x ? { ts: Number(x.ts), price: numOrNull(x.p), liq: numOrNull(x.l), feed: x.feed ?? null, tx5: numOrNull(x.t), volH1: numOrNull(x.v) } : null);
@@ -989,8 +995,8 @@ export default {
 			const orderTail = resFlag ? "o.resolved_at DESC, r.mint ASC" : "r.first_seen DESC, r.mint ASC";
 			const rows = await env.DB_MAIN.prepare(
 				`SELECT r.mint, r.first_seen, r.name, v.choice, v.confidence, o.mult, o.dead, v.tier, v.policy_v, o.dead_v2,
-				(SELECT price_usd FROM snapshots s WHERE s.mint = r.mint ORDER BY ts DESC LIMIT 1) AS last_price,
-				(SELECT liquidity_usd FROM snapshots s WHERE s.mint = r.mint ORDER BY ts DESC LIMIT 1) AS last_liq,
+				(SELECT price_usd FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL ORDER BY ts DESC LIMIT 1) AS last_price,
+				(SELECT liquidity_usd FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL ORDER BY ts DESC LIMIT 1) AS last_liq,
 				g.top1_pct AS top1, o.resolved_at AS resolved_at
 				${fromWhere} ORDER BY ${orderTail} LIMIT ? OFFSET ?`
 			)
@@ -1019,11 +1025,14 @@ export default {
 				.bind(mint)
 				.first();
 			const hist = await env.DB_MAIN.prepare(
-				"SELECT ts, price_usd, liquidity_usd, fdv, txns_5m FROM snapshots WHERE mint = ? ORDER BY ts DESC LIMIT 200"
+				"SELECT ts, price_usd, liquidity_usd, fdv, txns_5m, look FROM snapshots WHERE mint = ? ORDER BY ts DESC LIMIT 200"
 			)
 				.bind(mint)
 				.all<{ ts: number; price_usd: number; liquidity_usd: number }>();
 			const last = hist.results?.[0] ?? null;
+			// DATA-001 (read-only): dev/creator row + second-look samples.
+			const dev = await env.DB_MAIN.prepare("SELECT * FROM dev_signals WHERE mint = ?").bind(mint).first().catch(() => null);
+			const looks = (hist.results ?? []).filter((h: any) => h.look != null).map((h: any) => ({ look: h.look, ts: h.ts }));
 			return json({
 				coin: round,
 				signals: sig,
@@ -1031,6 +1040,8 @@ export default {
 				outcome: o,
 				last,
 				history: (hist.results ?? []).slice().reverse(),
+				dev,
+				looks,
 			});
 		}
 
@@ -1277,6 +1288,9 @@ export default {
 			if (r24 < 500) alerts.push(`intake_drop: rounds/24h=${r24} (<500, pipeline or gecko-list trouble)`);
 			if (jev24 * JEV_USD > 0.5) alerts.push(`jev_spend: 24h=$${(jev24 * JEV_USD).toFixed(2)} (>$0.50)`);
 			if (sol24 > 50000) alerts.push(`solami_volume: ${sol24} RPCs/24h (trial watch)`);
+			const dataCollect = await collectCounters(env.DB_MAIN, Date.now());
+			const solTotal = Number((dataCollect as any).solami_total_rpc_24h_est ?? 0);
+			if (sol24 <= 50000 && solTotal > 50000) alerts.push(`solami_volume: ${solTotal} RPCs/24h incl. dev_signals (trial watch)`);
 			return json({
 				jev: { calls_all: jevAll, calls_24h: jev24, usd_all: Math.round(jevAll * JEV_USD * 1000) / 1000, usd_24h: Math.round(jev24 * JEV_USD * 1000) / 1000, note: "1 call/verdict; backfill ts=first_seen skews 24h down" },
 				solami: { rpc_est_all: solAll, rpc_est_24h: sol24, usd: 0, note: "4 RPCs/signal-row; lower bound (recomputes overwrite); trial" },
@@ -1285,6 +1299,7 @@ export default {
 				cloudflare: { usd_month: 5, note: "workers paid flat; D1 within included quota" },
 				d1_rows: { rounds: Number(q3?.r_all ?? 0), snapshots: Number(q4?.snaps ?? 0), verdicts: jevAll, outcomes: Number(q4?.outs ?? 0), signals: Number(q2?.s_all ?? 0), rug_vectors: Number(q4?.mems ?? 0), models: Number(q4?.mods ?? 0) },
 				intake_24h: { rounds: r24, live_verdicts_24h: Number(q1?.v_live24 ?? 0) },
+				data_collect: dataCollect,
 				alerts,
 			});
 		}
@@ -1518,7 +1533,7 @@ export default {
 			for (const c of cands.results ?? []) {
 				try {
 					const first = await env.DB_MAIN.prepare(
-						"SELECT price_usd, liquidity_usd, fdv, txns_5m, buys_5m, sells_5m, price_chg_h1, vol_h1, pair_age_min FROM snapshots WHERE mint = ? ORDER BY ts ASC LIMIT 1"
+						"SELECT price_usd, liquidity_usd, fdv, txns_5m, buys_5m, sells_5m, price_chg_h1, vol_h1, pair_age_min FROM snapshots WHERE mint = ? AND look IS NULL ORDER BY ts ASC LIMIT 1"
 					).bind(c.mint).first<any>();
 					if (!first) { results.push({ mint: c.mint, skipped: "no_snapshot" }); continue; }
 					const sig = await env.DB_MAIN.prepare(

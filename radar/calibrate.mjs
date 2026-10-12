@@ -20,14 +20,14 @@ try {
 const ml = await import(pathToFileURL(path.join(CACHE, "train.js")).href);
 
 const SQL_ROWS = `SELECT v.mint AS mint, v.ts AS ts, o.dead AS dead, r.source AS src,`
-	+ ` (SELECT liquidity_usd FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS liq,`
-	+ ` (SELECT fdv FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS fdv,`
-	+ ` (SELECT txns_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS txns,`
-	+ ` (SELECT buys_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS buys,`
-	+ ` (SELECT sells_5m FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS sells,`
-	+ ` (SELECT price_chg_h1 FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS chgH1,`
-	+ ` (SELECT vol_h1 FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS volH1,`
-	+ ` (SELECT pair_age_min FROM snapshots s WHERE s.mint=v.mint ORDER BY ts ASC LIMIT 1) AS pairAge,`
+	+ ` (SELECT liquidity_usd FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS liq,`
+	+ ` (SELECT fdv FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS fdv,`
+	+ ` (SELECT txns_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS txns,`
+	+ ` (SELECT buys_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS buys,`
+	+ ` (SELECT sells_5m FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS sells,`
+	+ ` (SELECT price_chg_h1 FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS chgH1,`
+	+ ` (SELECT vol_h1 FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS volH1,`
+	+ ` (SELECT pair_age_min FROM snapshots s WHERE s.mint=v.mint AND s.look IS NULL ORDER BY ts ASC LIMIT 1) AS pairAge,`
 	+ ` g.top1_pct AS top1, g.top2_11_pct AS t211, g.early_buys AS early, g.mint_age_min AS age,`
 	+ ` g.pool_suspect AS pool, g.mint_auth_live AS mintLive, g.freeze_auth_live AS freezeLive, g.simpson AS simpson,`
 	+ ` v.choice AS choice, v.p_red AS pRed, v.f_whale AS fWhale, v.f_sell AS fSell, v.f_struct AS fStruct`
