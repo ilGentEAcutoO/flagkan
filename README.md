@@ -4,9 +4,15 @@
 
 Thousands of Solana tokens launch every day and most of them are dead within hours.
 FlagKan looks at every new token as soon as it appears, gives it a **RED (don't buy) /
-YELLOW (caution) / GREEN (looks OK)** light with written reasons, and then **grades its
+YELLOW (caution) / GREEN (lower risk — not safe)** light with written reasons, and then **grades its
 own verdict ~6 hours later** against what actually happened. Every graded coin is public,
 and every headline number is shown next to the "do-nothing" baseline it has to beat.
+
+**The honest headline.** About 98 of every 100 new coins are dead within 6 hours, so "call
+everything red" is already ~98% accurate — accuracy is not our skill metric. Our skill is
+**ranking**: the coins FlagKan scores safest survive more often than a random pick. On 11,351
+live coins (5–12 Oct 2026) the safest 10% survived 12.2% (95% CI 10.4–14.2%) vs 7.0% for a random
+pick — about 1.7×, AUC 0.627. Live values: `ranking` on [`/api/proof`](https://flag.sornkan.com/api/proof).
 
 > FlagKan flags risk patterns. It is not financial advice.
 
@@ -66,6 +72,19 @@ Otherwise it is **alive**. The exact parameters are published in `label_def` on
 - **Legacy numbers are kept.** The old (v1) figures stay in `legacy_v1` on /api/proof, and a regrade
   of the history under v2 is published in `v2_history_regrade`, so nothing silently disappears.
 - **No cherry-picking.** The proof table lists every resolved coin, not a highlight reel.
+- **Outcomes are graded from market data, not on-chain.** The 6h outcome is read from the same
+  GeckoTerminal / DexScreener feed the coin was first seen on. On-chain data (Solami RPC) feeds
+  the light, not the grade.
+- **Ranking is measured tie-aware.** Before 12 Oct most stored first-sight scores were coarse
+  stamps from rules / Jev, so the safest 10% is one tied group; ties are split pro rata, never by
+  row order, and backfilled coins are excluded. (An earlier internal figure of 3.35× used row order
+  and backfilled rows and is withdrawn.) The model-era ranking and the LightGBM-vs-LR head-to-head
+  show only once there are 200+ graded coins and 10+ survivors.
+- **Small samples are labelled.** Green has been called on very few coins under policy v2, so no
+  green hit rate is claimed. "Red · high confidence" needs 0.996 from LightGBM, whose highest score
+  so far is ~0.994, so that tier currently cannot fire; the bar was left unchanged.
+- **Legacy numbers are not current claims.** The old ~80% accuracy (label v1) and the legacy
+  calibration (ECE ~0.20, mostly fixed 0.95–0.98 stamps from rules / Jev) are kept for transparency only.
 
 Live metrics are not hardcoded here on purpose — read them from
 [`/api/proof`](https://flag.sornkan.com/api/proof) or the [proof page](https://flag.sornkan.com/proof).
@@ -76,7 +95,7 @@ All read endpoints are public `GET`s on `https://flag.sornkan.com`.
 
 | Endpoint | What |
 |---|---|
-| `GET /api/proof` | scoreboard: `headline` (label v2 metrics + baselines + tiers), `label_def`, `v2_history_regrade`, `legacy_v1`, plus calibration detail |
+| `GET /api/proof` | scoreboard: `headline` (label v2 metrics + baselines + tiers), `ranking` (tie-aware top-1/2/10% survival vs random, Wilson 95% CI, deciles, AUC — all-era score, policy-v2 only, LR, LightGBM), `decider`, `challenger`, `label_def`, `v2_history_regrade`, `legacy_v1`, plus legacy calibration detail |
 | `GET /api/rounds?limit=&offset=` | board page, newest first, with `total`; `resolved=1` → newest graded coins |
 | `GET /api/coin?mint=` | everything for one coin: signals, verdict, outcome, price history |
 | `GET /api/verdict?mint=` | the stored verdict for a mint |
@@ -133,8 +152,10 @@ live on Solana data) tracks. Built solo by SORNKan in Thailand.
 [หน้า Proof](https://flag.sornkan.com/proof)
 
 - **ข้อมูล:** เหรียญใหม่จาก GeckoTerminal (ราว 98%) + DexScreener boosts → สัญญาณบนเชนผ่าน Solami RPC
-- **การชี้:** โมเดล logistic regression ที่ไม่มีข้อมูลรั่ว + กฎที่เขียนชัด + AI Jev (TypeSafe) ให้เหตุผล
-  และ re-check เมื่อราคาร่วงจริง
+- **การชี้:** โมเดล LightGBM (มี logistic regression เป็นตัวสำรอง) + กฎเด็ดขาด 2 ข้อ + AI Jev (TypeSafe) ให้เหตุผล
+  และ re-check เมื่อราคาร่วงจริง ผลตัดสินอ่านจากแหล่งข้อมูลตลาดเดียวกับตอนเจอ ไม่ได้ตัดสินบนเชน
+- **ตัวเลขที่ซื่อตรง:** เหรียญใหม่ราว 98 ใน 100 ตายเองใน 6 ชม. ความแม่นจึงไม่ใช่ฝีมือ ฝีมือคือการจัดอันดับ:
+  10% ที่คะแนนปลอดภัยสุดรอด 12.2% เทียบสุ่ม 7.0% (~1.7×, 11,351 เหรียญ, 5–12 ต.ค.) ไฟเขียวยังมีน้อยเกินจะอ้างอัตราถูก
 - **นิยาม "ตาย" (label v2):** ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000
   (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย
 - **ความซื่อตรง:** ทุกตัวเลขแสดงคู่กับ baseline แบบ "ไม่ทำอะไรเลย" เสมอ นิยามเดิมมีจุดบกพร่อง

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only">
-<meta name="description" content="FlagKan — new-coin risk radar. Red / yellow / green verdicts on fresh Solana tokens with on-chain proof.">
+<meta name="description" content="FlagKan — new-coin risk radar. Red / yellow / green risk lights on fresh Solana tokens, each graded in public 6 hours later.">
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -92,13 +92,12 @@
     <div class="cta"><a class="btn primary" href="/board.html"><span data-i18n="ctaBoard">Open the board</span><span class="arr">↗</span></a><a class="btn ghost" href="/proof.html"><span data-i18n="ctaProof">How we judge</span><span class="arr">→</span></a></div>
   </div>
   <div class="band" id="bandShell">
-    <span class="btag" id="bTag" hidden></span>
-    <div class="bstats">
-      <div class="bstat"><div class="v green" id="sAcc">–</div><div class="k" id="kAcc" data-i18n="sAcc">accuracy</div><div class="bs" id="bsAcc" hidden></div></div>
-      <div class="bstat"><div class="v" id="sRes">–</div><div class="k" id="kRes" data-i18n="sRes">coins judged</div><div class="bs" id="bsRes" hidden></div></div>
-      <div class="bstat"><div class="v red" id="sRed">–</div><div class="k" id="kRed" data-i18n="sRed">red precision</div><div class="bs" id="bsRed" hidden></div></div>
+        <div class="bstats">
+      <div class="bstat"><div class="v red" id="sRes">–</div><div class="k" id="kRes">die within 6h</div><div class="bs" id="bsRes" hidden></div></div>
+      <div class="bstat"><div class="v" id="sAcc">–</div><div class="k" id="kAcc">accuracy</div><div class="bs" id="bsAcc" hidden></div></div>
+      <div class="bstat"><div class="v green" id="sRed">–</div><div class="k" id="kRed">safest 10% vs random</div><div class="bs" id="bsRed" hidden></div></div>
     </div>
-    <div class="bfoot"><p id="bandLine"></p><a href="/proof.html" data-i18n="bandLink">See how every coin resolved</a></div>
+    <div class="bfoot"><p id="bandLine"></p><a href="/proof.html" data-i18n="bandLink">See the proof</a></div>
   </div>
   <!-- Demo video: the whole section stays hidden until data-video holds an embed URL,
        e.g. https://www.youtube.com/embed/VIDEO_ID (youtube / youtube-nocookie / vimeo player only) -->
@@ -130,43 +129,43 @@ liveA:"live",liveB:"tracked",
 h1:'Check before you buy<span class="rd">.</span>',
 sub:"FlagKan watches brand-new Solana tokens and gives each one a risk light — red, yellow, or green. Six hours later we grade every verdict against what actually happened.",
 ctaBoard:"Open the board",ctaProof:"How we judge",
-sAcc:"accuracy",sRes:"coins judged",sRed:"red precision",
+kBase:"die within 6h",kAcc:"accuracy",kLift:"safest 10% vs random",
 defFb:"Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
-bandRest:"The scoreboard counts every graded coin and shows the do-nothing baseline next to each number — nothing cherry-picked.",
-sBase:"die within 6h",bsBase:"of all new coins",bsVs:"do-nothing: {b}",bsGraded:"{n} coins graded",
-tagOld:"old definition · new results collecting {n}/100",
-bandLink:"See how every coin resolved",
-vidT:"Watch the demo",vidSub:"90 seconds: a live verdict, then the chain grades it.",vidSoon:"Demo video coming soon",
+bandHead:"About {k} of every 100 new coins die on their own — so accuracy is easy.",
+bandRest:"Our skill is ranking: the coins we score safest survive more often than a random pick. Every number is live, next to its baseline.",
+bsBase:"of {n} new coins graded since {since}",bsVs:"calling every coin red: {b}",bsLift:"survived {a} vs {b} random · {n} coins",bsWait:"ranking still being computed",
+bandLink:"See the proof",
+vidT:"Watch the demo",vidSub:"90 seconds: a live verdict, then how it is graded 6 hours later.",vidSoon:"Demo video coming soon",
 howT:"How it works",
 s1t:"Spot",s1d:"Every minute we pull the newest Solana pools (GeckoTerminal) and boosted tokens (DexScreener).",
 s2t:"Inspect",s2d:"Solami RPC reads the chain: top holders, early buys, coin age. Same chain anyone can read — no insider data.",
-s3t:"Judge",s3d:"A model + rules set the light, the Jev AI judge writes the reasons, and ~6 hours later the outcome is graded in public.",
+s3t:"Judge",s3d:"A LightGBM model + two hard rules set the light, the Jev AI judge writes the reasons, and 6 hours later the outcome is graded in public from the same market feed.",
 freshT:"Fresh verdicts",freshSub:"The newest coins on the radar — click through to the board for the full story.",
 boardLink:"Open the full board →",
 dead:"dead",alive:"alive",h:"h",
 tracks:"Built for Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami",
-riskD:"<b>Not financial advice.</b> FlagKan flags risk patterns — it can't see private chats, planned unlocks, or off-chain deals. Past accuracy doesn't promise future results. Never bet more than you can lose."},
+riskD:"<b>Not financial advice.</b> FlagKan flags risk patterns — it can't see private chats, planned unlocks, or off-chain deals. Most new coins die; a green light means lower risk, not safe. Past results don't promise future ones. Never bet more than you can lose."},
 th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
 liveA:"สด",liveB:"ติดตาม",
 h1:'เช็กก่อนซื้อ<span class="rd">.</span>',
 sub:"FlagKan เฝ้าเหรียญ Solana ที่เพิ่งเกิด แล้วติดไฟให้ทุกเหรียญ — แดง เหลือง หรือเขียว อีก 6 ชั่วโมงต่อมาเราตัดสินทุกคำชี้จากสิ่งที่เกิดขึ้นจริง",
 ctaBoard:"เปิดกระดาน",ctaProof:"ดูวิธีตัดสิน",
-sAcc:"ความแม่น",sRes:"เหรียญที่ชี้แล้ว",sRed:"แดงแม่น",
+kBase:"ตายใน 6 ชม.",kAcc:"ความแม่น",kLift:"10% ปลอดภัยสุด เทียบสุ่ม",
 defFb:"ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
-bandRest:"ตารางคะแนนนับทุกเหรียญที่ตัดสินแล้ว และแสดง baseline แบบไม่ทำอะไรเลยคู่กับทุกตัวเลข — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
-sBase:"ตายใน 6 ชม.",bsBase:"ของเหรียญใหม่ทั้งหมด",bsVs:"ไม่ทำอะไรเลย: {b}",bsGraded:"ตัดสินแล้ว {n} เหรียญ",
-tagOld:"นิยามเดิม · กำลังเก็บผลนิยามใหม่ {n}/100",
-bandLink:"ดูทุกเหรียญที่ตัดสินแล้ว",
-vidT:"ดูวิดีโอสาธิต",vidSub:"90 วินาที: คำชี้สด แล้วดูเชนตัดสิน",vidSoon:"วิดีโอสาธิตกำลังมา",
+bandHead:"เหรียญใหม่ราว {k} ใน 100 ตัวตายเอง — ความแม่นจึงได้มาง่าย",
+bandRest:"ฝีมือของเราคือการจัดอันดับ: เหรียญที่เราให้คะแนนปลอดภัยสุดรอดบ่อยกว่าการสุ่มเลือก ทุกตัวเลขเป็นค่าสด แสดงคู่กับ baseline",
+bsBase:"จาก {n} เหรียญใหม่ที่ตัดสินแล้ว ตั้งแต่ {since}",bsVs:"ชี้แดงทุกเหรียญ: {b}",bsLift:"รอด {a} เทียบสุ่ม {b} · {n} เหรียญ",bsWait:"กำลังคำนวณการจัดอันดับ",
+bandLink:"ดูหลักฐาน",
+vidT:"ดูวิดีโอสาธิต",vidSub:"90 วินาที: คำชี้สด แล้วดูว่า 6 ชั่วโมงต่อมาตัดสินผลยังไง",vidSoon:"วิดีโอสาธิตกำลังมา",
 howT:"ทำงานยังไง",
 s1t:"จับ",s1d:"ทุกนาทีเราดึงพูล Solana ใหม่ล่าสุด (GeckoTerminal) และเหรียญที่ถูกบูสต์ (DexScreener)",
 s2t:"ตรวจ",s2d:"Solami RPC อ่านเชน: รายใหญ่ ยอดซื้อแรก อายุเหรียญ เชนเดียวกับที่ทุกคนอ่านได้ — ไม่มีข้อมูลวงใน",
-s3t:"ชี้",s3d:"โมเดล + กฎ ติดไฟ AI Jev เขียนเหตุผลเป็นข้อ ๆ แล้วราว 6 ชั่วโมงต่อมาผลถูกตัดสินแบบเปิดเผย",
+s3t:"ชี้",s3d:"โมเดล LightGBM + กฎเด็ดขาด 2 ข้อ ติดไฟ AI Jev เขียนเหตุผลเป็นข้อ ๆ แล้ว 6 ชั่วโมงต่อมาผลถูกตัดสินแบบเปิดเผย จากแหล่งข้อมูลตลาดเดียวกัน",
 freshT:"คำชี้ล่าสุด",freshSub:"เหรียญใหม่สุดบนเรดาร์ — กดไปดูเรื่องเต็มที่กระดาน",
 boardLink:"เปิดกระดานเต็ม →",
 dead:"พัง",alive:"รอด",h:" ชม.",
 tracks:"สร้างเพื่อ Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami",
-riskD:"<b>ไม่ใช่คำแนะนำการลงทุน</b> FlagKan จับแพทเทิร์นความเสี่ยง — มองไม่เห็นแชทส่วนตัว ปลดล็อกที่วางแผนไว้ หรือดีลนอกเชน ความแม่นในอดีตไม่รับประกันอนาคต อย่าลงเกินกว่าที่เสียได้"}};
+riskD:"<b>ไม่ใช่คำแนะนำการลงทุน</b> FlagKan จับแพทเทิร์นความเสี่ยง — มองไม่เห็นแชทส่วนตัว ปลดล็อกที่วางแผนไว้ หรือดีลนอกเชน เหรียญใหม่ส่วนใหญ่ตาย ไฟเขียวแปลว่าเสี่ยงน้อยกว่า ไม่ใช่ปลอดภัย ผลในอดีตไม่รับประกันอนาคต อย่าลงเกินกว่าที่เสียได้"}};
 var L="en",REDUCED=false;
 try{REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
@@ -187,23 +186,23 @@ function isNum(x){return x!=null&&x!==""&&!isNaN(Number(x))}
 function fill(s,o){return String(s).replace(/\{(\w+)\}/g,function(_,k){return o[k]==null?"":o[k]})}
 function p100(x){return isNum(x)?Number(x)*100:null}
 function setBs(id,txt){var e=document.getElementById(id);e.textContent=txt||"";e.hidden=!txt}
-// band: v2 headline when ready; legacy numbers otherwise (tagged "old definition" while v2 collects)
-function renderBand(){var d=PROOF||{},hd=(d.headline&&typeof d.headline==="object")?d.headline:null;
-var ready=!!(hd&&hd.ready&&isNum(hd.accuracy));
-var ld=d.label_def||{};var def=(L==="th"?ld.text_th:ld.text_en)||t("defFb");
-document.getElementById("bandLine").innerHTML="<b>"+esc(def)+"</b> "+esc(t("bandRest"));
-var tag=document.getElementById("bTag");
-if(hd&&!ready){tag.textContent=fill(t("tagOld"),{n:isNum(hd.n)?Number(hd.n):0});tag.hidden=false}else{tag.hidden=true}
-var bestBase=ready?Math.max(isNum(hd.baseline_all_red_accuracy)?Number(hd.baseline_all_red_accuracy):0,isNum(hd.baseline_all_yellow_accuracy)?Number(hd.baseline_all_yellow_accuracy):0):0;
-document.getElementById("kRes").textContent=ready?t("sBase"):t("sRes");
-setBs("bsAcc",ready&&bestBase>0?fill(t("bsVs"),{b:fmtPct(bestBase*100)}):"");
-setBs("bsRed",ready&&isNum(hd.base_dead_rate)?fill(t("bsVs"),{b:fmtPct(p100(hd.base_dead_rate))}):"");
-setBs("bsRes",ready?(isNum(hd.n)?fill(t("bsGraded"),{n:fmtInt(hd.n)}):t("bsBase")):"");
-var vA=ready?p100(hd.accuracy):p100(d.accuracy),vR=ready?p100(hd.red_precision):p100(d.red_precision);
+function fmtPct1(v){return (v==null||isNaN(v))?"—":Number(v).toFixed(1)+"%"}
+function fmtX(v){return (v==null||isNaN(v))?"—":"×"+Number(v).toFixed(1)}
+function fmtDay(ts){if(!isNum(ts))return "—";try{return new Date(Number(ts)).toLocaleDateString(L==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",timeZone:"UTC"})}catch(e){return ""}}
+// band: the honest story in three numbers — base rate, accuracy beside the all-red baseline, ranking lift
+function renderBand(){var d=PROOF||{},hd=(d.headline&&typeof d.headline==="object")?d.headline:{};
+var rk=d.ranking&&d.ranking.first_sight,t10=null;if(rk&&Array.isArray(rk.top))for(var i=0;i<rk.top.length;i++)if(Math.abs(Number(rk.top[i].frac)-0.1)<1e-9)t10=rk.top[i];
+var lift=rk&&rk.ready&&t10&&isNum(t10.lift)?Number(t10.lift):null;
+document.getElementById("kRes").textContent=t("kBase");document.getElementById("kAcc").textContent=t("kAcc");document.getElementById("kRed").textContent=t("kLift");
+document.getElementById("bandLine").innerHTML="<b>"+esc(fill(t("bandHead"),{k:isNum(hd.base_dead_rate)?Math.round(Number(hd.base_dead_rate)*100):"—"}))+"</b> "+esc(t("bandRest"));
+setBs("bsRes",isNum(hd.n)?fill(t("bsBase"),{n:fmtInt(hd.n),since:fmtDay(hd.since)}):"");
+setBs("bsAcc",isNum(hd.baseline_all_red_accuracy)?fill(t("bsVs"),{b:fmtPct1(p100(hd.baseline_all_red_accuracy))}):"");
+setBs("bsRed",lift!=null?fill(t("bsLift"),{a:fmtPct1(p100(t10.survival)),b:fmtPct1(p100(rk.survival)),n:fmtInt(rk.n)}):t("bsWait"));
 var e1=document.getElementById("sAcc"),e2=document.getElementById("sRes"),e3=document.getElementById("sRed");
 if(!PROOF)return;
-if(!COUNTED){COUNTED=true;countUp(e1,vA,fmtPct);if(ready)countUp(e2,p100(hd.base_dead_rate),fmtPct);else countUp(e2,d.resolved_with_verdict,fmtInt);countUp(e3,vR,fmtPct)}
-else{e1.textContent=fmtPct(vA);e2.textContent=ready?fmtPct(p100(hd.base_dead_rate)):fmtInt(d.resolved_with_verdict);e3.textContent=fmtPct(vR)}}
+var vA=p100(hd.accuracy),vB=p100(hd.base_dead_rate);
+if(!COUNTED){COUNTED=true;countUp(e2,vB,fmtPct1);countUp(e1,vA,fmtPct1);countUp(e3,lift,fmtX)}
+else{e1.textContent=fmtPct1(vA);e2.textContent=fmtPct1(vB);e3.textContent=fmtX(lift)}}
 fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d||{};renderBand()}).catch(function(){});
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
 function dot(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="fdot '+c+'"></span>'}

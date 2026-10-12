@@ -42,6 +42,7 @@ h1{font-size:30px;letter-spacing:-.02em;font-weight:800;line-height:1.15}
   <div class="col">
     <h1 data-i18n="h1">About FlagKan</h1>
     <section class="sec"><h2 data-i18n="whyT">Why it exists</h2><p data-i18n-html="whyD"></p></section>
+    <section class="sec"><h2 data-i18n="numT">What the numbers say</h2><p id="numD" data-i18n-html="numFb"></p></section>
     <section class="sec"><h2 data-i18n="whoT">Who builds it</h2><p data-i18n-html="whoD"></p></section>
     <section class="sec"><h2 data-i18n="nextT">What's next</h2><p data-i18n-html="nextD"></p></section>
     <section class="sec"><h2 data-i18n="linkT">Links</h2>
@@ -57,25 +58,44 @@ var T={
 en:{navBoard:"Board",navProof:"Proof",navAbout:"About",
 h1:"About FlagKan",
 whyT:"Why it exists",
-whyD:"New Solana tokens launch every minute, and most of them go to zero within hours. Charts show you the past; <b>nothing tells you the risk before you buy</b>. FlagKan answers one question — safe to touch? — with a red / yellow / green light backed by on-chain data and graded against real outcomes.",
+whyD:"New Solana tokens launch every minute, and most of them go to zero within hours. Charts show you the past; <b>nothing tells you the risk before you buy</b>. FlagKan gives every new coin a red / yellow / green risk light from on-chain holder data (Solami RPC) and market data, then grades it in public 6 hours later against what actually happened.",
 whoT:"Who builds it",
 whoD:"<b>FlagKan is built by SORNKan, a solo builder in Thailand</b>, for the Colosseum Crypto World's Fair 2026 hackathon (AI × Solana Thailand and Solami tracks). One person, one worker, one database — the whole stack runs on Cloudflare with Solana as the data layer.",
 nextT:"What's next",
-nextD:"After the hackathon: <b>alerts for watched coins</b> when their outcome resolves, a per-signal accuracy leaderboard so the rules keep improving, and distribution where traders already live. The goal stays the same — <b>fewer rugs, proven on-chain</b>.",
-linkT:"Links",lBoard:"Live board",lProof:"Proof & rules"},
+nextD:"After the hackathon: <b>alerts for watched coins</b> when their outcome resolves, a per-signal accuracy leaderboard so the rules keep improving, and distribution where traders already live. The goal stays the same — <b>fewer rugs, proven in public</b>.",
+linkT:"Links",lBoard:"Live board",lProof:"Proof & rules",
+numT:"What the numbers say",
+numFb:"Most new coins die within hours, so calling everything red is already almost always right. That is why we judge ourselves on <b>ranking</b> — do the coins we score safest survive more often than a random pick? Live numbers are on the <a href=\"/proof.html\">proof page</a>.",
+numD:"About <b>{k} of every 100</b> new coins are dead within 6 hours ({n} coins graded since {since}). Calling every coin red would already be {b} accurate — we score {a}, so accuracy is not our skill. Our skill is <b>ranking</b>: the safest 10% by our score survived <b>{s10}</b> vs <b>{sr}</b> for a random pick ({x}, {rn} live coins). Green lights are rare — {g} graded so far — so we make no green hit-rate claim. Details and caveats on the <a href=\"/proof.html\">proof page</a>."},
 th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
 h1:"เกี่ยวกับ FlagKan",
 whyT:"ทำไมต้องมี",
-whyD:"เหรียญ Solana เกิดใหม่ทุกนาที และส่วนใหญ่เหลือศูนย์ภายในไม่กี่ชั่วโมง กราฟบอกแค่อดีต <b>ไม่มีอะไรบอกความเสี่ยงก่อนคุณซื้อ</b> FlagKan ตอบคำถามเดียว — แตะได้ไหม — ด้วยไฟแดง / เหลือง / เขียว ที่มีข้อมูลเชนหนุนหลังและวัดผลจริง",
+whyD:"เหรียญ Solana เกิดใหม่ทุกนาที และส่วนใหญ่เหลือศูนย์ภายในไม่กี่ชั่วโมง กราฟบอกแค่อดีต <b>ไม่มีอะไรบอกความเสี่ยงก่อนคุณซื้อ</b> FlagKan ติดไฟแดง / เหลือง / เขียวให้ทุกเหรียญใหม่ จากข้อมูลผู้ถือบนเชน (Solami RPC) และข้อมูลตลาด แล้วตัดสินผลแบบเปิดเผย 6 ชั่วโมงต่อมาจากสิ่งที่เกิดขึ้นจริง",
 whoT:"ใครสร้าง",
 whoD:"<b>FlagKan สร้างโดย SORNKan นักสร้างเดี่ยวในไทย</b> เพื่อแฮกกาธอน Colosseum Crypto World's Fair 2026 (track AI × Solana Thailand และ Solami) คนเดียว หนึ่ง worker หนึ่งฐานข้อมูล — ทั้งกองรันบน Cloudflare โดยมี Solana เป็นชั้นข้อมูล",
 nextT:"ขั้นต่อไป",
-nextD:"หลังแฮกกาธอน: <b>แจ้งเตือนเหรียญที่ watch</b> เมื่อรู้ผล ตารางความแม่นรายสัญญาณเพื่อให้เกณฑ์ดีขึ้นเรื่อย ๆ และการกระจายไปจุดที่เทรดเดอร์อยู่ เป้าเหมือนเดิม — <b>โดน rug น้อยลง พิสูจน์บนเชน</b>",
-linkT:"ลิงก์",lBoard:"กระดานสด",lProof:"หลักฐานและเกณฑ์"}};
+nextD:"หลังแฮกกาธอน: <b>แจ้งเตือนเหรียญที่ watch</b> เมื่อรู้ผล ตารางความแม่นรายสัญญาณเพื่อให้เกณฑ์ดีขึ้นเรื่อย ๆ และการกระจายไปจุดที่เทรดเดอร์อยู่ เป้าเหมือนเดิม — <b>โดน rug น้อยลง พิสูจน์แบบเปิดเผย</b>",
+linkT:"ลิงก์",lBoard:"กระดานสด",lProof:"หลักฐานและเกณฑ์",
+numT:"ตัวเลขบอกอะไร",
+numFb:"เหรียญใหม่ส่วนใหญ่ตายภายในไม่กี่ชั่วโมง ชี้แดงทุกตัวก็ถูกเกือบทุกครั้งอยู่แล้ว เราจึงวัดตัวเองด้วย <b>การจัดอันดับ</b> — เหรียญที่เราให้คะแนนปลอดภัยสุดรอดบ่อยกว่าการสุ่มไหม ตัวเลขสดอยู่ที่ <a href=\"/proof.html\">หน้าหลักฐาน</a>",
+numD:"เหรียญใหม่ราว <b>{k} ใน 100 ตัว</b> ตายภายใน 6 ชั่วโมง (ตัดสินแล้ว {n} เหรียญ ตั้งแต่ {since}) ชี้แดงทุกเหรียญก็แม่น {b} แล้ว เราได้ {a} ความแม่นจึงไม่ใช่ฝีมือ ฝีมือของเราคือ <b>การจัดอันดับ</b>: 10% ที่คะแนนเราว่าปลอดภัยสุดรอด <b>{s10}</b> เทียบสุ่มเลือก <b>{sr}</b> ({x}, {rn} เหรียญจริง) ไฟเขียวมีน้อย — รู้ผลแล้วแค่ {g} ตัว — เราจึงไม่อ้างอัตราถูกของไฟเขียว รายละเอียดและข้อจำกัดอยู่ที่ <a href=\"/proof.html\">หน้าหลักฐาน</a>"}};
 var L="en";
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":""}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderNum()}
+var PROOF=null;
+function isNum(x){return x!=null&&x!==""&&!isNaN(Number(x))}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function p1(x){return isNum(x)?(Number(x)*100).toFixed(1)+"%":"—"}
+function fillH(s,o){return String(s).replace(/\{(\w+)\}/g,function(_,k){return o[k]==null?"":esc(o[k])})}
+// numbers paragraph: every value from /api/proof; falls back to the number-free text
+function renderNum(){var d=PROOF,el=document.getElementById("numD");if(!d||!el)return;var hd=d.headline||{},rk=d.ranking&&d.ranking.first_sight,t10=null,g=null,i;
+if(rk&&Array.isArray(rk.top))for(i=0;i<rk.top.length;i++)if(Math.abs(Number(rk.top[i].frac)-0.1)<1e-9)t10=rk.top[i];
+if(Array.isArray(hd.tiers))for(i=0;i<hd.tiers.length;i++)if(hd.tiers[i]&&hd.tiers[i].tier==="green")g=hd.tiers[i].n;
+if(!isNum(hd.base_dead_rate)||!rk||!rk.ready||!t10)return;
+var since="";try{since=new Date(Number(hd.since)).toLocaleDateString(L==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",timeZone:"UTC"})}catch(e){}
+el.innerHTML=fillH(t("numD"),{k:Math.round(Number(hd.base_dead_rate)*100),n:Number(hd.n).toLocaleString("en-US"),since:since,b:p1(hd.baseline_all_red_accuracy),a:p1(hd.accuracy),s10:p1(t10.survival),sr:p1(rk.survival),x:"×"+Number(t10.lift).toFixed(1),rn:Number(rk.n).toLocaleString("en-US"),g:isNum(g)?g:"—"})}
+fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderNum()}).catch(function(){});
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 (function(){var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")==="about")as[i].className="on"}})();

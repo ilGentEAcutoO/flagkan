@@ -13,6 +13,7 @@ import type { GoldModel, TrainRow } from "./ml/train";
 import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence, LABEL_V2, shouldPersistVerdict } from "./ml/upgrade";
 import type { SnapLite } from "./ml/upgrade";
 import { scoreGbm, gbmModelOk, challengerStats } from "./ml/gbm";
+import { rankingStats, RANK_MIN_N, RANK_MIN_SURVIVORS } from "./ml/ranking";
 import GBM_MODEL from "./ml/gbm-model.json";
 import { RESOLVE_FIRST_SQL, RESOLVE_LAST_SQL, RESOLVE_PRIOR_SQL } from "./ml/collect";
 import { collectLooks, collectDev, collectCounters } from "./dev";
@@ -1301,6 +1302,56 @@ async function proofCore(env: Env): Promise<{ row: ProofRow | null; base: Record
 	};
 }
 
+// FINAL-WEB ranking block (read-only, display-only): do the coins a score
+// calls safest survive more than a random pick? Live label-v2 coins only
+// (backfill rows excluded: they were picked after the fact). Grouped by
+// distinct score so D1 returns a few hundred rows, then tie-aware stats.
+// Memoised per isolate for 10 minutes — the numbers move ~15 coins/hour.
+const RANK_TTL_MS = 10 * 60_000;
+let rankMemo: { at: number; val: Record<string, unknown> } | null = null;
+async function rankingBlock(env: Env): Promise<Record<string, unknown>> {
+	const now = Date.now();
+	if (rankMemo && now - rankMemo.at < RANK_TTL_MS) return rankMemo.val;
+	const base = "FROM verdicts v JOIN outcomes o ON o.mint = v.mint WHERE v.source = 'live' AND o.dead_v2 IS NOT NULL";
+	const q = (col: string, extra: string) => env.DB_MAIN.prepare(
+		`SELECT ROUND(${col}, 6) AS p, COUNT(*) AS n, SUM(1 - o.dead_v2) AS alive, MIN(v.ts) AS t0, MAX(v.ts) AS t1 ${base} AND ${col} IS NOT NULL ${extra} GROUP BY 1`
+	);
+	const pair = "AND v.p_lr_first IS NOT NULL AND v.p_gbm_first IS NOT NULL";
+	const [all, v2, lr, gbm] = await env.DB_MAIN.batch<{ p: number; n: number; alive: number; t0: number; t1: number }>([
+		q("v.p_red_first", ""), q("v.p_red_first", "AND v.policy_v >= 2"), q("v.p_lr_first", pair), q("v.p_gbm_first", pair),
+	]);
+	// Highest LightGBM first-sight P(dead) ever stored (all live coins, graded
+	// or not): shows whether the decider's red_sure bar can be reached at all.
+	const gmax = await env.DB_MAIN.prepare("SELECT MAX(p_gbm_first) AS m, COUNT(p_gbm_first) AS n FROM verdicts WHERE source = 'live'").first<{ m: number | null; n: number }>();
+	const pack = (res: D1Result<{ p: number; n: number; alive: number; t0: number; t1: number }>, score: string, desc: string) => {
+		const rows = res.results ?? [];
+		const st = rankingStats(rows.map((r) => ({ p: Number(r.p), n: Number(r.n), alive: Number(r.alive ?? 0) })));
+		let t0: number | null = null, t1: number | null = null;
+		for (const r of rows) {
+			if (t0 === null || Number(r.t0) < t0) t0 = Number(r.t0);
+			if (t1 === null || Number(r.t1) > t1) t1 = Number(r.t1);
+		}
+		return {
+			score, desc, since: t0, until: t1, ...st,
+			survival: r3(st.survival), survival_ci_lo: r3(st.survival_ci_lo), survival_ci_hi: r3(st.survival_ci_hi), auc: r3(st.auc),
+			top: st.top.map((x) => ({ ...x, survival: r3(x.survival), lift: x.lift === null ? null : Math.round(x.lift * 100) / 100, ci_lo: r3(x.ci_lo), ci_hi: r3(x.ci_hi), tie_share: r3(x.tie_share) })),
+			deciles: st.deciles.map((x) => ({ d: x.d, survival: r3(x.survival) })),
+		};
+	};
+	const val: Record<string, unknown> = {
+		label: "v2", min_n: RANK_MIN_N, min_survivors: RANK_MIN_SURVIVORS,
+		note: "survival = alive 6h after first sight (label v2); safest = lowest first-sight P(dead); ties split pro rata; Wilson 95% CI; live verdicts only",
+		first_sight: pack(all, "p_red_first", "the first-sight P(dead) FlagKan stored for every live coin, all eras (before 12 Oct most of it was a coarse rules/Jev stamp)"),
+		policy_v2: pack(v2, "p_red_first", "same score, policy v2 only (model-driven, since 12 Oct 03:20 UTC)"),
+		lr: pack(lr, "p_lr_first", "logistic regression, model-only, coins scored by both models"),
+		gbm: pack(gbm, "p_gbm_first", "LightGBM-27, model-only, same coins as lr"),
+		gbm_scored: Number(gmax?.n ?? 0), gbm_max_p: gmax?.m == null ? null : Math.round(Number(gmax.m) * 10000) / 10000,
+		computed_at: now,
+	};
+	rankMemo = { at: now, val };
+	return val;
+}
+
 function json(data: unknown, status = 200): Response {
 	return new Response(JSON.stringify(data), {
 		status,
@@ -1455,6 +1506,8 @@ export default {
 				b.n++; b.acc += ok; b.conf += c;
 			}
 			let ece = 0;
+			let ranking: Record<string, unknown>;
+			try { ranking = await rankingBlock(env); } catch (e) { ranking = { error: String(e).slice(0, 120) }; }
 			const deciles = buckets.map((b, i) => {
 				const acc = b.n ? b.acc / b.n : null;
 				const avg = b.n ? b.conf / b.n : null;
@@ -1479,6 +1532,8 @@ export default {
 				ece: brierN ? r3(ece) : null,
 				conf_n: brierN,
 				conf_deciles: deciles.map((d) => ({ ...d, accuracy: r3(d.accuracy), avg_confidence: r3(d.avg_confidence) })),
+				conf_scope: "legacy: label v1, all live verdicts; most confidences were fixed 0.95-0.98 stamps from rules/Jev",
+				ranking,
 				note: n < 50 ? "warming up: need 50+ resolved rounds" : "ready",
 				...base,
 			});

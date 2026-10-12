@@ -8,7 +8,7 @@ See the [root README](../README.md) for the product overview and honesty notes.
 FlagKan watches **new Solana tokens** (about 98% arrive through GeckoTerminal's new-pool feed,
 the rest through DexScreener boosts) and gives each one a risk light:
 
-- **RED — do not buy** · **YELLOW — caution** · **GREEN — looks OK**
+- **RED — do not buy** · **YELLOW — caution** · **GREEN — lower risk, not safe**
 - Every verdict shows a checklist (whale share, holder spread, early buys, liquidity, coin age,
   AI wallet-coordination score) with the measured value next to a **reference level**, in Thai
   and English. The reference levels explain the verdict; the light itself comes from the model,

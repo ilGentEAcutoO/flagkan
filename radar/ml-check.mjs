@@ -24,7 +24,7 @@ if (!existsSync(TSC)) { console.error("FAIL typescript not installed (run npm in
 rmSync(CACHE, { recursive: true, force: true });
 mkdirSync(CACHE, { recursive: true });
 try {
-	execSync(`"${process.execPath}" "${TSC}" src/ml/train.ts src/ml/upgrade.ts src/ml/gbm.ts src/ml/collect.ts --outDir "${CACHE}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`,
+	execSync(`"${process.execPath}" "${TSC}" src/ml/train.ts src/ml/upgrade.ts src/ml/gbm.ts src/ml/collect.ts src/ml/ranking.ts --outDir "${CACHE}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`,
 		{ cwd: HERE, stdio: "pipe" });
 } catch (e) {
 	console.error("FAIL tsc compile:", String(e.stdout ?? e.message).slice(0, 400));
@@ -34,6 +34,7 @@ const ml = await import(pathToFileURL(path.join(CACHE, "train.js")).href);
 const up = await import(pathToFileURL(path.join(CACHE, "upgrade.js")).href);
 const gbm = await import(pathToFileURL(path.join(CACHE, "gbm.js")).href);
 const col = await import(pathToFileURL(path.join(CACHE, "collect.js")).href);
+const rk = await import(pathToFileURL(path.join(CACHE, "ranking.js")).href);
 // LIVE-001 pure helpers compile into their own dir (keeps rootDir of the ml set).
 try {
 	execSync(`"${process.execPath}" "${TSC}" src/live-core.ts --outDir "${path.join(CACHE, "live")}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`, { cwd: HERE, stdio: "pipe" });
@@ -864,6 +865,25 @@ try {
 		const h = readFileSync(path.join(HERE, "public", pg), "utf8");
 		check(pg + ": loads /live.js, connects, no 60s setInterval polling", /<script src="\/live\.js"><\/script>/.test(h) && /FlagLive\.connect\(\{onTick:onTick/.test(h) && !/setInterval\(load\w*,\s*60000\)/.test(h));
 	}
+}
+
+// FINAL-WEB: tie-aware ranking (display-only)
+{
+	// 10 coins, distinct scores, survivors at the 2 safest -> top 10% = 1 coin alive
+	const g = [];
+	for (let i = 0; i < 10; i++) g.push({ p: i / 10, n: 1, alive: i < 2 ? 1 : 0 });
+	const s = rk.rankingStats(g, [0.1, 0.2]);
+	check("ranking: base 2/10, top10% survival 1, lift 5", s.n === 10 && approx(s.survival, 0.2) && approx(s.top[0].survival, 1) && approx(s.top[0].lift, 5) && s.top[0].tie_share === 0);
+	check("ranking: perfect order AUC 1", approx(s.auc, 1));
+	// one big tie: order must NOT create skill (pro rata, tie_share 1, lift 1, AUC 0.5)
+	const t = rk.rankingStats([{ p: 0, n: 100, alive: 10 }, { p: 0.5, n: 100, alive: 10 }], [0.1]);
+	check("ranking: tied group taken pro rata (no row-order skill)", approx(t.top[0].survival, 0.1) && approx(t.top[0].lift, 1) && approx(t.top[0].tie_share, 1) && approx(t.auc, 0.5));
+	const d = t.deciles.map((x) => x.survival);
+	check("ranking: deciles tie-aware and complete", d.length === 10 && d.every((v) => approx(v, 0.1)));
+	check("ranking: ready gate needs n>=200 and >=10 survivors", t.ready === true && rk.rankingStats([{ p: 0, n: 300, alive: 9 }]).ready === false && rk.rankingStats([{ p: 0, n: 150, alive: 50 }]).ready === false);
+	check("ranking: empty / junk groups", rk.rankingStats([]).n === 0 && rk.rankingStats([{ p: NaN, n: 3, alive: 1 }, { p: 0.2, n: 2, alive: 5 }]).n === 0);
+	const w = rk.wilson(10, 100);
+	check("wilson 10/100 = [0.0552, 0.1744]", approx(w[0], 0.0552, 5e-4) && approx(w[1], 0.1744, 5e-4));
 }
 
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }
