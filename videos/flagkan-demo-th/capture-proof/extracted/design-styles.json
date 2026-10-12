@@ -1,0 +1,166 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "Sarabun",
+      "fontSize": "28px",
+      "fontWeight": "800",
+      "lineHeight": "46.2px",
+      "letterSpacing": "-0.56px",
+      "color": "#26211B",
+      "sampleText": "Proof, not promises."
+    },
+    {
+      "role": "link",
+      "fontFamily": "Sarabun",
+      "fontSize": "19px",
+      "fontWeight": "800",
+      "lineHeight": "31.35px",
+      "letterSpacing": "-0.19px",
+      "color": "#26211B",
+      "sampleText": "FlagKan"
+    },
+    {
+      "role": "body",
+      "fontFamily": "Sarabun",
+      "fontSize": "15px",
+      "fontWeight": "400",
+      "lineHeight": "24.75px",
+      "letterSpacing": "normal",
+      "color": "#6E6252",
+      "sampleText": "Every verdict is graded by what actually happened 6 hours af"
+    },
+    {
+      "role": "body-small",
+      "fontFamily": "Sarabun",
+      "fontSize": "12.5px",
+      "fontWeight": "400",
+      "lineHeight": "20.625px",
+      "letterSpacing": "normal",
+      "color": "#6E6252",
+      "sampleText": "Share held by the single largest wallet."
+    },
+    {
+      "role": "heading",
+      "fontFamily": "Sarabun",
+      "fontSize": "12px",
+      "fontWeight": "800",
+      "lineHeight": "19.8px",
+      "letterSpacing": "1.56px",
+      "color": "#6E6252",
+      "sampleText": "The 6 checks"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      2,
+      5,
+      7,
+      8,
+      9,
+      10,
+      12,
+      13,
+      14,
+      16,
+      18,
+      20,
+      22,
+      24
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "9px"
+  ],
+  "shadows": [
+    {
+      "value": "rgb(38, 33, 27) 4px 4px 0px 0px",
+      "count": 6
+    }
+  ],
+  "buttons": [
+    {
+      "label": "EN",
+      "background": "#26211B",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#FFFDF7",
+      "padding": "5px 12px",
+      "borderRadius": "10px 0px 0px 10px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "800",
+      "height": "30px"
+    },
+    {
+      "label": "ไทย",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#6E6252",
+      "padding": "5px 12px",
+      "borderRadius": "0px 10px 10px 0px",
+      "border": "",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "800",
+      "height": "30px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "#FFFFFF",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#26211B",
+      "padding": "22px 24px",
+      "borderRadius": "16px",
+      "border": "2px solid rgb(38, 33, 27)",
+      "boxShadow": "rgb(38, 33, 27) 4px 4px 0px 0px",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "height": "451.141px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "transparent",
+    "backgroundImage": "",
+    "backdropFilter": "",
+    "color": "#26211B",
+    "padding": "0px",
+    "borderRadius": "0px",
+    "border": "0px none rgb(38, 33, 27)",
+    "boxShadow": "none",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "height": "36.2656px"
+  },
+  "chips": [],
+  "statCells": [
+    {
+      "background": "#FFFFFF",
+      "borderRadius": "12px",
+      "border": "2px solid rgb(38, 33, 27)",
+      "boxShadow": "rgb(38, 33, 27) 4px 4px 0px 0px",
+      "numberFontSize": "32px",
+      "numberFontWeight": "800",
+      "numberColor": "#0B7A55"
+    }
+  ],
+  "tabs": [],
+  "backgrounds": [],
+  "glass": [
+    {
+      "backdropFilter": "blur(10px) saturate(1.4)",
+      "background": "rgb(255, 253, 247)",
+      "border": "",
+      "borderRadius": "0px",
+      "boxShadow": "",
+      "area": 126720
+    }
+  ]
+}

@@ -14,3 +14,16 @@ sweep-rows.json
 instruction/
 data/skills/
 skills-lock.json
+# heavy video outputs / media (rendered separately)
+videos/**/renders/
+videos/**/snapshots/
+videos/**/.hyperframes/
+videos/**/capture/
+videos/**/assets/voice/
+videos/**/assets/sfx/
+*.mp4
+*.wav
+*.mp3
+# local ML lab artifacts
+ml-lab/.venv/
+ml-lab/data/

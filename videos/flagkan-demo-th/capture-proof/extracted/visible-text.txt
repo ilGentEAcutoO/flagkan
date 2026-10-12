@@ -1,0 +1,53 @@
+[span] Flag
+[a] Kan
+[button] ไทย
+[h1] Proof, not promises.
+[p] Every verdict is graded by what actually happened 6 hours after first sight. This page shows the live score and every resolved coin — nothing cherry-picked.
+[div] 57%
+[div] accuracy
+[div] red+dead or other+alive
+[div] 3058
+[div] coins judged
+[div] resolved with a verdict
+[div] 23%
+[div] red precision
+[div] red verdicts that died
+[h2] The 6 checks
+[span] Whale concentration
+[small] Share held by the single largest wallet.
+[span] red ≥ 30%
+[span] Top holders 2–11
+[small] Share held by wallets ranked 2 to 11 combined.
+[span] red ≥ 40%
+[span] First-minute buys
+[small] Buy pressure in the first minute of the tracked window.
+[span] red ≥ 300
+[span] Pool liquidity
+[small] USD liquidity in the pool at verdict time.
+[span] red < $10k
+[span] Coin age
+[small] Minutes since the mint was created on-chain.
+[span] warn < 15 min
+[span] Linked wallets · AI
+[small] Jev estimates how coordinated the holder wallets look.
+[span] red ≥ 70%
+[h2] The AI judge
+[p] The
+[b] Jev judge (jev-latest)
+[p] reads all six checks plus wallet-coordination signals and issues
+[b] red / yellow / green
+[p] with probabilities, a coordination score, and a severity rating. One failing check means red unless the judge finds strong counter-evidence. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.
+[p] Outcomes settle automatically:
+[b] dead means the price fell 90%+ from first sight, liquidity drained under $1,000, or the price sat frozen with zero trading
+[p] . Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from
+[b] Solami RPC
+[p] — the only data path.
+[h2] Every resolved coin
+[th] coin
+[th] light
+[th] 6h move
+[th] outcome
+[td] loading…
+[span] FlagKan · SORNKan · Solami + Jev
+[a] api/proof
+[a] api/rounds

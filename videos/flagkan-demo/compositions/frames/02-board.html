@@ -1,0 +1,292 @@
+<template>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aAFJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBpJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBtJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBVJn3YO5gg.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqik8s6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqilQs6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+#root{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: size;
+  font-family: 'Sarabun', sans-serif;
+}
+#root .clip{
+  position: absolute;
+  inset: 0;
+}
+#f02-ground{
+  background: #16130E;
+}
+#f02-viewport{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+#f02-world{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+#f02-plate{
+  position: absolute;
+  left: 0;
+  top: 57px;
+  width: 1920px;
+  height: 863px;
+  display: block;
+}
+.f02-hl{
+  position: absolute;
+  border: 3px solid #B7321F;
+  border-radius: 12px;
+  outline: 2px solid rgba(183, 50, 31, 0.4);
+  outline-offset: 5px;
+  opacity: 0;
+  pointer-events: none;
+}
+#f02-h1{ left: 612px; top: 244px; width: 92px; height: 340px; }
+#f02-hall{ left: 1114px; top: 172px; width: 52px; height: 38px; }
+#f02-hred{ left: 1163px; top: 172px; width: 50px; height: 38px; }
+#f02-hyel{ left: 1209px; top: 172px; width: 68px; height: 38px; }
+#f02-hgrn{ left: 1273px; top: 172px; width: 70px; height: 38px; }
+#f02-h3{ left: 910px; top: 172px; width: 205px; height: 38px; }
+#f02-h4{ left: 600px; top: 215px; width: 760px; height: 40px; }
+#f02-h5{ left: 1390px; top: 178px; width: 62px; height: 32px; }
+#f02-h6{ left: 1352px; top: 70px; width: 96px; height: 42px; }
+#f02-h7{ left: 1232px; top: 70px; width: 112px; height: 42px; }
+.f02-ring{
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 3px solid #B7321F;
+  opacity: 0;
+  pointer-events: none;
+}
+#f02-r1{ left: 600px; top: 178px; }
+#f02-r2{ left: 602px; top: 365px; }
+#f02-r3{ left: 602px; top: 485px; }
+#f02-r4{ left: 1085px; top: 135px; }
+#f02-r5{ left: 1133px; top: 135px; }
+#f02-r6{ left: 1188px; top: 135px; }
+#f02-r7{ left: 1253px; top: 135px; }
+#f02-r8{ left: 955px; top: 135px; }
+#f02-r9{ left: 695px; top: 178px; }
+#f02-r10{ left: 1015px; top: 178px; }
+#f02-r11{ left: 1137px; top: 178px; }
+#f02-r12{ left: 1257px; top: 178px; }
+#f02-r13{ left: 1363px; top: 137px; }
+#f02-r14{ left: 1345px; top: 36px; }
+#f02-r15{ left: 1233px; top: 36px; }
+#f02-cur{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+}
+#f02-cur svg{
+  display: block;
+  width: 40px;
+  height: auto;
+  margin-left: -7px;
+  margin-top: -4px;
+  overflow: visible;
+}
+</style>
+<div id="root" data-composition-id="02-board" data-start="0" data-duration="27" data-width="1920" data-height="1080">
+  <div class="clip" id="f02-ground" data-start="0" data-duration="27" data-track-index="0"></div>
+  <div class="clip" id="f02-stage" data-start="0" data-duration="27" data-track-index="1">
+    <div id="f02-viewport">
+      <div id="f02-world">
+        <img id="f02-plate" src="assets/en-board.png" alt="FlagKan live board" />
+        <div class="f02-hl" id="f02-h1"></div>
+        <div class="f02-hl" id="f02-hall"></div>
+        <div class="f02-hl" id="f02-hred"></div>
+        <div class="f02-hl" id="f02-hyel"></div>
+        <div class="f02-hl" id="f02-hgrn"></div>
+        <div class="f02-hl" id="f02-h3"></div>
+        <div class="f02-hl" id="f02-h4"></div>
+        <div class="f02-hl" id="f02-h5"></div>
+        <div class="f02-hl" id="f02-h6"></div>
+        <div class="f02-hl" id="f02-h7"></div>
+        <div class="f02-ring" id="f02-r1"></div>
+        <div class="f02-ring" id="f02-r2"></div>
+        <div class="f02-ring" id="f02-r3"></div>
+        <div class="f02-ring" id="f02-r4"></div>
+        <div class="f02-ring" id="f02-r5"></div>
+        <div class="f02-ring" id="f02-r6"></div>
+        <div class="f02-ring" id="f02-r7"></div>
+        <div class="f02-ring" id="f02-r8"></div>
+        <div class="f02-ring" id="f02-r9"></div>
+        <div class="f02-ring" id="f02-r10"></div>
+        <div class="f02-ring" id="f02-r11"></div>
+        <div class="f02-ring" id="f02-r12"></div>
+        <div class="f02-ring" id="f02-r13"></div>
+        <div class="f02-ring" id="f02-r14"></div>
+        <div class="f02-ring" id="f02-r15"></div>
+        <div id="f02-cur">
+          <svg viewBox="0 0 28 36" aria-hidden="true">
+            <path d="M5 3 L5 30 L12 23.8 L15.4 31.5 L19 29.6 L15.6 22 L23 22 Z" fill="#B7321F" stroke="#FFFFFF" stroke-width="2.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var el = function(id){ return document.getElementById(id); };
+  var world = el("f02-world");
+  var cur = el("f02-cur");
+  var H1 = el("f02-h1"), HALL = el("f02-hall"), HRED = el("f02-hred");
+  var HYEL = el("f02-hyel"), HGRN = el("f02-hgrn"), H3 = el("f02-h3");
+  var H4 = el("f02-h4"), H5 = el("f02-h5"), H6 = el("f02-h6"), H7 = el("f02-h7");
+  var R1 = el("f02-r1"), R2 = el("f02-r2"), R3 = el("f02-r3"), R4 = el("f02-r4");
+  var R5 = el("f02-r5"), R6 = el("f02-r6"), R7 = el("f02-r7"), R8 = el("f02-r8");
+  var R9 = el("f02-r9"), R10 = el("f02-r10"), R11 = el("f02-r11"), R12 = el("f02-r12");
+  var R13 = el("f02-r13"), R14 = el("f02-r14"), R15 = el("f02-r15");
+
+  var tl = gsap.timeline({ paused: true });
+
+  function press(at){
+    tl.to(cur, { scale: 0.85, duration: 0.08, ease: "power2.in" }, at);
+    tl.to(cur, { scale: 1, duration: 0.12, ease: "power2.out" }, at + 0.08);
+  }
+  function ripple(ring, at, scale){
+    tl.fromTo(ring,
+      { scale: 0, opacity: 0.9, transformOrigin: "50% 50%" },
+      { scale: scale, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false },
+      at);
+  }
+  function boxIn(box, at){
+    tl.fromTo(box,
+      { opacity: 0, scale: 0.94, transformOrigin: "50% 50%" },
+      { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(1.5)", immediateRender: false },
+      at);
+  }
+  function boxOut(box, at){
+    tl.to(box, { opacity: 0, duration: 0.3, ease: "power2.out" }, at);
+  }
+  function pulse(box, at){
+    tl.to(box, { scale: 1.03, duration: 0.18, ease: "power2.out" }, at);
+    tl.to(box, { scale: 1, duration: 0.22, ease: "power2.out" }, at + 0.18);
+  }
+
+  // Establish: plate fades in, cursor slides in from the left edge.
+  tl.fromTo(world,
+    { opacity: 0, scale: 0.98, x: 0, y: 0 },
+    { opacity: 1, scale: 1.02, x: 0, y: 0, duration: 0.9, ease: "power2.out" }, 0);
+  tl.fromTo(cur, { x: -90, y: 760 }, { x: 200, y: 740, duration: 0.5, ease: "power2.out" }, 0.25);
+
+  // Beat 1 (0-6s): LIGHT column pulse.
+  tl.to(cur, { x: 655, y: 233, duration: 0.6, ease: "power3.out" }, 0.8);
+  press(1.45); ripple(R1, 1.45, 4.5); boxIn(H1, 1.45);
+  tl.to(world, { scale: 1.14, x: 60, y: 40, duration: 2.0, ease: "power2.inOut" }, 1.45);
+  tl.to(cur, { x: 657, y: 420, duration: 0.7, ease: "power2.inOut" }, 2.1);
+  press(2.9); ripple(R2, 2.9, 4.5); pulse(H1, 2.9);
+  tl.to(cur, { x: 657, y: 540, duration: 0.7, ease: "power2.inOut" }, 3.6);
+  press(4.4); ripple(R3, 4.4, 4.5); pulse(H1, 4.4);
+  tl.to(cur, { x: 720, y: 560, duration: 0.5, ease: "power2.out" }, 5.1);
+  boxOut(H1, 5.8);
+
+  // Beat 2 (6-12s): filter chips All -> Red -> Yellow -> Green.
+  tl.to(cur, { x: 1140, y: 190, duration: 0.6, ease: "power3.inOut" }, 6.0);
+  tl.to(world, { scale: 1.15, x: -380, y: 110, duration: 1.6, ease: "power2.inOut" }, 6.0);
+  press(6.7); ripple(R4, 6.7, 4); boxIn(HALL, 6.7);
+  tl.to(cur, { x: 1188, y: 190, duration: 0.4, ease: "power2.inOut" }, 7.5);
+  press(7.95); ripple(R5, 7.95, 4); boxIn(HRED, 7.95);
+  tl.to(cur, { x: 1243, y: 190, duration: 0.4, ease: "power2.inOut" }, 9.0);
+  press(9.45); ripple(R6, 9.45, 4); boxIn(HYEL, 9.45);
+  tl.to(cur, { x: 1308, y: 190, duration: 0.4, ease: "power2.inOut" }, 10.5);
+  press(10.95); ripple(R7, 10.95, 4); boxIn(HGRN, 10.95);
+  boxOut(HALL, 11.6); boxOut(HRED, 11.6); boxOut(HYEL, 11.6); boxOut(HGRN, 11.6);
+
+  // Beat 3 (12-19s): search box, then sort headers LIGHT / CONF / PRICE / LIQ / TOP1.
+  tl.to(cur, { x: 1010, y: 190, duration: 0.6, ease: "power3.inOut" }, 12.0);
+  tl.to(world, { scale: 1.15, x: -200, y: 110, duration: 1.2, ease: "power2.inOut" }, 12.0);
+  press(12.7); ripple(R8, 12.7, 4); boxIn(H3, 12.7);
+  boxOut(H3, 13.4); boxIn(H4, 13.4);
+  tl.to(cur, { x: 655, y: 233, duration: 0.6, ease: "power3.inOut" }, 13.5);
+  tl.to(world, { scale: 1.12, x: -140, y: 130, duration: 1.4, ease: "power2.inOut" }, 13.5);
+  press(14.2); ripple(R1, 14.2, 4.5); pulse(H4, 14.2);
+  tl.to(cur, { x: 750, y: 233, duration: 0.35, ease: "power3.inOut" }, 14.9);
+  press(15.3); ripple(R9, 15.3, 4.5);
+  tl.to(cur, { x: 1070, y: 233, duration: 0.4, ease: "power3.inOut" }, 15.7);
+  press(16.15); ripple(R10, 16.15, 4.5);
+  tl.to(cur, { x: 1192, y: 233, duration: 0.35, ease: "power3.inOut" }, 16.55);
+  press(16.95); ripple(R11, 16.95, 4.5);
+  tl.to(cur, { x: 1312, y: 233, duration: 0.35, ease: "power3.inOut" }, 17.35);
+  press(17.75); ripple(R12, 17.75, 4.5);
+  boxOut(H4, 18.5);
+
+  // Beat 4 (19-27s): settle on 50 / 50, rest on 50 tracked + 3073 resolved, pull back to full board.
+  tl.to(cur, { x: 1418, y: 192, duration: 0.6, ease: "power3.inOut" }, 19.0);
+  tl.to(world, { scale: 1.15, x: -400, y: 150, duration: 1.2, ease: "power2.inOut" }, 19.0);
+  press(19.7); ripple(R13, 19.7, 3.5); boxIn(H5, 19.7);
+  tl.to(cur, { x: 1400, y: 91, duration: 0.7, ease: "power3.inOut" }, 20.8);
+  tl.to(world, { scale: 1.15, x: -400, y: 260, duration: 1.4, ease: "power2.inOut" }, 20.8);
+  press(21.6); ripple(R14, 21.6, 3.5); boxOut(H5, 21.6); boxIn(H6, 21.6);
+  tl.to(cur, { x: 1288, y: 91, duration: 0.5, ease: "power3.inOut" }, 22.6);
+  press(23.2); ripple(R15, 23.2, 3.5); boxIn(H7, 23.2);
+  tl.to(world, { scale: 1.0, x: 0, y: 0, duration: 2.2, ease: "power2.inOut" }, 24.0);
+  tl.to(cur, { x: 1560, y: 300, duration: 1.2, ease: "power2.inOut" }, 24.0);
+  boxOut(H6, 24.2); boxOut(H7, 24.2);
+
+  // Hold the settled full-board tableau to the end of the slot (no exit: not the final frame).
+  tl.set(cur, { opacity: 1 }, 27);
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines["02-board"] = tl;
+})();
+</script>
+</template>

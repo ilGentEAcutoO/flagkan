@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<style>
+:root{--bg:#f3f5f9;--card:#ffffff;--line:#e3e8f0;--line2:#cdd5e3;
+--ink:#16233f;--dim:#475569;--faint:#64748b;
+--red:#dc2626;--redbg:#fdecec;--yel:#9a6a00;--yelbg:#fdf3d7;--grn:#0e9d6e;--grnbg:#def7ec;
+--acc:#1e40af;
+--sans:'Sarabun',-apple-system,BlinkMacSystemFont,'Segoe UI','Sukhumvit Set','Noto Sans Thai',Arial,sans-serif;
+--mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);border-bottom:1px solid var(--line)}
+.topbar .in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink)}
+.brand .f{color:var(--red)}
+.brand{display:inline-flex;align-items:center}
+.mark{display:inline-flex;gap:3px;margin-right:9px}
+.mark i{width:8px;height:8px;border-radius:50%}
+.mark .r{background:var(--red)}.mark .y{background:#d99a17}.mark .g{background:var(--grn)}
+.nav{display:flex;gap:2px;align-items:center}
+.nav a{padding:6px 12px;border-radius:8px;color:var(--dim);font-weight:700;font-size:12.5px;white-space:nowrap;text-decoration:none}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a.on{background:var(--bg);color:var(--ink)}
+.lang{margin-left:auto}
+.lang button{background:transparent;color:var(--faint);border:1px solid var(--line);border-radius:99px;
+padding:4px 11px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.lang button.on{color:var(--ink);border-color:var(--line2);background:var(--bg)}
+.wrap{max-width:1060px;margin:0 auto;padding:26px 16px 40px}
+h1{font-size:28px;letter-spacing:-.02em;font-weight:800}
+.lead{color:var(--dim);font-size:15px;max-width:680px;margin-top:6px}
+.score{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+.stat .v{font-family:var(--mono);font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .v.green{color:var(--grn)}.stat .v.red{color:var(--red)}
+.stat .k{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.stat .s{font-size:12px;color:var(--faint);margin-top:2px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-top:18px}
+.panel h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-bottom:10px}
+.rule{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)}
+.rule:last-child{border-bottom:none}
+.rule .n{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--acc)}
+.rule .t{font-weight:700;font-size:13.5px}
+.rule .t small{display:block;font-weight:400;color:var(--dim);font-size:12.5px}
+.rule .lim{font-family:var(--mono);font-size:11.5px;color:var(--dim);white-space:nowrap}
+.prose{font-size:13.5px;color:var(--dim);max-width:720px}
+.prose b{color:var(--ink)}
+.prose p+p{margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);text-align:left;
+padding:7px 10px;border-bottom:1px solid var(--line);font-weight:700;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:#2b3346;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.coinname{font-family:var(--sans);font-weight:700;color:var(--ink);font-size:12.5px}
+.badge{font-family:var(--mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;text-transform:uppercase}
+.badge.red{background:var(--redbg);color:var(--red)}
+.badge.yellow{background:var(--yelbg);color:var(--yel)}
+.badge.green{background:var(--grnbg);color:var(--grn)}
+.up{color:var(--grn)}.down{color:var(--red)}
+.mut{color:var(--faint)}
+footer{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);
+display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+a{color:var(--acc)}
+@media(max-width:700px){.score{grid-template-columns:1fr}.rule{grid-template-columns:32px 1fr}.rule .lim{grid-column:2}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+/* sticker-pop upgrades (shared base in /theme.css) */
+.wrap{max-width:1060px}
+.stat,.panel{border-width:2px;box-shadow:var(--sh)}
+.rule{border-bottom:2px dashed #E5DCC8}
+th{background:var(--cream)}
+</style>
+<style>/* thai */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(assets/fonts/DtVjJx26TKEr37c9aAFJn3YO5gjupg.woff2) format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(assets/fonts/DtVjJx26TKEr37c9aBpJn3YO5gjupg.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(assets/fonts/DtVjJx26TKEr37c9aBtJn3YO5gjupg.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(assets/fonts/DtVjJx26TKEr37c9aBVJn3YO5gg.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* thai */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(assets/fonts/DtVmJx26TKEr37c9YOZqik8s6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(assets/fonts/DtVmJx26TKEr37c9YOZqilQs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YOZqilUs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YOZqilss6yLUrwA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* thai */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YMptik8s6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YMptilQs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YMptilUs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YMptilss6yLUrwA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* thai */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YK5sik8s6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YK5silQs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YK5silUs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YK5silss6yLUrwA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* thai */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YLJvik8s6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YLJvilQs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YLJvilUs6yLUrwB0lw.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sarabun/v17/DtVmJx26TKEr37c9YLJvilss6yLUrwA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<style>/* FlagKan sticker-pop theme — shared by index/board/proof/about.
+   Cream paper · chunky ink borders · hard shadows · Sarabun-first.
+   No purple · no glass · no gradient text · motion honors reduced-motion. */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font:"Sarabun",-apple-system,BlinkMacSystemFont,"Segoe UI","Sukhumvit Set","Noto Sans Thai",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --bg:#FFFDF7; --paper:#FFFDF7; --cream:#FCEFD9; --card:#FFFFFF;
+  --ink:#26211B; --dim:#6E6252; --faint:#A2937C; --line:#26211B;
+  --line2:#26211B; /* compat: old soft-line name now maps to ink */
+  --hover:#FCEFD9;
+  --red:#B7321F; --redbg:#FDE3DC;
+  --yel:#8A5E00; --yelbg:#FFF1D4; --yeldot:#E8A100;
+  --grn:#0B7A55; --grnbg:#DDF5E9;
+  --acc:#B7321F; /* compat: old link blue now maps to ink-red */
+  --sun:#FFB020; --sunbg:#FFF1D4;
+  --sh:4px 4px 0 var(--ink); --sh-sm:3px 3px 0 var(--ink);
+  --r:16px;
+  /* compat with page inline styles */
+  --ink2:#26211B; --ease:cubic-bezier(.32,.72,0,1);
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+::selection{background:var(--sun)}
+a{color:var(--acc)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:4px}
+
+/* ---------- topbar ---------- */
+.topbar{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:2px solid var(--line)}
+.topbar .in{max-width:1180px;margin:0 auto;padding:0 16px;min-height:64px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:800;font-size:19px;letter-spacing:-.01em;white-space:nowrap;text-decoration:none;color:var(--ink);display:inline-flex;align-items:center}
+.brand .f{color:var(--red)}
+.mark{display:inline-flex;gap:3px;margin-right:9px}
+.mark i{width:10px;height:10px;border-radius:50%;border:2px solid var(--ink)}
+.mark .r{background:var(--red)}.mark .y{background:var(--yeldot)}.mark .g{background:var(--grn)}
+.nav{display:flex;gap:2px;align-items:center}
+.nav a{padding:7px 13px;border-radius:9px;color:var(--dim);font-weight:700;font-size:13.5px;white-space:nowrap;text-decoration:none}
+.nav a:hover{background:var(--cream);color:var(--ink)}
+.nav a.on{background:var(--ink);color:var(--paper)}
+.lang{margin-left:auto}
+.lang button{background:#fff;color:var(--dim);border:2px solid var(--line);font-weight:800;font-size:12px;padding:5px 12px;cursor:pointer;font-family:var(--font)}
+.lang button:first-child{border-radius:10px 0 0 10px;border-right-width:1px}
+.lang button:last-child{border-radius:0 10px 10px 0;border-left-width:1px}
+.lang button.on{background:var(--ink);color:var(--paper)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 40px}
+.panel{background:var(--card);border:2px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:22px 24px;margin-top:20px}
+.panel h2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;color:var(--dim);margin-bottom:8px}
+.mut{color:var(--faint)}
+
+/* ---------- badges / dots ---------- */
+.badge{font-family:var(--mono);font-size:10px;font-weight:800;padding:3px 10px;border-radius:99px;text-transform:uppercase;border:2px solid var(--line);white-space:nowrap}
+.badge.red{background:var(--red);color:#fff;border-color:var(--red)}
+.badge.yellow{background:var(--yelbg);color:var(--yel)}
+.badge.green{background:var(--grn);color:#fff;border-color:var(--grn)}
+.badge.none{background:var(--cream);color:var(--faint)}
+.oc{font-weight:700;white-space:nowrap}
+.oc i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;border:1px solid var(--ink)}
+.oc.pend{color:var(--dim)}.oc.pend i{background:var(--yeldot)}
+.oc.alive{color:var(--grn)}.oc.alive i{background:var(--grn)}
+.oc.dead{color:var(--red)}.oc.dead i{background:var(--red)}
+.up{color:var(--grn)}.down{color:var(--red)}
+
+/* ---------- buttons / inputs ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;padding:11px 22px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;cursor:pointer;border:2px solid var(--line);box-shadow:var(--sh-sm);font-family:var(--font);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.primary{background:var(--red);color:#fff}
+.btn.primary:hover{background:#D23D27}
+.btn.ghost{background:#fff;color:var(--ink)}
+.btn .arr{font-size:15px}
+input,select,button{font-family:var(--font)}
+
+/* ---------- trust band / risk note ---------- */
+.trustband{background:var(--ink);color:var(--paper);border:2px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px 24px;margin-top:20px;font-size:14px}
+.trustband b{color:var(--sun)}
+.trustband a{color:var(--sun);font-weight:800}
+.risk{margin-top:16px;font-size:12.5px;color:var(--dim);border:2px dashed var(--line);border-radius:12px;padding:12px 16px;background:var(--paper)}
+.risk b{color:var(--ink)}
+
+/* ---------- footer ---------- */
+footer.site{margin-top:22px;background:var(--ink);color:#CFC2A8;border-radius:var(--r);border:2px solid var(--line);padding:16px 20px;font-size:12px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer.site a{color:var(--sun);text-decoration:none;font-weight:700}
+footer.site a:hover{text-decoration:underline}
+footer.plain{margin-top:14px;color:var(--faint);font-size:11px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+
+@media(max-width:700px){
+  .topbar .in{gap:8px}
+  .panel{padding:18px 16px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+
+</head>
+<body>
+
+<div class="topbar"><div class="in">
+  <a class="brand" href="/"><span class="mark" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span><span class="f">Flag</span>Kan</a>
+  <nav class="nav" aria-label="Pages"><a href="/board.html" data-nav="board" data-i18n="navBoard">Board</a><a href="/proof.html" data-nav="proof" data-i18n="navProof" class="on">Proof</a><a href="/about.html" data-nav="about" data-i18n="navAbout">About</a></nav>
+  <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
+</div></div>
+<div class="wrap">
+  <h1 data-i18n="h1">Proof, not promises.</h1>
+  <p class="lead" data-i18n="sub">Every verdict is graded by what actually happened 6 hours after first sight. This page shows the live score and every resolved coin — nothing cherry-picked.</p>
+  <div class="score">
+    <div class="stat"><div class="v green" id="sAcc">57%</div><div class="k" data-i18n="sAcc">accuracy</div><div class="s" data-i18n="sAccS">red+dead or other+alive</div></div>
+    <div class="stat"><div class="v" id="sRes">3058</div><div class="k" data-i18n="sRes">coins judged</div><div class="s" data-i18n="sResS">resolved with a verdict</div></div>
+    <div class="stat"><div class="v red" id="sRed">23%</div><div class="k" data-i18n="sRed">red precision</div><div class="s" data-i18n="sRedS">red verdicts that died</div></div>
+  </div>
+  <div class="panel"><h2 data-i18n="ruleT">The 6 checks</h2><div id="rules"><div class="rule"><span class="n">01</span><span class="t">Whale concentration<small>Share held by the single largest wallet.</small></span><span class="lim">red ≥ 30%</span></div><div class="rule"><span class="n">02</span><span class="t">Top holders 2–11<small>Share held by wallets ranked 2 to 11 combined.</small></span><span class="lim">red ≥ 40%</span></div><div class="rule"><span class="n">03</span><span class="t">First-minute buys<small>Buy pressure in the first minute of the tracked window.</small></span><span class="lim">red ≥ 300</span></div><div class="rule"><span class="n">04</span><span class="t">Pool liquidity<small>USD liquidity in the pool at verdict time.</small></span><span class="lim">red &lt; $10k</span></div><div class="rule"><span class="n">05</span><span class="t">Coin age<small>Minutes since the mint was created on-chain.</small></span><span class="lim">warn &lt; 15 min</span></div><div class="rule"><span class="n">06</span><span class="t">Linked wallets · AI<small>Jev estimates how coordinated the holder wallets look.</small></span><span class="lim">red ≥ 70%</span></div></div></div>
+  <div class="panel"><h2 data-i18n="aiT">The AI judge</h2><div class="prose"><p data-i18n-html="aiD">The <b>Jev judge (jev-latest)</b> reads all six checks plus wallet-coordination signals and issues <b>red / yellow / green</b> with probabilities, a coordination score, and a severity rating. One failing check means red unless the judge finds strong counter-evidence. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.</p><p data-i18n-html="outD">Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight, liquidity drained under $1,000, or the price sat frozen with zero trading</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.</p></div></div>
+  <div class="panel"><h2 data-i18n="tabT">Every resolved coin</h2>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th data-i18n="cCoin">coin</th><th data-i18n="cLight">light</th><th style="text-align:right" data-i18n="cMove">6h move</th><th style="text-align:right" data-i18n="cOut">outcome</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="4" class="mut">loading…</td></tr></tbody>
+    </table></div>
+  </div>
+  <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
+</div>
+<script>
+(function(){
+"use strict";
+var T={
+en:{navBoard:"Board",navProof:"Proof",navAbout:"About",
+h1:"Proof, not promises.",
+sub:"Every verdict is graded by what actually happened 6 hours after first sight. This page shows the live score and every resolved coin — nothing cherry-picked.",
+sAcc:"accuracy",sAccS:"red+dead or other+alive",sRes:"coins judged",sResS:"resolved with a verdict",sRed:"red precision",sRedS:"red verdicts that died",
+ruleT:"The 6 checks",
+r1t:"Whale concentration",r1d:"Share held by the single largest wallet.",r1l:"red ≥ 30%",
+r2t:"Top holders 2–11",r2d:"Share held by wallets ranked 2 to 11 combined.",r2l:"red ≥ 40%",
+r3t:"First-minute buys",r3d:"Buy pressure in the first minute of the tracked window.",r3l:"red ≥ 300",
+r4t:"Pool liquidity",r4d:"USD liquidity in the pool at verdict time.",r4l:"red < $10k",
+r5t:"Coin age",r5d:"Minutes since the mint was created on-chain.",r5l:"warn < 15 min",
+r6t:"Linked wallets · AI",r6d:"Jev estimates how coordinated the holder wallets look.",r6l:"red ≥ 70%",
+aiT:"The AI judge",
+aiD:"The <b>Jev judge (jev-latest)</b> reads all six checks plus wallet-coordination signals and issues <b>red / yellow / green</b> with probabilities, a coordination score, and a severity rating. One failing check means red unless the judge finds strong counter-evidence. Green needs everything at once: whale under 15%, liquidity over $100k, age over 15 minutes.",
+outD:"Outcomes settle automatically: <b>dead means the price fell 90%+ from first sight, liquidity drained under $1,000, or the price sat frozen with zero trading</b>. Unresolved coins count down on the board; resolved coins stay 7 days. Holder data comes from <b>Solami RPC</b> — the only data path.",
+tabT:"Every resolved coin",cCoin:"coin",cLight:"light",cMove:"6h move",cOut:"outcome",
+dead:"dead",alive:"alive",loading:"loading…"},
+th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
+h1:"วัดผลจริง ไม่ใช่คำคุย",
+sub:"ทุกคำชี้ถูกตัดสินจากสิ่งที่เกิดขึ้นจริง 6 ชั่วโมงหลังเจอเหรียญ หน้านี้โชว์คะแนนสดกับทุกเหรียญที่รู้ผลแล้ว — ไม่เลือกโชว์เฉพาะตัวที่ถูก",
+sAcc:"ความแม่น",sAccS:"แดง+พัง หรือ อื่น+รอด",sRes:"เหรียญที่ชี้แล้ว",sResS:"รู้ผลพร้อมคำชี้",sRed:"แดงแม่น",sRedS:"ชี้แดงแล้วพังจริง",
+ruleT:"เกณฑ์ 6 ข้อ",
+r1t:"รายใหญ่สุดถือ",r1d:"สัดส่วนที่กระเป๋าใหญ่อันดับ 1 ถือ",r1l:"แดง ≥ 30%",
+r2t:"รายใหญ่อันดับ 2–11",r2d:"สัดส่วนรวมของกระเป๋าอันดับ 2 ถึง 11",r2l:"แดง ≥ 40%",
+r3t:"ยอดซื้อ 1 นาทีแรก",r3d:"แรงซื้อในนาทีแรกของช่วงที่ติดตาม",r3l:"แดง ≥ 300",
+r4t:"สภาพคล่องพูล",r4d:"สภาพคล่องดอลลาร์ในพูลตอนชี้",r4l:"แดง < $10k",
+r5t:"อายุเหรียญ",r5d:"นาทีตั้งแต่ mint ถูกสร้างบนเชน",r5l:"เตือน < 15 นาที",
+r6t:"กระเป๋าโยงกัน · AI",r6d:"Jev ประเมินว่ากระเป๋าผู้ถือดูประสานกันแค่ไหน",r6l:"แดง ≥ 70%",
+aiT:"AI ผู้ชี้",
+aiD:"<b>Jev (jev-latest)</b> อ่านเกณฑ์ทั้ง 6 ข้อบวกสัญญาณกระเป๋าโยงกัน แล้วชี้ <b>แดง / เหลือง / เขียว</b> พร้อมความน่าจะเป็น คะแนนโยงกัน และระดับความรุนแรง ตกข้อเดียวคือแดง เว้นแต่ AI เจอหลักฐานแย้งหนักแน่น เขียวต้องผ่านทุกข้อพร้อมกัน: รายใหญ่ต่ำกว่า 15% สภาพคล่องเกิน $100k อายุเกิน 15 นาที",
+outD:"ผลตัดสินอัตโนมัติ: <b>พังคือราคาหลุดเกิน 90% จากตอนเจอ สภาพคล่องต่ำกว่า $1,000 หรือราคานิ่งไม่มีเทรดเลย</b> เหรียญที่รอผลนับถอยหลังบนกระดาน เหรียญที่รู้ผลค้าง 7 วัน ข้อมูลผู้ถือมาจาก <b>Solami RPC</b> — ช่องทางเดียว",
+tabT:"ทุกเหรียญที่รู้ผลแล้ว",cCoin:"เหรียญ",cLight:"ไฟ",cMove:"6 ชม.",cOut:"ผล",
+dead:"พัง",alive:"รอด",loading:"กำลังโหลด…"}};
+var L="en";
+try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
+function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function pct(x){return (x==null||isNaN(Number(x)))?"—":Math.round(Number(x)*100)+"%"}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderRules();loadProof();loadRows()}
+document.getElementById("bEN").onclick=function(){L="en";applyLang()};
+document.getElementById("bTH").onclick=function(){L="th";applyLang()};
+(function(){var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")==="proof")as[i].className="on"}})();
+function renderRules(){var h="";for(var i=1;i<=6;i++){h+='<div class="rule"><span class="n">0'+i+'</span><span class="t">'+esc(t("r"+i+"t"))+"<small>"+esc(t("r"+i+"d"))+"</small></span>"+'<span class="lim">'+esc(t("r"+i+"l"))+"</span></div>"}document.getElementById("rules").innerHTML=h}
+function loadProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){
+document.getElementById("sAcc").textContent=pct(d.accuracy);
+document.getElementById("sRes").textContent=d.resolved_with_verdict==null?"—":d.resolved_with_verdict;
+document.getElementById("sRed").textContent=pct(d.red_precision);
+}).catch(function(){})}
+function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
+function loadRows(){fetch("/api/rounds?limit=100").then(function(r){return r.json()}).then(function(d){
+var h="",n=0;
+for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];if(x.resolved_at==null)continue;n++;
+var mv="—";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;mv='<span class="'+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}
+var nm=esc((x.name||x.mint.slice(0,8))+"").slice(0,18);
+h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(x.dead?t("dead"):t("alive"))+"</td></tr>"}
+document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="mut">'+esc(t("loading"))+"</td></tr>";
+}).catch(function(){})}
+applyLang();
+})();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;b9655d46f0af49d1be716710bcb98441&quot;,&quot;r&quot;:1,&quot;spa&quot;:2}" crossorigin="anonymous"></script>
+
+
+
+</body>
+</html>

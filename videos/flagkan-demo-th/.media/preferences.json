@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "youtube",
+      "confirmed_in": [
+        "flagkan-demo"
+      ],
+      "updated_at": "2026-10-09T05:26:33.295Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "flagkan-demo"
+      ],
+      "updated_at": "2026-10-09T05:26:33.347Z"
+    },
+    "language": {
+      "value": "en",
+      "confirmed_in": [
+        "flagkan-demo"
+      ],
+      "updated_at": "2026-10-09T05:26:33.401Z"
+    },
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "flagkan-demo"
+      ],
+      "updated_at": "2026-10-09T05:26:33.452Z"
+    },
+    "storyboard": {
+      "value": "no",
+      "confirmed_in": [
+        "flagkan-demo"
+      ],
+      "updated_at": "2026-10-09T05:26:33.506Z"
+    },
+    "voice": {
+      "value": "am_michael",
+      "confirmed_in": [
+        "flagkan-demo"
+      ],
+      "updated_at": "2026-10-09T05:58:52.622Z"
+    }
+  },
+  "sightings": {}
+}

@@ -1,0 +1,38 @@
+{
+  "provider": "kokoro",
+  "speed": "1.0",
+  "lines": [
+    {
+      "id": "01",
+      "text": "This is FlagKan — a risk radar for new coins on Solana. In the next two minutes, I'll walk you through the live board, a full coin verdict, an on-demand check, and the public proof behind every call. No slides, no mockups — the real product. Let's go."
+    },
+    {
+      "id": "02",
+      "text": "The board tracks every new coin, live, as it gets discovered. Each row is a coin with its light — red, yellow, or green — plus confidence, price, liquidity, and the whale's share. Filter by light, search by name or mint, and sort any column with one click. Fifty coins a page, thousands tracked around the clock. Everything updates live — no refresh needed."
+    },
+    {
+      "id": "03",
+      "text": "Click any row for the full verdict. AI is yellow at ninety-eight percent confidence. The Why panel shows all six checks: whale concentration failed at one hundred percent, pool liquidity failed at two thousand four hundred dollars against a limit of ten thousand — and the AI judge agrees: caution. Below that, the raw rules, the severity score, and links to the explorer and the chart."
+    },
+    {
+      "id": "04",
+      "text": "Now the on-demand check. Paste any mint address into the box up top, hit Check, and watch FlagKan judge it fresh: the same six checks, the same verdict, plus a live price chart on the side. Any coin, any time, in seconds. Try it on the next coin someone shills you."
+    },
+    {
+      "id": "05",
+      "text": "Every verdict on the board gets resolved. Six hours after we first see a coin, the chain delivers the outcome, and the proof page publishes all of it — every call, right or wrong, nothing hidden. Thousands of graded verdicts already sit on the public record, and the API is free for anyone to audit. That is the whole point."
+    },
+    {
+      "id": "06",
+      "text": "FlagKan speaks two languages. One tap on the toggle switches the whole board between Thai and English — same data, same verdicts, same lights."
+    },
+    {
+      "id": "07",
+      "text": "That's FlagKan — check before you buy. The link is on screen. See you on the board."
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  },
+  "voice": "am_michael"
+}

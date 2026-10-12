@@ -1,0 +1,273 @@
+<template>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aAFJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBpJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBtJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBVJn3YO5gg.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqik8s6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqilQs6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+#root{
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  container-type: size;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 400;
+}
+#root .clip{
+  position: absolute;
+  inset: 0;
+}
+#root .f03-coin-ground{
+  background: #16130E;
+}
+#root .f03-coin-world{
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+#root .f03-coin-world img.f03-coin-plate{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  display: block;
+}
+.f03-coin-hl{
+  position: absolute;
+  pointer-events: none;
+  border: 3px solid #B7321F;
+  border-radius: 12px;
+  background: rgba(183, 50, 31, 0.08);
+  box-shadow: 0 0 22px rgba(183, 50, 31, 0.35);
+  opacity: 0;
+}
+.f03-coin-hl-fail{
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.10);
+  box-shadow: 0 0 26px rgba(220, 38, 38, 0.45);
+}
+.f03-coin-hl-soft{
+  border-color: rgba(183, 50, 31, 0.75);
+  background: rgba(183, 50, 31, 0.05);
+  box-shadow: 0 0 16px rgba(183, 50, 31, 0.25);
+}
+.f03-coin-bar{
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border-radius: 6px;
+  background: #B7321F;
+}
+.f03-coin-bar-fail{ background: #dc2626; }
+.f03-coin-line{
+  position: absolute;
+  pointer-events: none;
+  height: 6px;
+  border-radius: 6px;
+  background: #B7321F;
+  box-shadow: 0 0 14px rgba(183, 50, 31, 0.6);
+  opacity: 0;
+}
+#f03-coin-o-banner{ left: 646px; top: 103px; width: 628px; height: 68px; }
+#f03-coin-o-barbox{ left: 646px; top: 166px; width: 628px; height: 44px; }
+#f03-coin-o-barline{ left: 745px; top: 207px; width: 465px; }
+#f03-coin-o-row1{ left: 646px; top: 418px; width: 344px; height: 64px; }
+#f03-coin-o-row2{ left: 646px; top: 480px; width: 344px; height: 58px; }
+#f03-coin-o-row3{ left: 646px; top: 536px; width: 344px; height: 58px; }
+#f03-coin-o-row4{ left: 646px; top: 592px; width: 344px; height: 58px; }
+#f03-coin-o-row5{ left: 646px; top: 648px; width: 344px; height: 58px; }
+#f03-coin-o-row6{ left: 646px; top: 704px; width: 344px; height: 58px; }
+#f03-coin-o-sev{ left: 646px; top: 206px; width: 628px; height: 94px; }
+#f03-coin-o-links{ left: 646px; top: 746px; width: 344px; height: 36px; border-radius: 10px; }
+#f03-coin-o-linksline{ left: 660px; top: 778px; width: 200px; height: 5px; }
+#f03-coin-o-ping{
+  position: absolute;
+  left: 638px;
+  top: 420px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 4px solid #dc2626;
+  box-shadow: 0 0 18px rgba(220, 38, 38, 0.7);
+  pointer-events: none;
+  opacity: 0;
+}
+#f03-coin-o-whaledot{
+  position: absolute;
+  left: 659px;
+  top: 441px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #dc2626;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.9);
+  pointer-events: none;
+  opacity: 0;
+}
+</style>
+<div id="root" data-composition-id="03-coin" data-width="1920" data-height="1080">
+  <div class="clip f03-coin-ground" data-start="0" data-duration="26" data-track-index="0"></div>
+  <div class="clip f03-coin-world" id="f03-coin-world" data-start="0" data-duration="26" data-track-index="1" data-layout-allow-overflow>
+    <img class="f03-coin-plate" src="assets/modal-cat.png" alt="" draggable="false" />
+    <div class="f03-coin-hl" id="f03-coin-o-banner"></div>
+    <div class="f03-coin-hl f03-coin-hl-soft" id="f03-coin-o-barbox"></div>
+    <div class="f03-coin-line" id="f03-coin-o-barline"></div>
+    <div class="f03-coin-hl f03-coin-hl-fail" id="f03-coin-o-row1"><div class="f03-coin-bar f03-coin-bar-fail" id="f03-coin-o-row1-bar"></div></div>
+    <div class="f03-coin-hl f03-coin-hl-soft" id="f03-coin-o-row2"><div class="f03-coin-bar" id="f03-coin-o-row2-bar"></div></div>
+    <div class="f03-coin-hl f03-coin-hl-fail" id="f03-coin-o-row3"><div class="f03-coin-bar f03-coin-bar-fail" id="f03-coin-o-row3-bar"></div></div>
+    <div class="f03-coin-hl f03-coin-hl-soft" id="f03-coin-o-row4"><div class="f03-coin-bar" id="f03-coin-o-row4-bar"></div></div>
+    <div class="f03-coin-hl f03-coin-hl-soft" id="f03-coin-o-row5"><div class="f03-coin-bar" id="f03-coin-o-row5-bar"></div></div>
+    <div class="f03-coin-hl f03-coin-hl-soft" id="f03-coin-o-row6"><div class="f03-coin-bar" id="f03-coin-o-row6-bar"></div></div>
+    <div class="f03-coin-hl" id="f03-coin-o-sev"></div>
+    <div class="f03-coin-hl" id="f03-coin-o-links"></div>
+    <div class="f03-coin-line" id="f03-coin-o-linksline"></div>
+    <div id="f03-coin-o-ping"></div>
+    <div id="f03-coin-o-whaledot"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var world = document.getElementById('f03-coin-world');
+  function $(id){ return document.getElementById('f03-coin-' + id); }
+  var cam = { s: 1, x: 0, y: 0 };
+  function applyCamera(){
+    world.style.transform = 'translate(' + cam.x + 'px, ' + cam.y + 'px) scale(' + cam.s + ')';
+  }
+  var blur = { v: 0 };
+  function applyBlur(){
+    world.style.filter = blur.v > 0.02 ? 'blur(' + blur.v.toFixed(2) + 'px)' : 'none';
+  }
+  applyCamera();
+  applyBlur();
+  window.__timelines = window.__timelines || {};
+  var tl = gsap.timeline({ paused: true });
+
+  /* Leg 1 (0-6): dive onto the YELLOW banner + R/Y/G probability bar.
+     VO: "Click any row for the full verdict. CAT is yellow at 86% confidence." */
+  tl.to(cam, { s: 2.3, x: -1248, y: 97.4, duration: 4.6, ease: 'power3.out', onUpdate: applyCamera }, 0);
+  tl.to(blur, { v: 5.5, duration: 1.8, ease: 'power2.in', onUpdate: applyBlur }, 0);
+  tl.to(blur, { v: 0, duration: 2.4, ease: 'power2.out', onUpdate: applyBlur }, 1.8);
+  tl.fromTo($('o-banner'), { opacity: 0, scale: 1.05, transformOrigin: '50% 50%' },
+    { opacity: 1, scale: 1, duration: 0.9, ease: 'power2.out' }, 2.9);
+  tl.fromTo($('o-barbox'), { opacity: 0 }, { opacity: 1, duration: 0.7, ease: 'power1.out' }, 4.5);
+  tl.fromTo($('o-barline'), { opacity: 0, scaleX: 0, transformOrigin: '0% 50%' },
+    { opacity: 1, scaleX: 1, duration: 0.9, ease: 'power2.out' }, 4.6);
+  tl.to(cam, { s: 2.33, x: -1257.2, y: 94.3, duration: 1.4, ease: 'power1.inOut', onUpdate: applyCamera }, 4.6);
+
+  /* Leg 2a (6-9): reposition travel down to the Why panel.
+     VO: "The Why panel shows all six checks." */
+  tl.to(cam, { s: 1.9, x: -717, y: -377, duration: 1.6, ease: 'power2.inOut', onUpdate: applyCamera }, 6.0);
+  tl.to(blur, { v: 2.5, duration: 0.7, ease: 'power2.in', onUpdate: applyBlur }, 6.0);
+  tl.to(blur, { v: 0, duration: 0.9, ease: 'power2.out', onUpdate: applyBlur }, 6.7);
+  tl.to(cam, { s: 2.1, x: -883.6, y: -475, duration: 1.4, ease: 'power2.inOut', onUpdate: applyCamera }, 7.6);
+
+  /* Leg 2b (9-11): whale row — fail highlight + ping.
+     VO: "whale concentration failed at eighty percent." */
+  tl.fromTo($('o-row1'), { opacity: 0 }, { opacity: 1, duration: 0.7, ease: 'power1.out' }, 8.9);
+  tl.fromTo($('o-row1-bar'), { scaleY: 0, transformOrigin: '50% 0%' },
+    { scaleY: 1, duration: 0.5, ease: 'power2.out' }, 9.0);
+  tl.fromTo($('o-ping'), { opacity: 0, scale: 0.4, transformOrigin: '50% 50%' },
+    { opacity: 1, scale: 1.0, duration: 0.25, ease: 'power2.out' }, 9.3);
+  tl.to($('o-ping'), { opacity: 0, scale: 2.3, duration: 0.65, ease: 'power2.in' }, 9.55);
+  tl.fromTo($('o-whaledot'), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'power1.out' }, 9.5);
+  tl.to(cam, { x: -883.6, y: -598.9, duration: 1.0, ease: 'power2.inOut', onUpdate: applyCamera }, 9.8);
+  tl.fromTo($('o-row2'), { opacity: 0 }, { opacity: 1, duration: 0.6, ease: 'power1.out' }, 10.5);
+  tl.fromTo($('o-row2-bar'), { scaleY: 0, transformOrigin: '50% 0%' },
+    { scaleY: 1, duration: 0.45, ease: 'power2.out' }, 10.6);
+
+  /* Leg 2c (11-14): first-minute buys — fail highlight with a long dwell.
+     VO: "first-minute buys failed at 925 against a limit of 300." */
+  tl.to(cam, { x: -883.6, y: -716.5, duration: 1.2, ease: 'power2.inOut', onUpdate: applyCamera }, 11.2);
+  tl.fromTo($('o-row3'), { opacity: 0 }, { opacity: 1, duration: 0.8, ease: 'power1.out' }, 12.1);
+  tl.fromTo($('o-row3-bar'), { scaleY: 0, transformOrigin: '50% 0%' },
+    { scaleY: 1, duration: 0.5, ease: 'power2.out' }, 12.2);
+  tl.to(cam, { s: 2.14, x: -900, y: -735, duration: 1.6, ease: 'power1.inOut', onUpdate: applyCamera }, 12.4);
+
+  /* Leg 2d (14-17.6): remaining checks + AI verdict.
+     VO: "and the AI agrees: caution." */
+  tl.to(cam, { s: 2.1, x: -883.6, y: -834.1, duration: 0.7, ease: 'power2.inOut', onUpdate: applyCamera }, 14.0);
+  tl.fromTo($('o-row4'), { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power1.out' }, 14.4);
+  tl.fromTo($('o-row4-bar'), { scaleY: 0, transformOrigin: '50% 0%' },
+    { scaleY: 1, duration: 0.4, ease: 'power2.out' }, 14.45);
+  tl.to(cam, { x: -883.6, y: -951.7, duration: 0.7, ease: 'power2.inOut', onUpdate: applyCamera }, 14.9);
+  tl.fromTo($('o-row5'), { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power1.out' }, 15.3);
+  tl.fromTo($('o-row5-bar'), { scaleY: 0, transformOrigin: '50% 0%' },
+    { scaleY: 1, duration: 0.4, ease: 'power2.out' }, 15.35);
+  tl.to(cam, { x: -883.6, y: -1069.3, duration: 0.8, ease: 'power2.inOut', onUpdate: applyCamera }, 15.8);
+  tl.fromTo($('o-row6'), { opacity: 0 }, { opacity: 1, duration: 0.6, ease: 'power1.out' }, 16.3);
+  tl.fromTo($('o-row6-bar'), { scaleY: 0, transformOrigin: '50% 0%' },
+    { scaleY: 1, duration: 0.4, ease: 'power2.out' }, 16.35);
+  tl.to(cam, { s: 2.12, x: -890, y: -1080, duration: 1.0, ease: 'power1.inOut', onUpdate: applyCamera }, 16.6);
+
+  /* Leg 3a (17.6-20.4): pull back to modal-wide, raw rules + severity beat.
+     VO: "Below that, the raw rules, the severity score." */
+  tl.to(cam, { s: 1.12, x: -115.2, y: -54, duration: 1.4, ease: 'power2.inOut', onUpdate: applyCamera }, 17.6);
+  tl.to(blur, { v: 3, duration: 0.6, ease: 'power2.in', onUpdate: applyBlur }, 17.6);
+  tl.to(blur, { v: 0, duration: 0.7, ease: 'power2.out', onUpdate: applyBlur }, 18.2);
+  tl.fromTo($('o-sev'), { opacity: 0, scale: 1.02, transformOrigin: '50% 50%' },
+    { opacity: 1, scale: 1, duration: 0.9, ease: 'power2.out' }, 19.2);
+
+  /* Leg 3b (20.4-25): landing push onto explorer links, hold to the end.
+     VO: "and links to the explorer and the chart." */
+  tl.to(cam, { s: 2.6, x: -1237, y: -1501.2, duration: 2.2, ease: 'power4.out', onUpdate: applyCamera }, 20.4);
+  tl.to(blur, { v: 6, duration: 1.0, ease: 'power2.in', onUpdate: applyBlur }, 20.4);
+  tl.to(blur, { v: 0, duration: 1.2, ease: 'power2.out', onUpdate: applyBlur }, 21.4);
+  tl.fromTo($('o-links'), { opacity: 0 }, { opacity: 1, duration: 0.7, ease: 'power1.out' }, 21.6);
+  tl.fromTo($('o-linksline'), { opacity: 0, scaleX: 0, transformOrigin: '0% 50%' },
+    { opacity: 1, scaleX: 1, duration: 0.9, ease: 'power2.out' }, 21.8);
+  tl.to(cam, { s: 2.64, x: -1270.8, y: -1531.7, duration: 2.4, ease: 'power1.inOut', onUpdate: applyCamera }, 22.6);
+
+  window.__timelines["03-coin"] = tl;
+})();
+</script>
+</template>

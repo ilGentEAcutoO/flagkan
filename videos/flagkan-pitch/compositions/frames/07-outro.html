@@ -1,0 +1,270 @@
+<template>
+<style>
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aAFJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBpJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBtJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBVJn3YO5gg.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqik8s6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqilQs6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+#root{
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  overflow: hidden;
+  container-type: size;
+  font-family: 'Sarabun', sans-serif;
+}
+.fr07-outro-ground{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  background: #FFFDF7;
+}
+.fr07-outro-rings{
+  position: absolute;
+  left: 960px;
+  top: 470px;
+  width: 0;
+  height: 0;
+}
+.fr07-outro-ring{
+  position: absolute;
+  border-radius: 50%;
+}
+.fr07-outro-ring-r1{
+  width: 560px;
+  height: 560px;
+  margin-left: -280px;
+  margin-top: -280px;
+  border: 2px solid rgba(183, 50, 31, 0.16);
+}
+.fr07-outro-ring-r2{
+  width: 880px;
+  height: 880px;
+  margin-left: -440px;
+  margin-top: -440px;
+  border: 2px solid rgba(183, 50, 31, 0.10);
+}
+.fr07-outro-ring-r3{
+  width: 1200px;
+  height: 1200px;
+  margin-left: -600px;
+  margin-top: -600px;
+  border: 2px solid rgba(183, 50, 31, 0.07);
+}
+.fr07-outro-glow{
+  position: absolute;
+  left: 560px;
+  top: 150px;
+  width: 800px;
+  height: 640px;
+  background: radial-gradient(closest-side, rgba(183, 50, 31, 0.10), rgba(183, 50, 31, 0));
+}
+.fr07-outro-stage{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.fr07-outro-lockup{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+}
+.fr07-outro-dot{
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+#fr07-outro-dot-0{ background: #dc2626; }
+#fr07-outro-dot-1{ background: #EAB308; }
+#fr07-outro-dot-2{ background: #059669; }
+.fr07-outro-wordmark{
+  position: absolute;
+  left: 0;
+  top: 380px;
+  width: 1920px;
+  text-align: center;
+  white-space: nowrap;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 700;
+  font-size: 6.8cqw;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #26211B;
+}
+.fr07-outro-wl{
+  display: inline-block;
+}
+.fr07-outro-underline{
+  position: absolute;
+  left: 900px;
+  top: 545px;
+  width: 120px;
+  height: 6px;
+  border-radius: 6px;
+  background: #B7321F;
+}
+.fr07-outro-tagline{
+  position: absolute;
+  left: 0;
+  top: 595px;
+  width: 1920px;
+  text-align: center;
+  white-space: nowrap;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 500;
+  font-size: 2.3cqw;
+  line-height: 1.3;
+  color: #26211B;
+}
+.fr07-outro-urlwrap{
+  position: absolute;
+  left: 0;
+  top: 690px;
+  width: 1920px;
+  text-align: center;
+}
+.fr07-outro-url{
+  display: inline-block;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 600;
+  font-size: 1.6cqw;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: #B7321F;
+  background: rgba(183, 50, 31, 0.08);
+  border: 1.5px solid rgba(183, 50, 31, 0.2);
+  border-radius: 100px;
+  padding: 14px 44px;
+}
+</style>
+<div id="root" data-composition-id="07-outro" data-width="1920" data-height="1080">
+  <div class="clip fr07-outro-ground" data-start="0" data-duration="15" data-track-index="0">
+    <div class="fr07-outro-rings">
+      <div class="fr07-outro-ring fr07-outro-ring-r1"></div>
+      <div class="fr07-outro-ring fr07-outro-ring-r2"></div>
+      <div class="fr07-outro-ring fr07-outro-ring-r3"></div>
+    </div>
+    <div class="fr07-outro-glow"></div>
+  </div>
+  <div class="clip fr07-outro-stage" data-start="0" data-duration="15" data-track-index="1">
+    <div class="fr07-outro-lockup" id="fr07-outro-lockup">
+      <div class="fr07-outro-dot" id="fr07-outro-dot-0"></div>
+      <div class="fr07-outro-dot" id="fr07-outro-dot-1"></div>
+      <div class="fr07-outro-dot" id="fr07-outro-dot-2"></div>
+      <div class="fr07-outro-wordmark" id="fr07-outro-wordmark"><span class="fr07-outro-wl">F</span><span class="fr07-outro-wl">l</span><span class="fr07-outro-wl">a</span><span class="fr07-outro-wl">g</span><span class="fr07-outro-wl">K</span><span class="fr07-outro-wl">a</span><span class="fr07-outro-wl">n</span></div>
+      <div class="fr07-outro-underline" id="fr07-outro-underline"></div>
+      <div class="fr07-outro-tagline" id="fr07-outro-tagline">Check before you buy.</div>
+      <div class="fr07-outro-urlwrap" id="fr07-outro-urlwrap"><span class="fr07-outro-url">flag.sornkan.com</span></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<script>
+(function(){
+  window.__timelines = window.__timelines || {};
+  var tl = gsap.timeline({ paused: true });
+  var CX = 960, CY = 450, R = 230, DOT = 30, HALF = DOT / 2;
+  var starts = [-90, 30, 150];
+  var sweep = 330, steps = 11, orbitDur = 4.2, stepDur = orbitDur / steps;
+  var slotY = 300, slotCX = [907, 960, 1013];
+  function pt(angleDeg){
+    var a = angleDeg * Math.PI / 180;
+    return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
+  }
+  gsap.set("#fr07-outro-lockup", { transformOrigin: "960px 470px" });
+  gsap.set("#fr07-outro-underline", { transformOrigin: "left center" });
+  for (var i = 0; i < 3; i++){
+    var sel = "#fr07-outro-dot-" + i;
+    var p0 = pt(starts[i]);
+    gsap.set(sel, { left: (p0.x - HALF) + "px", top: (p0.y - HALF) + "px", x: 0, y: 0 });
+    for (var k = 1; k <= steps; k++){
+      var pk = pt(starts[i] + sweep * k / steps);
+      tl.to(sel, { x: pk.x - p0.x, y: pk.y - p0.y, duration: stepDur, ease: "none" }, (k - 1) * stepDur);
+    }
+    tl.to(sel, {
+      x: slotCX[i] - p0.x,
+      y: (slotY + HALF) - p0.y,
+      duration: 0.9,
+      ease: "back.out(1.7)"
+    }, 4.3 + i * 0.12);
+  }
+  tl.fromTo(".fr07-outro-ring",
+    { opacity: 0 },
+    { opacity: 1, duration: 1.6, ease: "power1.out" }, 0);
+  tl.fromTo(".fr07-outro-ring",
+    { scale: 0.96 },
+    { scale: 1, duration: 2.0, ease: "power2.out", stagger: 0.15 }, 0);
+  tl.fromTo(".fr07-outro-wl",
+    { y: 46, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.55, ease: "back.out(1.8)", stagger: 0.07 }, 5.0);
+  tl.fromTo(".fr07-outro-glow",
+    { opacity: 0 },
+    { opacity: 1, duration: 1.5, ease: "power1.out" }, 5.5);
+  tl.to("#fr07-outro-lockup",
+    { scale: 1.035, duration: 0.22, ease: "power2.in" }, 6.0);
+  tl.to("#fr07-outro-lockup",
+    { scale: 1, duration: 0.5, ease: "power2.out" }, 6.22);
+  tl.fromTo("#fr07-outro-underline",
+    { scaleX: 0 },
+    { scaleX: 1, duration: 0.7, ease: "power2.out" }, 6.1);
+  tl.fromTo("#fr07-outro-tagline",
+    { y: 26, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.9, ease: "power2.out" }, 6.6);
+  tl.fromTo("#fr07-outro-urlwrap",
+    { y: 26, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.9, ease: "power2.out" }, 8.0);
+  window.__timelines["07-outro"] = tl;
+  tl.seek(0);
+})();
+</script>
+</template>

@@ -1,0 +1,418 @@
+<template>
+<style>
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aAFJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBpJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBtJn3YO5gjupg.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVjJx26TKEr37c9aBVJn3YO5gg.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqik8s6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+@font-face{
+  font-family: 'Sarabun';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/captured-DtVmJx26TKEr37c9YOZqilQs6yLUrwB0lw.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+#root{
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  container-type: size;
+  font-family: 'Sarabun', sans-serif;
+  background: transparent;
+}
+#a04check-ground{
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  background: #16130E;
+}
+#a04check-board, #a04check-result{
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  overflow: hidden;
+}
+#a04check-zoom{
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px; height: 863px;
+}
+#a04check-zoom img, #a04check-rzoom img{
+  display: block;
+  width: 1920px;
+  pointer-events: none;
+}
+#a04check-rzoom{
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px; height: 1080px;
+}
+#a04check-patch{
+  position: absolute;
+  left: 713px; top: 17px;
+  width: 351px; height: 29px;
+  border-radius: 9px;
+  background: #FFFFFF;
+  opacity: 0;
+}
+#a04check-typedwrap{
+  position: absolute;
+  left: 724px; top: 17px;
+  width: 340px; height: 30px;
+  line-height: 30px;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  color: #26211B;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#a04check-caret{
+  display: inline-block;
+  width: 2px; height: 15px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: #B7321F;
+  opacity: 0;
+}
+#a04check-cattag{
+  position: absolute;
+  left: 713px; top: 54px;
+  padding: 5px 14px 5px 11px;
+  border-radius: 100px;
+  background: #B7321F;
+  color: #FFFDF7;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  white-space: nowrap;
+}
+#a04check-catdot{
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #FFFDF7;
+  margin-right: 7px;
+  vertical-align: 1px;
+}
+#a04check-btnflash{
+  position: absolute;
+  left: 1075px; top: 13px;
+  width: 72px; height: 36px;
+  border-radius: 10px;
+  background: #B7321F;
+  opacity: 0;
+}
+#a04check-cursor{
+  position: absolute;
+  left: 0; top: 0;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: #B7321F;
+  border: 3px solid #FFFDF7;
+  outline: 2px solid #26211B;
+  opacity: 0;
+}
+#a04check-dim{
+  position: absolute;
+  left: 0; top: 0;
+  width: 1920px; height: 1080px;
+  background: #16130E;
+  opacity: 0;
+}
+#a04check-sheen{
+  position: absolute;
+  left: 0; top: -200px;
+  width: 340px; height: 1500px;
+  background: linear-gradient(100deg, rgba(255,253,247,0) 0%, rgba(255,253,247,0.30) 50%, rgba(255,253,247,0) 100%);
+  opacity: 0;
+}
+#a04check-eyebrow{
+  position: absolute;
+  left: 96px; top: 48px;
+  padding: 14px 30px;
+  border-radius: 100px;
+  background: #B7321F;
+  color: #FFFDF7;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 500;
+  font-size: 26px;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  white-space: nowrap;
+}
+.a04check-status{
+  position: absolute;
+  left: 960px; top: 560px;
+  min-width: 620px;
+  padding: 18px 44px;
+  border-radius: 100px;
+  background: #26211B;
+  border: 1.5px solid rgba(255,253,247,0.35);
+  color: #FFFDF7;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  letter-spacing: 0.12em;
+  text-align: center;
+  opacity: 0;
+  white-space: nowrap;
+}
+#a04check-banner{
+  position: absolute;
+  left: 624px; top: 110px;
+  width: 640px; height: 56px;
+  border-radius: 12px;
+  border: 3px solid #B7321F;
+  opacity: 0;
+}
+#a04check-sweep{
+  position: absolute;
+  left: 640px; top: 384px;
+  width: 308px; height: 48px;
+  border-radius: 10px;
+  background: rgba(183,50,31,0.10);
+  border-left: 4px solid #B7321F;
+  opacity: 0;
+}
+.a04check-failring{
+  position: absolute;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 3px solid #B7321F;
+  opacity: 0;
+}
+#a04check-ring1{ left: 633px; top: 395px; }
+#a04check-ring4{ left: 633px; top: 555px; }
+#a04check-chartframe{
+  position: absolute;
+  left: 962px; top: 388px;
+  width: 286px; height: 114px;
+  border-radius: 10px;
+  border: 3px solid #B7321F;
+  opacity: 0;
+}
+#a04check-trace{
+  position: absolute;
+  left: 962px; top: 388px;
+  width: 286px; height: 114px;
+  opacity: 0;
+}
+#a04check-tracemain{
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+#a04check-live{
+  position: absolute;
+  left: 1148px; top: 344px;
+  padding: 8px 20px 8px 16px;
+  border-radius: 100px;
+  background: #B7321F;
+  color: #FFFDF7;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  white-space: nowrap;
+}
+#a04check-livedot{
+  display: inline-block;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #FFFDF7;
+  margin-right: 9px;
+  vertical-align: 1px;
+}
+.a04check-chip{
+  position: absolute;
+  left: 1360px;
+  min-width: 340px;
+  padding: 18px 40px;
+  border-radius: 100px;
+  background: #B7321F;
+  color: #FFFDF7;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  opacity: 0;
+  white-space: nowrap;
+}
+#a04check-chip1{ top: 200px; }
+#a04check-chip2{ top: 294px; }
+#a04check-chip3{ top: 388px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<div id="root" data-composition-id="04-check" data-start="0" data-duration="25" data-width="1920" data-height="1080">
+  <div id="a04check-ground" class="clip" data-start="0" data-duration="25" data-track-index="0"></div>
+  <div id="a04check-board" class="clip" data-start="0" data-duration="12" data-track-index="1">
+    <div id="a04check-boardinner">
+      <div id="a04check-zoom">
+        <img src="assets/en-board.png" alt="" />
+        <div id="a04check-patch"></div>
+        <div id="a04check-typedwrap"><span id="a04check-typed"></span><span id="a04check-caret"></span></div>
+        <div id="a04check-cattag"><span id="a04check-catdot"></span>PUMP</div>
+        <div id="a04check-btnflash"></div>
+        <div id="a04check-cursor"></div>
+      </div>
+      <div id="a04check-dim"></div>
+      <div id="a04check-sheen"></div>
+      <div id="a04check-eyebrow">ON-DEMAND CHECK</div>
+      <div id="a04check-status1" class="a04check-status">READING MINT</div>
+      <div id="a04check-status2" class="a04check-status">RUNNING 6 CHECKS</div>
+      <div id="a04check-status3" class="a04check-status">SCORING VERDICT</div>
+    </div>
+  </div>
+  <div id="a04check-result" class="clip" data-start="12" data-duration="13" data-track-index="1">
+    <div id="a04check-resultinner">
+      <div id="a04check-rzoom">
+        <img src="assets/check-result.png" alt="" />
+        <div id="a04check-banner"></div>
+        <div id="a04check-sweep"></div>
+        <div id="a04check-ring1" class="a04check-failring"></div>
+        <div id="a04check-ring4" class="a04check-failring"></div>
+        <div id="a04check-chartframe"></div>
+        <svg id="a04check-trace" viewBox="0 0 286 114" preserveAspectRatio="none">
+          <path d="M6,10 L46,26 L84,24 L124,48 L164,64 L204,80 L244,94 L280,106" fill="none" stroke="rgba(183,50,31,0.25)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="a04check-tracemain" d="M6,10 L46,26 L84,24 L124,48 L164,64 L204,80 L244,94 L280,106" fill="none" stroke="#B7321F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" pathLength="100"/>
+        </svg>
+        <div id="a04check-live"><span id="a04check-livedot"></span>LIVE</div>
+        <div id="a04check-chip1" class="a04check-chip">ANY COIN</div>
+        <div id="a04check-chip2" class="a04check-chip">ANY TIME</div>
+        <div id="a04check-chip3" class="a04check-chip">IN SECONDS</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var CUT = 12, D = 25;
+  var MINT = "C7XmZmpCqKdwZQ5pPnPGDVz1p4vQxbD3B12CuaXKwPvK";
+  var typedEl = document.querySelector("#a04check-typed");
+  var tl = gsap.timeline({ paused: true });
+  tl.set("#a04check-boardinner", { opacity: 1 }, 0);
+  tl.set("#a04check-resultinner", { opacity: 0 }, 0);
+  tl.fromTo("#a04check-zoom",
+    { scale: 1, x: 0, y: 0, transformOrigin: "0 0" },
+    { scale: 1.6, x: -461, y: 290, duration: 7.6, ease: "power1.inOut" }, 0);
+  tl.fromTo("#a04check-eyebrow", { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" },
+    { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 0.4);
+  tl.fromTo("#a04check-patch", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 1.2);
+  tl.set("#a04check-caret", { opacity: 1 }, 1.4);
+  var proxy = { i: 0 };
+  tl.to(proxy, { i: 44, duration: 5.0, ease: "none", onUpdate: function(){
+    typedEl.textContent = MINT.slice(0, Math.round(proxy.i));
+  } }, 1.6);
+  var ct = 1.95, cv = 0;
+  while (ct < 7.4){
+    tl.set("#a04check-caret", { opacity: cv }, ct);
+    cv = cv ? 0 : 1;
+    ct += 0.35;
+  }
+  tl.set("#a04check-caret", { opacity: 1 }, 7.4);
+  tl.fromTo("#a04check-cattag", { opacity: 0, scale: 0.6, transformOrigin: "0% 50%" },
+    { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2)" }, 5.6);
+  tl.fromTo("#a04check-cursor", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 6.6);
+  tl.fromTo("#a04check-cursor", { x: 950, y: 300, xPercent: -50, yPercent: -50 },
+    { x: 1111, y: 31, duration: 0.65, ease: "power2.inOut" }, 6.7);
+  tl.to("#a04check-cursor", { scale: 0.7, duration: 0.1, ease: "power2.in" }, 7.35);
+  tl.to("#a04check-cursor", { scale: 1, duration: 0.25, ease: "back.out(3)" }, 7.45);
+  tl.fromTo("#a04check-btnflash", { opacity: 0 }, { opacity: 0.45, duration: 0.1 }, 7.35);
+  tl.to("#a04check-btnflash", { opacity: 0, duration: 0.3 }, 7.45);
+  tl.set("#a04check-caret", { opacity: 0 }, 7.5);
+  tl.to("#a04check-cursor", { opacity: 0, duration: 0.25 }, 7.7);
+  tl.set("#a04check-cattag", { opacity: 0 }, 8.0);
+  tl.to("#a04check-dim", { opacity: 0.45, duration: 0.4 }, 8.0);
+  tl.fromTo("#a04check-status1", { opacity: 0, scale: 0.6, xPercent: -50, yPercent: -50 },
+    { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" }, 8.2);
+  tl.to("#a04check-status1", { opacity: 0, duration: 0.25 }, 9.4);
+  tl.fromTo("#a04check-status2", { opacity: 0, scale: 0.85, xPercent: -50, yPercent: -50 },
+    { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 9.55);
+  tl.to("#a04check-status2", { opacity: 0, duration: 0.25 }, 10.55);
+  tl.fromTo("#a04check-status3", { opacity: 0, scale: 0.85, xPercent: -50, yPercent: -50 },
+    { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.7)" }, 10.7);
+  tl.fromTo("#a04check-sheen", { x: -500 }, { x: 2100, duration: 2.8, ease: "power1.inOut" }, 8.6);
+  tl.to("#a04check-sheen", { opacity: 1, duration: 0.3 }, 8.6);
+  tl.to("#a04check-sheen", { opacity: 0, duration: 0.4 }, 11.0);
+  tl.set("#a04check-boardinner", { opacity: 0 }, CUT);
+  tl.set("#a04check-resultinner", { opacity: 1 }, CUT);
+  tl.fromTo("#a04check-rzoom", { scale: 1.05, transformOrigin: "50% 40%" },
+    { scale: 1, duration: 0.6, ease: "back.out(1.6)" }, CUT);
+  tl.fromTo("#a04check-rzoom", { scale: 1, x: 0, y: 0, transformOrigin: "0 0" },
+    { scale: 1.12, x: -160, y: 114, duration: 12.2, ease: "power1.inOut" }, 12.8);
+  tl.fromTo("#a04check-banner", { opacity: 0, scale: 1.08, transformOrigin: "50% 50%" },
+    { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, 12.5);
+  tl.fromTo("#a04check-sweep", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 13.4);
+  tl.fromTo("#a04check-sweep", { y: 0 }, { y: 300, duration: 2.8, ease: "power1.inOut" }, 13.6);
+  tl.to("#a04check-sweep", { opacity: 0, duration: 0.25 }, 16.6);
+  tl.fromTo("#a04check-ring1", { opacity: 0, scale: 0.4, transformOrigin: "50% 50%" },
+    { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2.5)" }, 13.8);
+  tl.fromTo("#a04check-ring4", { opacity: 0, scale: 0.4, transformOrigin: "50% 50%" },
+    { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2.5)" }, 15.3);
+  tl.fromTo("#a04check-chartframe", { opacity: 0, scale: 1.08, transformOrigin: "50% 50%" },
+    { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.8)" }, 16.6);
+  tl.fromTo("#a04check-trace", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 16.6);
+  tl.fromTo("#a04check-tracemain", { strokeDashoffset: 100 },
+    { strokeDashoffset: 0, duration: 1.8, ease: "power1.inOut" }, 16.6);
+  tl.fromTo("#a04check-live", { opacity: 0, scale: 0.5, transformOrigin: "50% 50%" },
+    { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, 16.9);
+  tl.fromTo("#a04check-chip1", { opacity: 0, scale: 0.6, transformOrigin: "0% 50%" },
+    { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 19.0);
+  tl.fromTo("#a04check-chip2", { opacity: 0, scale: 0.6, transformOrigin: "0% 50%" },
+    { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 19.9);
+  tl.fromTo("#a04check-chip3", { opacity: 0, scale: 0.6, transformOrigin: "0% 50%" },
+    { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 20.8);
+  tl.to("#a04check-livedot", { opacity: 0.25, duration: 0.2 }, 21.5);
+  tl.to("#a04check-livedot", { opacity: 1, duration: 0.2 }, 21.7);
+  tl.to("#a04check-livedot", { opacity: 0.25, duration: 0.2 }, 22.5);
+  tl.to("#a04check-livedot", { opacity: 1, duration: 0.2 }, 22.7);
+  tl.to("#a04check-livedot", { opacity: 0.25, duration: 0.2 }, 23.5);
+  tl.to("#a04check-livedot", { opacity: 1, duration: 0.2 }, 23.7);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["04-check"] = tl;
+  tl.seek(0);
+})();
+</script>
+</template>
