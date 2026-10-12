@@ -569,5 +569,23 @@ try {
 	}
 }
 
+// --- dev collector: concurrency pool + stop on 429 ---
+{
+	check("DEV_CONCURRENCY is 3", col.DEV_CONCURRENCY === 3);
+	check("isRateLimited: solami 429 / rate limit yes, 500 / timeout no",
+		col.isRateLimited(new Error("solami 429")) && col.isRateLimited("Too Many Requests") && !col.isRateLimited(new Error("solami 500")) && !col.isRateLimited(new Error("TimeoutError")));
+	let inflight = 0, peak = 0;
+	const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+	const p1 = await col.runPool([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 3, async (x) => { inflight++; peak = Math.max(peak, inflight); await sleep(5); inflight--; return x * 2; });
+	check("runPool: all 10 run, <= 3 in flight, order kept", p1.started === 10 && p1.skipped === 0 && peak <= 3 && peak > 1 && p1.results.join() === "2,4,6,8,10,12,14,16,18,20", `${peak} ${p1.results.join()}`);
+	let stop = false;
+	const p2 = await col.runPool([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 3, async (x) => { await sleep(2); if (x === 1) stop = true; return x; }, () => stop);
+	check("runPool: stop() halts new starts (429 path)", p2.started === 3 && p2.skipped === 7 && p2.results.slice(3).every((r) => r === undefined), `${p2.started} ${p2.skipped}`);
+	const dev = (await import("node:fs")).readFileSync(path.join(HERE, "src", "dev.ts"), "utf8");
+	check("collectDev uses runPool(DEV_CONCURRENCY) + 429 stop, no unbounded Promise.all over picks", /runPool\(picks, DEV_CONCURRENCY/.test(dev) && /isRateLimited\(e\)/.test(dev) && !/Promise\.all\(picks/.test(dev));
+	const idx = (await import("node:fs")).readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
+	check("solamiRpc has an 8s AbortSignal.timeout", /async function solamiRpc[\s\S]{0,600}AbortSignal\.timeout\(8000\)/.test(idx));
+}
+
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }
 console.log(`ml-check: all green (${passes} passed)`);

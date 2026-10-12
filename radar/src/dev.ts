@@ -6,6 +6,7 @@ import {
 	DEV_PER_RUN, DEV_RPC_PER_ROW, DEV_SIG_PAGES, SIG_PAGE, SIGNAL_RPC_PER_ROW, SOLAMI_SOFT_CAP_24H, DEV_WINDOW_MS,
 	DEV_PICK_SQL, SOLAMI_EST_24H_SQL, CREATOR_HISTORY_SQL, DEV_UPSERT_SQL,
 	oldestSig, parseCreateTx, ownerBalance, shareOf,
+	DEV_CONCURRENCY, isRateLimited, runPool,
 } from "./ml/collect";
 
 export interface LookMarket {
@@ -126,9 +127,22 @@ export async function collectDev(db: D1Database, rpc: RpcFn, hasKey: boolean, no
 			console.log(JSON.stringify({ cron: "dev_skip_budget", est: est.est }));
 			return out;
 		}
-		const res = await Promise.all(picks.map((p) =>
-			devForMint(db, rpc, p.mint, Number(p.first_seen), now).catch((e) => "write_" + String(e).slice(0, 60))));
-		for (const r of res) { if (r) out.dev_err++; else out.dev_ok++; }
+		// At most DEV_CONCURRENCY lookups in flight. The first 429 stops the
+		// collector for the rest of this run (no new mints, no further calls)
+		// so intake's own signal RPCs are not starved.
+		let limited = false;
+		const guarded: RpcFn = async (m, p) => {
+			if (limited) throw new Error("solami dev_stopped_429");
+			try { return await rpc(m, p); }
+			catch (e) { if (isRateLimited(e)) limited = true; throw e; }
+		};
+		const pool = await runPool(picks, DEV_CONCURRENCY, (p) =>
+			devForMint(db, guarded, p.mint, Number(p.first_seen), now).catch((e) => "write_" + String(e).slice(0, 60)), () => limited);
+		for (const r of pool.results.slice(0, pool.started)) { if (r) out.dev_err++; else out.dev_ok++; }
+		if (limited) {
+			out.dev_stop_429 = 1; out.dev_skipped = pool.skipped;
+			console.log(JSON.stringify({ cron: "dev_stop_429", skipped: pool.skipped }));
+		}
 	} catch (e) {
 		out.dev_fail = 1;
 		console.log(JSON.stringify({ cron: "dev_fail", err: String(e).slice(0, 160) }));

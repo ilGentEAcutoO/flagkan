@@ -153,3 +153,31 @@ export function shareOf(tokens: number | null, supply: number | null): number | 
 	if (tokens === null || supply === null || !(supply > 0)) return null;
 	return Math.round((tokens / supply) * 1e6) / 1e6;
 }
+
+// Per-run concurrency for dev lookups: DEV_PER_RUN mints, at most this many
+// in flight, so intake's own signal calls are not starved.
+export const DEV_CONCURRENCY = 3;
+
+// True when an RPC error looks like an HTTP 429 / rate limit.
+export function isRateLimited(e: unknown): boolean {
+	const s = String((e as any)?.message ?? e ?? "");
+	return /\b429\b/.test(s) || /rate[ _-]?limit|too many requests/i.test(s);
+}
+
+// Tiny promise pool: runs fn over items with at most `limit` in flight and
+// starts no new item once stop() is true. Skipped items stay undefined.
+export async function runPool<T, R>(
+	items: T[], limit: number, fn: (item: T) => Promise<R>, stop: () => boolean = () => false
+): Promise<{ results: (R | undefined)[]; started: number; skipped: number }> {
+	const results: (R | undefined)[] = new Array(items.length).fill(undefined);
+	let next = 0, started = 0;
+	const worker = async () => {
+		while (next < items.length && !stop()) {
+			const i = next++;
+			started++;
+			results[i] = await fn(items[i]);
+		}
+	};
+	await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
+	return { results, started, skipped: items.length - started };
+}

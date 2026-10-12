@@ -377,6 +377,9 @@ async function solamiRpc(env: Env, method: string, params: unknown[]): Promise<a
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+		// 8s cap: a hung RPC throws (TimeoutError) into the callers' try/catch
+		// instead of eating the cron's wall time.
+		signal: AbortSignal.timeout(8000),
 	});
 	if (!r.ok) throw new Error("solami " + r.status);
 	const j: any = await r.json();
