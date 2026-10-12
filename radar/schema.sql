@@ -18,9 +18,11 @@ CREATE TABLE IF NOT EXISTS snapshots (
 	price_chg_h1 REAL,
 	vol_h1 REAL,
 	pair_age_min REAL,
-	feed TEXT
+	feed TEXT,
+	look INTEGER
 );
 CREATE INDEX IF NOT EXISTS idx_snap_mint_ts ON snapshots (mint, ts);
+CREATE INDEX IF NOT EXISTS idx_rounds_first_seen ON rounds (first_seen);
 CREATE TABLE IF NOT EXISTS verdicts (
 	mint TEXT PRIMARY KEY,
 	ts INTEGER NOT NULL,
@@ -87,3 +89,20 @@ CREATE TABLE IF NOT EXISTS models (
 	promoted INTEGER NOT NULL DEFAULT 0,
 	label_v INTEGER
 );
+CREATE TABLE IF NOT EXISTS dev_signals (
+	mint TEXT PRIMARY KEY,
+	creator TEXT,
+	create_sig TEXT,
+	create_ts INTEGER,
+	dev_buy_sol REAL,
+	dev_buy_tokens REAL,
+	dev_share_initial REAL,
+	dev_share_now REAL,
+	creator_prior_n INTEGER,
+	creator_prior_graded INTEGER,
+	creator_prior_dead INTEGER,
+	err TEXT,
+	fetched_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_dev_creator ON dev_signals (creator);
+CREATE INDEX IF NOT EXISTS idx_dev_fetched ON dev_signals (fetched_at);
