@@ -147,3 +147,58 @@ Study 2 (loopholetape, Oct 2 to 4 test, coins still undecided at 60 s):
 6. **Before trusting it, shadow-score.** Log P(dead) next to the current policy for about 3 days, then
    compare AUC on FlagKan's own v2 labels. Gecko counts and horizon differences will cost some AUC. If it
    holds, refit the same feature set on FlagKan's labels (6h horizon) and keep this model as the prior.
+
+## Study 3: FlagKan's own data (label v2, 6h), Oct 12
+
+Question: does LightGBM beat the live v8 LR on FlagKan's own rows and real 6h label, and does a second
+look at +15/+30 min help? Data: read-only SELECT dump of `radar-d1-main` (12,984 graded first sights,
+Oct 5 to 12, 91.8% dead). Results in `out/results_flagkan.json`.
+
+```bash
+.venv/Scripts/python -I src/fk_dump.py     # SELECT-only paging dump -> data/flagkan/*.parquet (~1 min)
+.venv/Scripts/python -I src/fk_build.py    # first-sight table (mirrors RETRAIN_SQL_V2 + rowFromDb) + look snapshots
+# compile the REAL radar code once (from radar/): node node_modules/typescript/bin/tsc src/ml/train.ts --outDir <tsml> --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck
+.venv/Scripts/python -I -X utf8 src/fk_train.py <tsml>/train.js   # LR (real buildFeatures + trainLRNewton) vs LightGBM, look study, export (~8 min)
+node src/fk_parity.mjs out/flagkan-gbm.json                        # JS parity on 200 rows
+```
+
+Splits: `s70` = older 70% train / newest 30% test (n = 3,896, as the worker validator), and a 3-block
+walk-forward over the newest 45% with a 6h label embargo. LightGBM is tuned only on the last 15% of
+each train period (6 configs, early stopping), then refit on the whole train period.
+
+| model (first sight) | s70 AUC | s70 acc (all-RED 0.9256) | WF pooled AUC | WF per block | PR-AUC alive (s70) | alive prec. top 1% / 5% |
+|---|---|---|---|---|---|---|
+| v8 LR, 27 dims (real radar code) | 0.675 | 0.9289 | 0.698 | 0.753 / 0.816 / 0.625 | 0.266 | 0.64 / 0.42 |
+| **LightGBM, same 27 dims** | **0.709** | **0.9348** | **0.751** | 0.798 / 0.878 / 0.646 | **0.362** | **0.87 / 0.45** |
+| LightGBM, 27 + raw fields + top10 + Jev coordinated/severity + hour | 0.715 | 0.9333 | 0.787 | 0.797 / 0.884 / 0.667 | 0.354 | 0.90 / 0.45 |
+| same without hour-of-day | 0.696 | 0.9345 | 0.769 | 0.800 / 0.882 / 0.643 | | |
+| + context (intake rate, recent resolved dead rate) | 0.695 | 0.9328 | 0.770 | | | |
+
+* GBM vs LR on s70: +0.034 AUC, paired bootstrap 95% CI [+0.009, +0.061]. Brier 0.058 vs 0.063 (base 0.069).
+  The public-data gap (+0.18) does not carry over: FlagKan's features are Gecko m5 counts, not a trade tape.
+* The extra fields only help through hour-of-day (6 days of data = regime risk), so the shipped model is the
+  drop-in 27-dim one. Top gain: pairAge 33%, logLiq 13%, simpson 10%, missVol 9%, fdvLiq 8%.
+* The newest block is the hardest (AUC 0.63 to 0.67 for every model): drift, so retrain often.
+* Policy replay without rules or Jev (RED if p > 0.5, GREEN if p <= 0.3), s70: LR 25 non-RED calls (76% alive),
+  GBM 58 (81% alive). GBM is overconfident at the top: p >= 0.99 is only 95.7% dead, so T_SURE must be re-fit.
+
+Second look (snapshot nearest before first_seen + T, never the coin's last snapshot, which the label reads):
+
+| look | coins covered | covered dead rate | covered test n (WF) | AUC first sight -> with look | lift 95% CI |
+|---|---|---|---|---|---|
+| +15m | 199 (1.5%) | 0.60 | 55 | 0.893 -> 0.946 (look model fit on covered rows) | [-0.004, +0.127] |
+| +30m | 328 (2.5%) | 0.73 | 57 | 0.895 -> 0.952 | [+0.010, +0.120] |
+| +60m | 1,530 | 0.91 | 354 | 0.956 -> 0.958 | [-0.006, +0.010] |
+| +120m | 5,595 | 0.93 | 2,643 | 0.777 -> 0.777 | [-0.011, +0.015] |
+
+FlagKan only refreshes a coin early in rare, biased cases, so +15/+30 cannot be judged on this data. A real
+test needs a scheduled +15m Gecko refresh for every coin. +60 and +120 min add nothing.
+
+Leakage review: features come only from the first snapshot, signals stamped <= first_seen + 10 min (22 later
+recomputes nulled), and the Jev factors f_whale/f_sell/f_struct/coordinated/severity, which the upgrade UPDATE
+never touches. p_red, choice, confidence, tier, red_source, mem_dist and upgrade_why are not even dumped.
+Context features use only outcomes resolved before first sight.
+
+Export: `out/flagkan-gbm.json` (lightgbm-compact-v1, 419 trees, 27 inputs = `buildFeatures(row)` in
+`FEATURES` order, trained on all 12,984 rows), evaluated by `out/predict-live.mjs`. Parity: Python compact vs
+LightGBM is 0 and JS vs LightGBM is 5.6e-17 on 200 rows.
