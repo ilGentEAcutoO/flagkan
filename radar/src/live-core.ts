@@ -14,11 +14,35 @@ export const LIVE_MAX_IN_BYTES = 64;
 export const LIVE_MAX_SOCKETS = 300;
 /** Concurrent sockets per client IP (tagged by a short IP hash). */
 export const LIVE_MAX_PER_IP = 3;
-/** Client keepalive frame; answered by the runtime auto-response (never wakes the DO). */
+/** Legacy keepalive words. Clients send NOTHING now (server heartbeat instead);
+ *  a stray "ping" is still answered "pong", but only after it is counted. */
 export const LIVE_PING = "ping";
 export const LIVE_PONG = "pong";
+/** Client watchdog: no frame (tick or hb) for this long -> reconnect. */
+export const LIVE_WATCHDOG_MS = 150_000;
+/** Cron skips the RPC when the stash says 0 sockets AND the last connect is older than this. */
+export const LIVE_IDLE_SKIP_MS = 5 * 60_000;
+/** A stored tick older than this is NOT replayed to a fresh connect (would overwrite fresher REST rows). */
+export const LIVE_REPLAY_MAX_AGE_MS = 120_000;
 /** Close code used for every "go away, poll instead" refusal (caps, budget). */
 export const LIVE_CLOSE_REFUSED = 4429;
+
+// --- worst-case monthly cost (Workers Paid includes 1,000,000 DO requests
+// and 400,000 GB-s per month) ---------------------------------------------
+// Requests:
+//   broadcasts  <= 1 per cron minute = 30 d x 1,440 = 43,200 (31 d: 44,640)
+//   upgrades + client frames: counted by the kill-switch below; at
+//     800,000 the DO refuses and the Worker stops calling it (D1 stash
+//     read on every upgrade attempt; cron skips the RPC).
+//   client frames bill at 20:1 and are counted at 1/20 EACH, pings included
+//     (no auto-response: every frame reaches webSocketMessage and is counted).
+//   Clients send no keepalive at all (server heartbeat), so idle viewers
+//     cost nothing but the 1/min broadcast already counted above.
+//   total <= 800,000 + 44,640 = 844,640 < 1,000,000 (the broadcasts are also
+//     inside the 800k counter, so this double-counts them on purpose).
+// Duration: exactly ONE instance exists (idFromName("global"), only path);
+//   even awake every second of a month at the 128 MB billing size:
+//   31 d x 86,400 s x 0.125 GB = 334,800 GB-s < 400,000 (30 d: 324,000).
 
 // --- monthly DO budget kill-switch -------------------------------------
 // Accounting unit = 1/20 of a billed DO request (incoming WS messages bill
@@ -47,6 +71,25 @@ export function budgetAdd(b: LiveBudget | null | undefined, now: number, units: 
 /** True once this month's spend is past the kill-switch line. */
 export function budgetOver(b: LiveBudget | null | undefined, now: number): boolean {
 	return !!b && b.month === monthKey(now) && b.units > LIVE_MONTH_BUDGET_UNITS;
+}
+
+/** Heartbeat frame the cron pushes when nothing changed (server-side keepalive). */
+export function heartbeatEvent(ts: number): { type: "hb"; ts: number } {
+	return { type: "hb", ts: Math.floor(Number(ts) || Date.now()) };
+}
+
+/**
+ * Cron gate for the per-minute RPC: skip when the last broadcast reported 0
+ * sockets AND nobody connected in the last LIVE_IDLE_SKIP_MS (the Worker
+ * stamps last_connect on every successful upgrade, so a new viewer re-arms
+ * it). No stash yet (first run) = broadcast.
+ */
+export function shouldBroadcast(stash: { sockets?: unknown; last_connect?: unknown } | null | undefined, now: number): boolean {
+	if (!stash) return true;
+	const socks = Number(stash.sockets);
+	if (!Number.isFinite(socks) || socks > 0) return true;
+	const lc = Number(stash.last_connect);
+	return Number.isFinite(lc) && lc > 0 && now - lc <= LIVE_IDLE_SKIP_MS;
 }
 
 /** Worker-side view of the stashed state row: over only if it is THIS month's row. */

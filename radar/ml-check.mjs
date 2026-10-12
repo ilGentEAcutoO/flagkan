@@ -796,12 +796,12 @@ try {
 		["liveEnabled(env)", '"websocket"', "originAllowed(", "CF-Connecting-IP", "stashOver("].every((k) => up.indexOf(k) >= 0 && up.indexOf(k) < iFetch) && /status: 426/.test(up) && /status: 503/.test(up));
 	check("route: only /api/live dispatches to liveUpgrade", (idx.match(/liveUpgrade\(request, env\)/g) || []).length === 1 && /url\.pathname === "\/api\/live"\) return liveUpgrade\(request, env\)/.test(idx));
 	const pt = idx.slice(idx.indexOf("async function pushTick("), idx.indexOf("async function liveUpgrade("));
-	check("pushTick: skips when unchanged / disabled / over budget before the RPC, never throws", pt.indexOf("touched.size === 0 && resolved === 0") < pt.indexOf(".broadcast(") && pt.indexOf("stashOver(") < pt.indexOf(".broadcast(") && /catch \(e\)/.test(pt));
+	check("pushTick: disabled / over budget checked before the RPC, never throws", pt.indexOf("liveEnabled(env)") < pt.indexOf(".broadcast(") && pt.indexOf("stashOver(") < pt.indexOf(".broadcast(") && /catch \(e\)/.test(pt));
 	check("scheduled: ONE pushTick per minutely run, after ingest", (idx.match(/await pushTick\(/g) || []).length === 1 && idx.indexOf("await pushTick(") > idx.indexOf("const stats = await ingest(env);"));
 	check("/api/rounds + tick share ROUND_COLS/ROUND_FROM (no SQL drift)", (idx.match(/\$\{ROUND_COLS\}/g) || []).length === 2 && !/SELECT r\.mint, r\.first_seen, r\.name, v\.choice/.test(idx.slice(idx.indexOf("export default {"))));
 	check("/api/proof + tick share proofCore()", (idx.match(/await proofCore\(env\)/g) || []).length === 2);
-	check("LiveFeed: hibernation accept, ping auto-response, no ws.accept on viewers, no fetch path to broadcast",
-		/this\.ctx\.acceptWebSocket\(server, \[tag\]\)/.test(live) && /setWebSocketAutoResponse\(new WebSocketRequestResponsePair\(LIVE_PING, LIVE_PONG\)\)/.test(live) &&
+	check("LiveFeed: hibernation accept, NO auto-response (every frame counted), no ws.accept on viewers, no fetch path to broadcast",
+		/this\.ctx\.acceptWebSocket\(server, \[tag\]\)/.test(live) && /ctx\.setWebSocketAutoResponse\(\);/.test(live) && !/new WebSocketRequestResponsePair/.test(live) &&
 		(live.match(/server\.accept\(\)/g) || []).length === 1 && /private refuse\(/.test(live) && /async broadcast\(msg: string\)/.test(live) &&
 		!/broadcast/.test(live.slice(live.indexOf("async fetch("), live.indexOf("async broadcast("))));
 	check("LiveFeed: non-ping client frame closes 1008; caps via getWebSockets(tag)", /ws\.close\(1008/.test(live) && /getWebSockets\(tag\)\.length >= LIVE_MAX_PER_IP/.test(live) && /getWebSockets\(\)\.length >= LIVE_MAX_SOCKETS/.test(live));
@@ -828,10 +828,25 @@ try {
 	const mp = FL.mergeProof({ by_rule: [1], accuracy: 0.1 }, { accuracy: 0.2, headline: { n: 1 } });
 	check("live.js mergeProof keeps heavy fields, overwrites live ones", mp.by_rule.length === 1 && mp.accuracy === 0.2 && mp.headline.n === 1);
 	check("live.js backoff: grows, jittered, capped at 30s", FL.backoff(0, 1) === 1000 && FL.backoff(3, 1) === 8000 && FL.backoff(20, 1) === 30000 && FL.backoff(20, 0) === 15000);
-	check("live.js: ping 25s, poll 60s fallback, slow retry >= 5 min, 3 fails, refusal 4429", FL.PING_MS === 25000 && FL.POLL_MS === 60000 && FL.SLOW_MS >= 300000 && FL.MAX_FAILS === 3 && FL.REFUSED === 4429);
+	check("live.js: watchdog 150s (= LIVE_WATCHDOG_MS), poll 60s fallback, slow retry >= 5 min, 3 fails, refusal 4429", FL.WATCHDOG_MS === 150000 && FL.WATCHDOG_MS === lc.LIVE_WATCHDOG_MS && !("PING_MS" in FL) && FL.POLL_MS === 60000 && FL.SLOW_MS >= 300000 && FL.MAX_FAILS === 3 && FL.REFUSED === 4429);
 	check("live.js status text TH/EN", FL.statusText("live", "en") === "live" && FL.statusText("polling", "th") === "อัปเดตทุกนาที" && FL.statusText("reconnecting", "en") === "reconnecting…");
 	const ljs = readFileSync(path.join(HERE, "public", "live.js"), "utf8");
-	check("live.js keepalive sends exactly \"ping\"", /sock\.send\("ping"\)/.test(ljs) && (ljs.match(/\.send\(/g) || []).length === 1);
+	check("live.js sends NOTHING (no ping, no .send at all); watchdog re-armed on every frame", !/\.send\(/.test(ljs) && !/"ping"/.test(ljs) && /sock\.onmessage=function\(ev\)\{lastMsg=Date\.now\(\);arm\(\);/.test(ljs) && /WATCHDOG_MS\)\}/.test(ljs));
+	// server heartbeat + idle skip
+	const hb = lc.heartbeatEvent(1234.9);
+	check("heartbeat frame is tiny {type:hb,ts}", hb.type === "hb" && hb.ts === 1234 && JSON.stringify(hb).length < 40 && JSON.stringify(hb).startsWith('{"type":"hb"'));
+	const NOW = 10_000_000;
+	check("shouldBroadcast: no stash yet -> broadcast", lc.shouldBroadcast(null, NOW) === true);
+	check("shouldBroadcast: sockets > 0 -> broadcast", lc.shouldBroadcast({ sockets: 2, last_connect: 0 }, NOW) === true);
+	check("shouldBroadcast: 0 sockets + recent connect (<5 min) -> broadcast", lc.shouldBroadcast({ sockets: 0, last_connect: NOW - 60_000 }, NOW) === true);
+	check("shouldBroadcast: 0 sockets + connect older than 5 min / never -> SKIP", lc.shouldBroadcast({ sockets: 0, last_connect: NOW - 6 * 60_000 }, NOW) === false && lc.shouldBroadcast({ sockets: 0, last_connect: null }, NOW) === false && lc.LIVE_IDLE_SKIP_MS === 300000);
+	check("pushTick: idle gate + heartbeat fallback before the single RPC", pt.indexOf("shouldBroadcast(") > 0 && pt.indexOf("shouldBroadcast(") < pt.indexOf(".broadcast(") && /evt \?\? heartbeatEvent\(/.test(pt) && (pt.match(/\.broadcast\(/g) || []).length === 1 && !/touched\.size === 0 && resolved === 0\) return/.test(pt));
+	check("liveUpgrade: stamps last_connect on 101, flips stash on DO 'budget', fresh D1 read per attempt", /res\.status === 101\) await liveStampConnect\(env\)/.test(up) && /liveStampOver\(env\)/.test(up) && /liveStashRead\(env, 0\)/.test(up));
+	check("LiveFeed: every client frame counted BEFORE ping/close handling; heartbeats not stored for replay; stale replay suppressed",
+		/webSocketMessage[\s\S]{0,200}this\.spend\(LIVE_COST\.clientMsg\)[\s\S]{0,200}LIVE_PING/.test(live) && /startsWith\('\{"type":"hb"'\)/.test(live) && /LIVE_REPLAY_MAX_AGE_MS/.test(live));
+	check("worst case (documented in live-core): 800k + 44,640 broadcasts < 1M req; 31d x 86400 x 0.125 = 334,800 GB-s < 400k",
+		lc.LIVE_MONTH_BUDGET_REQ + 31 * 1440 === 844640 && 844640 < 1_000_000 && 31 * 86400 * 0.125 === 334800 && 334800 < 400000 &&
+		/total <= 800,000 \+ 44,640 = 844,640 < 1,000,000/.test(readFileSync(path.join(HERE, "src", "live-core.ts"), "utf8")));
 	for (const pg of ["board.html", "index.html", "proof.html"]) {
 		const h = readFileSync(path.join(HERE, "public", pg), "utf8");
 		check(pg + ": loads /live.js, connects, no 60s setInterval polling", /<script src="\/live\.js"><\/script>/.test(h) && /FlagLive\.connect\(\{onTick:onTick/.test(h) && !/setInterval\(load\w*,\s*60000\)/.test(h));

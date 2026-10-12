@@ -2,11 +2,12 @@
    server pushes a "tick" after each cron run. Polling (60s, Worker REST, not
    the Durable Object) is ONLY the fallback: after 3 failed attempts, a
    refusal (close 4429), or no WebSocket support. While polling, the socket
-   is retried no sooner than every 5 minutes. Keepalive = exactly "ping"
-   every 25s (answered by the server runtime without waking anything). */
+   is retried no sooner than every 5 minutes. The client sends NOTHING:
+   the server pushes a heartbeat ("hb") every minute, and a watchdog
+   reconnects when no frame has arrived for 150 s. */
 (function(root){
 "use strict";
-var PING_MS=25000,POLL_MS=60000,SLOW_MS=300000,MAX_FAILS=3,CAP_MS=30000,GAP_RESYNC_MS=120000,REFUSED=4429;
+var WATCHDOG_MS=150000,POLL_MS=60000,SLOW_MS=300000,MAX_FAILS=3,CAP_MS=30000,GAP_RESYNC_MS=120000,REFUSED=4429;
 var TXT={en:{live:"live",reconnecting:"reconnecting…",polling:"updating every minute"},th:{live:"สด",reconnecting:"กำลังเชื่อมต่อใหม่…",polling:"อัปเดตทุกนาที"}};
 function statusText(state,lang){var t=TXT[lang]||TXT.en;return t[state]||TXT.en[state]||""}
 /* exponential backoff with jitter, capped (attempt 0 -> ~1s) */
@@ -28,7 +29,7 @@ function inWindow(list,complete){var min=Infinity;for(var i=0;i<list.length;i++)
 function mergeProof(full,summary){if(!summary||typeof summary!=="object")return full;var out=full&&typeof full==="object"?full:{};for(var k in summary){if(Object.prototype.hasOwnProperty.call(summary,k))out[k]=summary[k]}return out}
 /* o: {onTick(evt), onStatus(state), poll(), resync()} */
 function connect(o){
-var ws=null,fails=0,pingT=null,retryT=null,pollT=null,polling=false,lastMsg=0,downAt=0,state="";
+var ws=null,fails=0,dogT=null,retryT=null,pollT=null,polling=false,lastMsg=0,downAt=0,state="";
 function status(s){if(s===state)return;state=s;try{o.onStatus&&o.onStatus(s)}catch(e){}}
 function startPolling(){if(polling)return;polling=true;status("polling");pollT=setInterval(function(){try{o.poll&&o.poll()}catch(e){}},POLL_MS)}
 function stopPolling(){if(!polling)return;polling=false;clearInterval(pollT);pollT=null}
@@ -38,13 +39,13 @@ if(typeof WS!=="function"){startPolling();return {state:function(){return state}
 function open(){var url=(root.location.protocol==="https:"?"wss://":"ws://")+root.location.host+"/api/live";var opened=false,openedAt=0,sock;
 try{sock=new WS(url)}catch(e){onFail(false,0);return}
 ws=sock;
-sock.onopen=function(){opened=true;openedAt=Date.now();fails=0;var wasPolling=polling;stopPolling();status("live");
-clearInterval(pingT);pingT=setInterval(function(){try{if(sock.readyState===1)sock.send("ping")}catch(e){}},PING_MS);
+function arm(){clearTimeout(dogT);dogT=setTimeout(function(){try{sock.close(4000,"watchdog")}catch(e){}if(ws===sock){ws=null;sock.onclose=null;onFail(opened&&Date.now()-openedAt>5000,4000)}},WATCHDOG_MS)}
+sock.onopen=function(){opened=true;openedAt=Date.now();fails=0;var wasPolling=polling;stopPolling();status("live");arm();
 if(wasPolling||(downAt&&Date.now()-downAt>GAP_RESYNC_MS)){try{o.resync&&o.resync()}catch(e){}}downAt=0};
-sock.onmessage=function(ev){lastMsg=Date.now();var d=ev&&ev.data;if(typeof d!=="string"||d==="pong")return;var m;try{m=JSON.parse(d)}catch(e){return}
+sock.onmessage=function(ev){lastMsg=Date.now();arm();var d=ev&&ev.data;if(typeof d!=="string")return;var m;try{m=JSON.parse(d)}catch(e){return}
 if(m&&m.type==="tick"){try{o.onTick&&o.onTick(m)}catch(e){}}};
 sock.onerror=function(){};
-sock.onclose=function(ev){clearInterval(pingT);pingT=null;if(ws===sock)ws=null;onFail(opened&&Date.now()-openedAt>5000,ev&&ev.code)}}
+sock.onclose=function(ev){clearTimeout(dogT);dogT=null;if(ws===sock)ws=null;onFail(opened&&Date.now()-openedAt>5000,ev&&ev.code)}}
 function onFail(wasOpen,code){if(!downAt)downAt=Date.now();
 if(code===REFUSED){startPolling();retry(SLOW_MS+backoff(0)*10);return}
 if(wasOpen){fails=0;if(!polling)status("reconnecting");retry(backoff(0));return}
@@ -53,5 +54,5 @@ if(fails>=MAX_FAILS){startPolling();retry(SLOW_MS+backoff(fails)*2);return}
 if(!polling)status("reconnecting");retry(backoff(fails))}
 open();
 return {state:function(){return state},lastMessageAt:function(){return lastMsg}}}
-root.FlagLive={connect:connect,upsertRows:upsertRows,byNewest:byNewest,inWindow:inWindow,mergeProof:mergeProof,backoff:backoff,statusText:statusText,PING_MS:PING_MS,POLL_MS:POLL_MS,SLOW_MS:SLOW_MS,MAX_FAILS:MAX_FAILS,REFUSED:REFUSED};
+root.FlagLive={connect:connect,upsertRows:upsertRows,byNewest:byNewest,inWindow:inWindow,mergeProof:mergeProof,backoff:backoff,statusText:statusText,WATCHDOG_MS:WATCHDOG_MS,POLL_MS:POLL_MS,SLOW_MS:SLOW_MS,MAX_FAILS:MAX_FAILS,REFUSED:REFUSED};
 })(typeof window!=="undefined"?window:globalThis);

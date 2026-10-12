@@ -18,7 +18,7 @@ import { RESOLVE_FIRST_SQL, RESOLVE_LAST_SQL, RESOLVE_PRIOR_SQL } from "./ml/col
 import { collectLooks, collectDev, collectCounters } from "./dev";
 import { LiveFeed } from "./live";
 import type { LiveState } from "./live";
-import { buildTickEvent, originAllowed, proofSummaryOf, stashOver, monthKey, TouchSet, TICK_MAX_ROWS } from "./live-core";
+import { buildTickEvent, heartbeatEvent, shouldBroadcast, originAllowed, proofSummaryOf, stashOver, monthKey, TouchSet, TICK_MAX_ROWS } from "./live-core";
 export { LiveFeed };
 
 // LIVE-001: coins touched by the running cron(s), for the push tick. Each
@@ -1028,17 +1028,17 @@ let liveTableReady = false;
 async function liveStashEnsure(env: Env): Promise<void> {
 	if (liveTableReady) return;
 	await env.DB_MAIN.prepare(
-		"CREATE TABLE IF NOT EXISTS live_state (id INTEGER PRIMARY KEY CHECK (id = 1), month TEXT, requests INTEGER, budget INTEGER, over INTEGER, sockets INTEGER, sent INTEGER, ts INTEGER)"
+		"CREATE TABLE IF NOT EXISTS live_state (id INTEGER PRIMARY KEY CHECK (id = 1), month TEXT, requests INTEGER, budget INTEGER, over INTEGER, sockets INTEGER, sent INTEGER, ts INTEGER, last_connect INTEGER)"
 	).run();
 	liveTableReady = true;
 }
-type LiveStash = { month: string; requests: number; budget: number; over: number; sockets: number; sent: number | null; ts: number };
+type LiveStash = { month: string | null; requests: number | null; budget: number | null; over: number | null; sockets: number | null; sent: number | null; ts: number | null; last_connect: number | null };
 let liveStashMemo: { at: number; row: LiveStash | null } | null = null;
 async function liveStashRead(env: Env, maxAgeMs: number): Promise<LiveStash | null> {
 	if (liveStashMemo && Date.now() - liveStashMemo.at < maxAgeMs) return liveStashMemo.row;
 	let row: LiveStash | null = null;
 	try {
-		row = await env.DB_MAIN.prepare("SELECT month, requests, budget, over, sockets, sent, ts FROM live_state WHERE id = 1").first<LiveStash>();
+		row = await env.DB_MAIN.prepare("SELECT month, requests, budget, over, sockets, sent, ts, last_connect FROM live_state WHERE id = 1").first<LiveStash>();
 	} catch { row = null; /* table not created yet = nothing stashed */ }
 	liveStashMemo = { at: Date.now(), row };
 	return row;
@@ -1046,8 +1046,26 @@ async function liveStashRead(env: Env, maxAgeMs: number): Promise<LiveStash | nu
 async function liveStashWrite(env: Env, st: LiveState): Promise<void> {
 	await liveStashEnsure(env);
 	await env.DB_MAIN.prepare(
-		"INSERT OR REPLACE INTO live_state (id, month, requests, budget, over, sockets, sent, ts) VALUES (1, ?, ?, ?, ?, ?, ?, ?)"
+		`INSERT INTO live_state (id, month, requests, budget, over, sockets, sent, ts) VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET month = excluded.month, requests = excluded.requests, budget = excluded.budget,
+		over = excluded.over, sockets = excluded.sockets, sent = excluded.sent, ts = excluded.ts`
 	).bind(st.month, st.requests, st.budget, st.over ? 1 : 0, st.sockets, st.sent ?? null, Date.now()).run();
+	liveStashMemo = null;
+}
+/** Successful upgrade: stamp last_connect so an idle-skipped feed resumes broadcasting. */
+async function liveStampConnect(env: Env): Promise<void> {
+	await liveStashEnsure(env);
+	await env.DB_MAIN.prepare(
+		"INSERT INTO live_state (id, last_connect) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET last_connect = excluded.last_connect"
+	).bind(Date.now()).run();
+	liveStashMemo = null;
+}
+/** The DO answered "budget": flip the stash at once so later attempts never reach it. */
+async function liveStampOver(env: Env): Promise<void> {
+	await liveStashEnsure(env);
+	await env.DB_MAIN.prepare(
+		"INSERT INTO live_state (id, month, over, ts) VALUES (1, ?, 1, ?) ON CONFLICT(id) DO UPDATE SET month = excluded.month, over = 1, ts = excluded.ts"
+	).bind(monthKey(Date.now()), Date.now()).run();
 	liveStashMemo = null;
 }
 
@@ -1060,24 +1078,32 @@ function liveStub(env: Env): DurableObjectStub<LiveFeed> {
 	return env.DO_LIVE.get(env.DO_LIVE.idFromName("global"));
 }
 
-/** End of a cron run: ONE tick per run, only when something changed; never throws. */
+/**
+ * End of a minutely cron run: exactly ONE broadcast RPC (a tick when coins
+ * changed, else a tiny heartbeat that keeps viewers' sockets alive), or none
+ * when the feed is idle (0 sockets + no connect in 5 min) / disabled / over
+ * budget. Never throws.
+ */
 async function pushTick(env: Env, touched: TouchSet, resolved: number): Promise<void> {
 	try {
 		if (!liveEnabled(env)) return;
-		if (touched.size === 0 && resolved === 0) return;
 		const stash = await liveStashRead(env, 0);
 		if (stashOver(stash, Date.now())) return; // monthly budget hit: no DO request at all
-		const rows = await roundRowsFor(env, touched.pick(TICK_MAX_ROWS));
-		let proof: Record<string, unknown> | undefined;
-		if (resolved > 0) {
-			try { proof = proofSummaryOf((await proofCore(env)).base); } catch { proof = undefined; }
+		if (!shouldBroadcast(stash, Date.now())) return; // nobody watching: an unused feed costs ~nothing
+		let evt: Record<string, unknown> | null = null;
+		if (touched.size > 0 || resolved > 0) {
+			const rows = await roundRowsFor(env, touched.pick(TICK_MAX_ROWS));
+			let proof: Record<string, unknown> | undefined;
+			if (resolved > 0) {
+				try { proof = proofSummaryOf((await proofCore(env)).base); } catch { proof = undefined; }
+			}
+			const total = await roundTotal(env, false);
+			evt = buildTickEvent({ ts: Date.now(), rows, total, proof }) as Record<string, unknown> | null;
 		}
-		const total = await roundTotal(env, false);
-		const evt = buildTickEvent({ ts: Date.now(), rows, total, proof });
-		if (!evt) return;
-		const st = await liveStub(env).broadcast(JSON.stringify(evt));
+		const frame: Record<string, unknown> = evt ?? heartbeatEvent(Date.now());
+		const st = await liveStub(env).broadcast(JSON.stringify(frame));
 		await liveStashWrite(env, st);
-		console.log(JSON.stringify({ live: "tick", rows: evt.rounds.length, proof: !!evt.proof, sent: st.sent ?? 0, sockets: st.sockets, req_month: st.requests, over: st.over }));
+		console.log(JSON.stringify({ live: frame.type, rows: Array.isArray(frame.rounds) ? frame.rounds.length : 0, proof: !!frame.proof, sent: st.sent ?? 0, sockets: st.sockets, req_month: st.requests, over: st.over }));
 	} catch (e) {
 		console.log(JSON.stringify({ live: "tick_fail", err: String(e).slice(0, 160) }));
 	}
@@ -1091,10 +1117,15 @@ async function liveUpgrade(request: Request, env: Env): Promise<Response> {
 	}
 	if (!originAllowed(request.headers.get("Origin"), new URL(request.url).host)) return new Response("forbidden origin", { status: 403 });
 	if (!request.headers.get("CF-Connecting-IP")) return new Response("missing client ip", { status: 400 });
-	if (stashOver(await liveStashRead(env, 60_000), Date.now())) {
+	if (stashOver(await liveStashRead(env, 0), Date.now())) { // fresh D1 read every attempt: no memo leak window
 		return new Response("live budget reached", { status: 503, headers: { "X-Live-State": "budget" } });
 	}
-	return liveStub(env).fetch(request);
+	const res = await liveStub(env).fetch(request);
+	try {
+		if (res.status === 101) await liveStampConnect(env);
+		else if (res.headers.get("X-Live-State") === "budget") await liveStampOver(env);
+	} catch { /* stash is best-effort; the DO enforces caps and budget itself */ }
+	return res;
 }
 
 // Shared by /api/proof and the live push tick (one SQL source, no drift):
