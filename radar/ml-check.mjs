@@ -65,10 +65,10 @@ function mintB64(mintTag, freezeTag, len = 82) {
 
 // --- buildFeatures: new slots + null defaults ---
 {
-	check("FEATURES has 21 entries", ml.FEATURES.length === 21, String(ml.FEATURES.length));
+	check("FEATURES has 30 entries", ml.FEATURES.length === 30, String(ml.FEATURES.length));
 	const nullRow = { ts: 1, dead: 0, choice: "yellow", liq: null, top1: null, t211: null, fdv: null, early: null, age: null, txns: null, buys: null, sells: null, pool: null, pRed: null, mintLive: null, freezeLive: null, chgH1: null, volH1: null, pairAge: null, simpson: null, fWhale: null, fSell: null, fStruct: null, src: null };
 	const f = ml.buildFeatures(nullRow);
-	check("features length 21", f.length === 21, String(f.length));
+	check("features length 30", f.length === 30, String(f.length));
 	check("null auth -> 0.5 neutral", f[10] === 0.5 && f[11] === 0.5, f.slice(10, 12).join(","));
 	check("null momentum -> 0", f[12] === 0 && f[13] === 0, f.slice(12, 14).join(","));
 	check("null pairAge -> 0.5", f[14] === 0.5, String(f[14]));
@@ -83,6 +83,14 @@ function mintB64(mintTag, freezeTag, len = 82) {
 	check("factors passthrough+clamp", fac[17] === 0.9 && fac[18] === 0.1 && fac[19] === 1, fac.slice(17, 20).join(","));
 	check("null src -> 0.5 neutral", f[20] === 0.5, String(f[20]));
 	check("gecko -> 1, dex -> 0", ml.buildFeatures({ ...nullRow, src: "gecko" })[20] === 1 && ml.buildFeatures({ ...nullRow, src: "dex" })[20] === 0);
+	check("null row all-missing flags", f[21] === 1 && f[22] === 1 && f[23] === 1 && f[24] === 1, f.slice(21, 25).join(","));
+	check("null row gap 0, sigChg 1", f[25] === 0 && f[26] === 1, `${f[25]},${f[26]}`);
+	check("null row disagreement neutral", f[27] === 0 && approx(f[28], 0.25) && f[29] === 0, f.slice(27, 30).join(","));
+	const full = ml.buildFeatures({ ...nullRow, top1: 5, t211: 10, mintLive: 0, freezeLive: 0, simpson: 0.8, chgH1: 5, volH1: 5000, pRed: 0.9, fWhale: 0.1, fSell: 0.1, fStruct: 0.1 });
+	check("full row missing 0", full[21] === 0 && full[22] === 0 && full[23] === 0 && full[24] === 0 && full[26] === 0);
+	check("disagreement dims", approx(full[27], 0.8) && full[28] > 0 && full[29] === 0, full.slice(27, 30).join(","));
+	const gap = ml.buildFeatures({ ...nullRow, top1: 5, t211: 10, mintLive: 0, freezeLive: 0, simpson: 0.8, volH1: 5000 });
+	check("tape gap fires", gap[25] === 1 && gap[21] === 0 && gap[22] === 1, gap.slice(21, 26).join(","));
 	const live = ml.buildFeatures({ ...nullRow, mintLive: 1, freezeLive: 0, chgH1: -50, volH1: 10000, liq: 10000, pairAge: 720 });
 	check("live auth -> 1/0", live[10] === 1 && live[11] === 0, live.slice(10, 12).join(","));
 	check("dump momentum negative", approx(live[12], Math.tanh(-0.5)), String(live[12]));
@@ -228,6 +236,29 @@ function mintB64(mintTag, freezeTag, len = 82) {
 	check("ruleConfidence R1 keeps 0.95", up.ruleConfidence("illiquid") === 0.95);
 	check("ruleConfidence R2-fat restamped 0.60", up.ruleConfidence("bot_frenzy") === 0.6);
 	check("ruleConfidence null defaults 0.95", up.ruleConfidence(null) === 0.95);
+}
+
+// --- reward shaping (Oct 11 wave-1 winner: 30-dim pw=5 bar=0.7 l2=0.01) ---
+{
+	check("tuned defaults pinned", ml.DEFAULT_POS_WEIGHT === 5 && ml.DEFAULT_RED_BAR === 0.7 && ml.DEFAULT_L2 === 0.01,
+		`${ml.DEFAULT_POS_WEIGHT}/${ml.DEFAULT_RED_BAR}/${ml.DEFAULT_L2}`);
+	const mk = (dead, top1) => ({ ts: 1, dead, choice: "yellow", liq: 50000, top1, t211: 10, fdv: 1000000, early: 10, age: 60, txns: 100, buys: 50, sells: 50, pool: 0, pRed: 0.1, mintLive: 0, freezeLive: 0, chgH1: 5, volH1: 5000, pairAge: 60, simpson: 0.8, fWhale: 0.1, fSell: 0.1, fStruct: 0.1, src: "gecko" });
+	const data = [];
+	for (let i = 0; i < 20; i++) data.push(mk(0, 5));
+	for (let i = 0; i < 4; i++) data.push(mk(1, 80));
+	const plain = ml.trainLR(data.map((r) => ({ x: ml.buildFeatures(r), y: r.dead })));
+	const heavy = ml.trainLR(data.map((r) => ({ x: ml.buildFeatures(r), y: r.dead, w: r.dead === 1 ? 12 : 1 })));
+	const probe = ml.buildFeatures(mk(1, 80));
+	const pp = ml.predict(plain, probe);
+	const ph = ml.predict(heavy, probe);
+	check("posWeight raises dead-row p", ph > pp, `${pp.toFixed(3)} -> ${ph.toFixed(3)}`);
+	const srows = [];
+	for (let i = 0; i < 40; i++) {
+		const dead = i % 2;
+		srows.push({ ...mk(dead, dead ? 80 : 5), ts: 1000 + i });
+	}
+	const sres = ml.timeSplitValidate(srows, { posWeight: 5, redBar: 0.7, l2: 0.01 });
+	check("winner hyper separable still 1", sres.chalAcc === 1, String(sres.chalAcc));
 }
 
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }

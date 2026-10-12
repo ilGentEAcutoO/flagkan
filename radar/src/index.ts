@@ -6,7 +6,7 @@ interface Env {
 	ADMIN_KEY: string;
 }
 
-import { hardRed, shadowGreen, timeSplitValidate, predict, buildFeatures, parseMintAuthorities, shouldPromote, memoryHit, FEATURES, demoteOneShot, DEMOTE_P_RED } from "./ml/train";
+import { hardRed, shadowGreen, timeSplitValidate, predict, buildFeatures, parseMintAuthorities, shouldPromote, memoryHit, FEATURES, demoteOneShot, DEMOTE_P_RED, DEFAULT_RED_BAR } from "./ml/train";
 import type { GoldModel, TrainRow, MemVector } from "./ml/train";
 import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence } from "./ml/upgrade";
 
@@ -184,7 +184,7 @@ async function loadChampion(env: Env): Promise<{ model: GoldModel; version: numb
 // Bar for the model to call red on its own: deliberately high so a model
 // red means strong measured evidence, not a coin flip. chalChoice in
 // train.ts mirrors this exact threshold for honest validation.
-const MODEL_RED_P = 0.85;
+const MODEL_RED_P = DEFAULT_RED_BAR;
 
 function liveRowFrom(a: any, vstate: Record<string, unknown>): TrainRow {
 	const txns = Number(vstate.txns_5m ?? 0);

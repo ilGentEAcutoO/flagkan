@@ -10,7 +10,12 @@
 		"smoke": "node smoke-guards.mjs",
 		"mltest": "node ml-check.mjs",
 		"backtest": "node backtest.mjs",
-		"calibrate": "node calibrate.mjs"
+		"calibrate": "node calibrate.mjs",
+		"gate": "node eval-challenger.mjs",
+		"train": "node eval-challenger.mjs --save",
+		"promote": "node promote-gold.mjs",
+		"sweep": "node sweep-reward.mjs",
+		"dump": "node dump-rows.mjs"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^5.0.0",

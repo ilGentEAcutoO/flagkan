@@ -23,6 +23,15 @@ export const FEATURES = [
 	"fSell",
 	"fStruct",
 	"isGecko",
+	"missSig",
+	"missChg",
+	"missVol",
+	"missCount",
+	"chgVolGap",
+	"missSigChg",
+	"pRedVsF",
+	"pRedVsConc",
+	"fSpread",
 ] as const;
 
 export interface TrainRow {
@@ -59,6 +68,12 @@ export interface GoldModel {
 	features: string[];
 }
 
+// Reward shaping (Oct 11): dead-row upweight + model-red bar, tuned by
+// sweep-reward.mjs on real resolved data. Live (index.ts MODEL_RED_P)
+// imports DEFAULT_RED_BAR — single source of truth, validation == live.
+export const DEFAULT_POS_WEIGHT = 5;
+export const DEFAULT_RED_BAR = 0.7;
+export const DEFAULT_L2 = 0.01;
 export const DEFAULT_MODEL: GoldModel = {
 	weights: FEATURES.map(() => 0),
 	bias: 0,
@@ -216,9 +231,33 @@ export function buildFeatures(r: TrainRow): number[] {
 	// E5-6 interaction terms REVERTED (Oct 8): dry retrain on 997 silent rows
 	// scored chalAcc identical to v5 (0.7612), +0 marginal — linear suffices,
 	// extra dims are overfit surface. Do not re-add without beating v5.
+	// RL-missing (Oct 11 wave 1 winner): missingness + disagreement dims.
+	// Nulls carry signal, not noise: chgH1-null rows die at 32% vs 8.7%
+	// present, signal-JOIN-miss rows at 21% vs 14% base (n=5000 dump).
+	// All derive from fixed dump columns — no new SQL. Killed Oct 10 under
+	// old hyper (tie, silentReds=0); wins under reward shaping.
+	const missSig = (r.top1 == null || r.t211 == null || r.mintLive == null
+		|| r.freezeLive == null || r.simpson == null) ? 1 : 0;
+	const missChg = r.chgH1 == null ? 1 : 0;
+	const missVol = r.volH1 == null ? 1 : 0;
+	const missCount = ([r.top1, r.t211, r.mintLive, r.freezeLive, r.simpson, r.chgH1, r.volH1]
+		.filter((v) => v == null).length) / 7;
+	// Tape gap: volume printed but no h1 change (stale quote history).
+	const chgVolGap = r.chgH1 == null && r.volH1 != null ? 1 : 0;
+	const missSigChg = missSig === 1 && missChg === 1 ? 1 : 0;
+	// Disagreement: stamped pRed vs Jev sensor mean and vs
+	// holder-concentration-implied risk; plus sensor spread.
+	const fMean = (clamp01(r.fWhale) + clamp01(r.fSell) + clamp01(r.fStruct)) / 3;
+	const pRedVsF = pRed - fMean;
+	const concRisk = Math.min(1, top1 + t211 / 2);
+	const pRedVsConc = pRed - concRisk;
+	const fSpread = Math.max(clamp01(r.fWhale), clamp01(r.fSell), clamp01(r.fStruct))
+		- Math.min(clamp01(r.fWhale), clamp01(r.fSell), clamp01(r.fStruct));
 	return [top1, t211, logLiq, fdvLiq, earlyRate, ageN, sellRatio, txns, pool, pRed,
 		mintLive, freezeLive, momH1, volLiqH1, pairAge, lysis, simpson,
-		clamp01(r.fWhale), clamp01(r.fSell), clamp01(r.fStruct), isGecko];
+		clamp01(r.fWhale), clamp01(r.fSell), clamp01(r.fStruct), isGecko,
+		missSig, missChg, missVol, missCount, chgVolGap, missSigChg,
+		pRedVsF, pRedVsConc, fSpread];
 }
 
 export function sigmoid(z: number): number {
@@ -238,7 +277,7 @@ export function predict(m: GoldModel, x: number[]): number {
 }
 
 export function trainLR(
-	rows: Array<{ x: number[]; y: number }>,
+	rows: Array<{ x: number[]; y: number; w?: number }>,
 	opts: { iters?: number; lr?: number; l2?: number } = {}
 ): GoldModel {
 	const iters = opts.iters ?? 500;
@@ -251,14 +290,17 @@ export function trainLR(
 	const d = FEATURES.length;
 	const w = new Array<number>(d).fill(0);
 	let b = 0;
-	const n = Math.max(1, rows.length);
+	// Per-sample weight (dead-row upweight); normalized by total weight so
+	// lr scale is stable. w=1 everywhere is exactly the old math.
+	const n = Math.max(1, rows.reduce((s, r) => s + (r.w ?? 1), 0));
 	for (let it = 0; it < iters; it++) {
 		const gw = new Array<number>(d).fill(0);
 		let gb = 0;
 		for (const r of rows) {
 			let z = b;
 			for (let j = 0; j < d; j++) z += w[j] * r.x[j];
-			const err = sigmoid(z) - r.y;
+			const sw = r.w ?? 1;
+			const err = (sigmoid(z) - r.y) * sw;
 			for (let j = 0; j < d; j++) gw[j] += err * r.x[j];
 			gb += err;
 		}
@@ -317,7 +359,7 @@ function champChoice(r: TrainRow): string {
 	return r.choice === "red" ? "yellow" : r.choice === "green" ? "green" : "yellow";
 }
 
-function chalChoice(r: TrainRow, m: GoldModel): string {
+function chalChoice(r: TrainRow, m: GoldModel, redBar: number): string {
 	const rule = hardRed({
 		liquidity_usd: r.liq,
 		top1_pct: r.top1,
@@ -328,8 +370,8 @@ function chalChoice(r: TrainRow, m: GoldModel): string {
 	if (rule) return "red";
 	const p = predict(m, buildFeatures(r));
 	// Mirrors live maybePromoteRed: the model may call red, but only with
-	// a high bar (0.85) so validation measures exactly what ships.
-	if (p >= 0.85) return "red";
+	// a high bar (redBar = live MODEL_RED_P) so validation measures what ships.
+	if (p >= redBar) return "red";
 	if (r.choice === "green" && p < 0.5) return "green";
 	return "yellow";
 }
@@ -383,7 +425,9 @@ export function ruleSilent(r: TrainRow): boolean {
 	}) === null;
 }
 
-export function timeSplitValidate(rows: TrainRow[]): SplitResult {
+export function timeSplitValidate(rows: TrainRow[], opts: { posWeight?: number; redBar?: number; l2?: number } = {}): SplitResult {
+	const posWeight = opts.posWeight ?? DEFAULT_POS_WEIGHT;
+	const redBar = opts.redBar ?? DEFAULT_RED_BAR;
 	const sorted = [...rows].sort((a, b) => a.ts - b.ts);
 	const n = sorted.length;
 	const k = Math.floor(n * 0.7);
@@ -394,7 +438,7 @@ export function timeSplitValidate(rows: TrainRow[]): SplitResult {
 	// stays representative and /api/proof is untouched by construction.
 	const train = trainAll.filter((r) => ruleSilent(r) && !r.zombie);
 	const nZombieDropped = trainAll.filter((r) => ruleSilent(r) && r.zombie).length;
-	const model = trainLR(train.map((r) => ({ x: buildFeatures(r), y: r.dead })));
+	const model = trainLR(train.map((r) => ({ x: buildFeatures(r), y: r.dead, w: r.dead === 1 ? posWeight : 1 })), { l2: opts.l2 ?? DEFAULT_L2 });
 	if (test.length < 5) {
 		return { n, nTrain: train.length, nTest: test.length, champAcc: null, chalAcc: null, champRedP: null, chalRedP: null, model, nSilentTrain: train.length, nSilentTest: test.filter(ruleSilent).length, chalAccSilent: null, chalRedPSilent: null, chalRedSilent: 0, nZombieDropped };
 	}
@@ -410,7 +454,7 @@ export function timeSplitValidate(rows: TrainRow[]): SplitResult {
 	let nSil = 0;
 	for (const r of test) {
 		const cc = champChoice(r);
-		const hc = chalChoice(r, model);
+		const hc = chalChoice(r, model, redBar);
 		if (correct(cc, r.dead)) champOk++;
 		if (correct(hc, r.dead)) chalOk++;
 		if (cc === "red") { champRed++; if (r.dead === 1) champRedDead++; }

@@ -10,6 +10,7 @@ node_modules/
 .claude/
 .playwright-mcp/
 agent-temp/
+sweep-rows.json
 instruction/
 data/skills/
 skills-lock.json
