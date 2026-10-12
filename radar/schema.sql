@@ -41,7 +41,10 @@ CREATE TABLE IF NOT EXISTS verdicts (
 	red_source TEXT,
 	mem_dist REAL,
 	upgrade_why TEXT,
-	v_rule TEXT
+	v_rule TEXT,
+	p_red_first REAL,
+	tier TEXT,
+	policy_v INTEGER
 );
 CREATE TABLE IF NOT EXISTS rug_vectors (
 	mint TEXT PRIMARY KEY,
@@ -67,7 +70,9 @@ CREATE TABLE IF NOT EXISTS outcomes (
 	first_price REAL,
 	last_price REAL,
 	mult REAL,
-	dead INTEGER NOT NULL
+	dead INTEGER NOT NULL,
+	dead_v2 INTEGER,
+	idle INTEGER
 );
 CREATE TABLE IF NOT EXISTS models (
 	version INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,5 +84,6 @@ CREATE TABLE IF NOT EXISTS models (
 	test_acc REAL,
 	test_n INTEGER,
 	champ_acc REAL,
-	promoted INTEGER NOT NULL DEFAULT 0
+	promoted INTEGER NOT NULL DEFAULT 0,
+	label_v INTEGER
 );

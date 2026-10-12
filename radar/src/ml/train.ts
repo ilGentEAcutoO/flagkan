@@ -1,6 +1,12 @@
 // Pure ML module: no Worker APIs, no dependencies.
 // Used by the worker (train on the edge) and testable via tsc + node.
 
+// Model v8 / label v2 (Oct 12): 27 strictly first-sight dims. REMOVED the
+// leaky pRed, pRedVsF, pRedVsConc: they read verdicts.p_red, which the
+// upgrade path overwrites after a price crash (post-outcome information);
+// v7's offline 80.7/44.3 was inflated by it.
+// TODO(p_red_first): a first-sight Jev/model p_red can come back as a
+// feature from verdicts.p_red_first once enough policy-v2 rows resolve.
 export const FEATURES = [
 	"top1",
 	"t211",
@@ -11,7 +17,6 @@ export const FEATURES = [
 	"sellRatio",
 	"txns",
 	"pool",
-	"pRed",
 	"mintLive",
 	"freezeLive",
 	"momH1",
@@ -29,8 +34,6 @@ export const FEATURES = [
 	"missCount",
 	"chgVolGap",
 	"missSigChg",
-	"pRedVsF",
-	"pRedVsConc",
 	"fSpread",
 ] as const;
 
@@ -48,7 +51,9 @@ export interface TrainRow {
 	buys: number | null;
 	sells: number | null;
 	pool: number | null;
-	pRed: number | null;
+	// Legacy, NOT a feature since v8 (verdicts.p_red is overwritten by
+	// upgrades = post-outcome leak). Kept optional so old row dumps load.
+	pRed?: number | null;
 	mintLive: number | null;
 	freezeLive: number | null;
 	chgH1: number | null;
@@ -171,6 +176,11 @@ export function hardRed(s: {
 	return null;
 }
 
+// Policy v2 (Oct 12) REVERTS this demote: under label v2 demoted:illiquid
+// rows die at 95.9% and demoted:memory at 95.0% (base 93.5%) — far above
+// the 50% line, so demoting them to yellow costs accuracy. Kept (pure,
+// unit-tested) for replaying pre-v2 history only; the live path no longer
+// calls it.
 // V4 demote (Oct 9): one-shot illiquid (17.2%, n=640) + memory (14.2%,
 // n=471) reds measured far below the red line on 2619 resolved rows, and a
 // KEEP sweep found NO first-seen feature predicting death inside that pool
@@ -202,7 +212,6 @@ export function buildFeatures(r: TrainRow): number[] {
 		r.buys == null || r.sells == null ? 0.5 : r.sells / Math.max(1, r.buys + r.sells);
 	const txns = Math.min(r.txns ?? 0, 2000) / 2000;
 	const pool = r.pool ? 1 : 0;
-	const pRed = r.pRed == null ? 0.5 : Math.min(Math.max(r.pRed, 0), 1);
 	// Authorities: unknown (0.5) leans neither safe nor risky; the model
 	// learns the weight of known-live (1) vs known-renounced (0).
 	const mintLive = r.mintLive == null ? 0.5 : r.mintLive ? 1 : 0;
@@ -245,19 +254,15 @@ export function buildFeatures(r: TrainRow): number[] {
 	// Tape gap: volume printed but no h1 change (stale quote history).
 	const chgVolGap = r.chgH1 == null && r.volH1 != null ? 1 : 0;
 	const missSigChg = missSig === 1 && missChg === 1 ? 1 : 0;
-	// Disagreement: stamped pRed vs Jev sensor mean and vs
-	// holder-concentration-implied risk; plus sensor spread.
-	const fMean = (clamp01(r.fWhale) + clamp01(r.fSell) + clamp01(r.fStruct)) / 3;
-	const pRedVsF = pRed - fMean;
-	const concRisk = Math.min(1, top1 + t211 / 2);
-	const pRedVsConc = pRed - concRisk;
+	// Jev sensor spread (disagreement between the three factor judgments).
+	// pRed-based disagreement dims were dropped in v8 (leak, see FEATURES).
 	const fSpread = Math.max(clamp01(r.fWhale), clamp01(r.fSell), clamp01(r.fStruct))
 		- Math.min(clamp01(r.fWhale), clamp01(r.fSell), clamp01(r.fStruct));
-	return [top1, t211, logLiq, fdvLiq, earlyRate, ageN, sellRatio, txns, pool, pRed,
+	return [top1, t211, logLiq, fdvLiq, earlyRate, ageN, sellRatio, txns, pool,
 		mintLive, freezeLive, momH1, volLiqH1, pairAge, lysis, simpson,
 		clamp01(r.fWhale), clamp01(r.fSell), clamp01(r.fStruct), isGecko,
 		missSig, missChg, missVol, missCount, chgVolGap, missSigChg,
-		pRedVsF, pRedVsConc, fSpread];
+		fSpread];
 }
 
 export function sigmoid(z: number): number {
@@ -480,5 +485,222 @@ export function timeSplitValidate(rows: TrainRow[], opts: { posWeight?: number; 
 		chalRedPSilent: silRed ? silRedDead / silRed : null,
 		chalRedSilent: silRed,
 		nZombieDropped,
+	};
+}
+
+// ---------------------------------------------------------------------------
+// Model v8 + policy v2 (Oct 12). Label = outcomes.dead_v2 (see upgrade.ts).
+// Offline, newest-30% time split (12500 gradeable verdicts, test n=3750,
+// base dead_v2 0.930): AUC 0.694; policy acc 0.9352 vs all-red 0.9304 /
+// all-yellow 0.0696; red_sure (p >= 0.99) precision 0.983 (n=293); green
+// (p <= 0.30) alive 14/14; hard rules overriding a non-red model call: 5/6
+// dead (kept).
+export const LABEL_V = 2;
+export const MODEL_V = 8;
+export const POLICY_V = 2;
+// RED iff P(dead_v2) > T_RED: accuracy-optimal for the binary scoring
+// (correct = RED&dead | non-RED&alive) when p is calibrated.
+export const T_RED = 0.5;
+export const T_SURE = 0.99;
+export const T_GREEN = 0.3;
+export const V2_L2 = 1e-4;
+// No champion (or a dim mismatch) => no model p: the base rate (~0.92
+// dead) makes all-red the accuracy-optimal fallback. Stamped as p_red.
+export const BASE_RATE_P = 0.92;
+
+export type Tier = "red_sure" | "red" | "yellow" | "green";
+
+// Pure policy: control flow in code. p = model P(dead_v2) at first sight
+// (null = no model), rule = hardRed(), jev = Jev's yellow/green choice.
+export function policyV2(p: number | null, rule: string | null, jev: string | null): { choice: "red" | "yellow" | "green"; tier: Tier } {
+	if (p !== null && p >= T_SURE) return { choice: "red", tier: "red_sure" };
+	if (rule) return { choice: "red", tier: "red" };
+	if (p === null || p > T_RED) return { choice: "red", tier: "red" };
+	if (p <= T_GREEN) return { choice: "green", tier: "green" };
+	// Model leans alive but not strongly: Jev may lift to green (its strict
+	// all-conditions bar), otherwise yellow.
+	if (jev === "green") return { choice: "green", tier: "green" };
+	return { choice: "yellow", tier: "yellow" };
+}
+
+function solveLinear(A: number[][], b: number[]): number[] {
+	const n = b.length;
+	const M = A.map((r, i) => [...r, b[i]]);
+	for (let c = 0; c < n; c++) {
+		let piv = c;
+		for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+		[M[c], M[piv]] = [M[piv], M[c]];
+		const d = M[c][c];
+		if (Math.abs(d) < 1e-12) continue;
+		for (let r = 0; r < n; r++) {
+			if (r === c) continue;
+			const f = M[r][c] / d;
+			if (f !== 0) for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+		}
+	}
+	return M.map((r, i) => (Math.abs(r[i]) < 1e-12 ? 0 : r[n] / r[i]));
+}
+
+// L2-regularized logistic regression by Newton/IRLS (converges in ~10-20
+// steps; plain GD at 500 iters left v2 underfit at AUC 0.64 vs 0.69).
+// Penalty = l2 * n / 2 * |w|^2, bias unpenalized. Deterministic.
+export function trainLRNewton(rows: Array<{ x: number[]; y: number }>, opts: { l2?: number; iters?: number } = {}): GoldModel {
+	const l2 = opts.l2 ?? V2_L2;
+	const iters = opts.iters ?? 30;
+	const d = FEATURES.length + 1;
+	const w = new Array<number>(d).fill(0);
+	const n = Math.max(1, rows.length);
+	const x = new Array<number>(d).fill(1);
+	for (let it = 0; it < iters; it++) {
+		const H: number[][] = Array.from({ length: d }, () => new Array<number>(d).fill(0));
+		const g = new Array<number>(d).fill(0);
+		for (const r of rows) {
+			for (let j = 0; j < d - 1; j++) x[j] = r.x[j] ?? 0;
+			x[d - 1] = 1;
+			let z = 0;
+			for (let j = 0; j < d; j++) z += w[j] * x[j];
+			const p = sigmoid(z);
+			const e = p - r.y;
+			const h = p * (1 - p);
+			for (let j = 0; j < d; j++) {
+				g[j] += e * x[j];
+				const hx = h * x[j];
+				for (let k = j; k < d; k++) H[j][k] += hx * x[k];
+			}
+		}
+		for (let j = 0; j < d; j++) {
+			for (let k = 0; k < j; k++) H[j][k] = H[k][j];
+			if (j < d - 1) { g[j] += l2 * n * w[j]; H[j][j] += l2 * n; }
+			H[j][j] += 1e-9;
+		}
+		const step = solveLinear(H, g);
+		let mx = 0;
+		for (let j = 0; j < d; j++) { w[j] -= step[j]; mx = Math.max(mx, Math.abs(step[j])); }
+		if (!(mx > 1e-7)) break;
+	}
+	return { weights: w.slice(0, d - 1), bias: w[d - 1], features: [...FEATURES] };
+}
+
+export function aucOf(ps: number[], ys: number[]): number | null {
+	const idx = ps.map((p, i) => [p, ys[i]] as [number, number]).sort((a, b) => a[0] - b[0]);
+	let sp = 0, np = 0, nn = 0;
+	for (let i = 0; i < idx.length;) {
+		let j = i;
+		while (j < idx.length && idx[j][0] === idx[i][0]) j++;
+		const avg = (i + j + 1) / 2;
+		for (let k = i; k < j; k++) { if (idx[k][1] === 1) { sp += avg; np++; } else nn++; }
+		i = j;
+	}
+	return np && nn ? (sp - (np * (np + 1)) / 2) / (np * nn) : null;
+}
+
+function ruleOf(r: TrainRow): string | null {
+	return hardRed({ liquidity_usd: r.liq, top1_pct: r.top1, early_buys: r.early, mint_age_min: r.age, txns_5m: r.txns });
+}
+
+export type TierStats = Record<Tier, { n: number; dead: number }>;
+export interface PolicyScore { n: number; acc: number | null; redP: number | null; reds: number; tiers: TierStats }
+
+// Replays policy v2 on labeled rows. Jev's yellow/green is NOT replayed
+// (verdicts.choice is overwritten by upgrades), so jev = null: validation
+// measures model + rules, which own every RED decision.
+export function scorePolicy(rows: TrainRow[], m: GoldModel | null): PolicyScore {
+	const tiers: TierStats = { red_sure: { n: 0, dead: 0 }, red: { n: 0, dead: 0 }, yellow: { n: 0, dead: 0 }, green: { n: 0, dead: 0 } };
+	let ok = 0, reds = 0, redDead = 0;
+	for (const r of rows) {
+		const p = m ? predict(m, buildFeatures(r)) : null;
+		const { choice, tier } = policyV2(p, ruleOf(r), null);
+		tiers[tier].n++;
+		tiers[tier].dead += r.dead;
+		if (correct(choice, r.dead)) ok++;
+		if (choice === "red") { reds++; redDead += r.dead; }
+	}
+	return { n: rows.length, acc: rows.length ? ok / rows.length : null, redP: reds ? redDead / reds : null, reds, tiers };
+}
+
+export interface SplitResultV2 {
+	labelV: number;
+	n: number;
+	nTrain: number;
+	nTest: number;
+	base: number | null;
+	auc: number | null;
+	champAcc: number | null;
+	champRedP: number | null;
+	chalAcc: number | null;
+	chalRedP: number | null;
+	allRedAcc: number | null;
+	allYellowAcc: number | null;
+	champIsBaseline: boolean;
+	tiers: TierStats | null;
+	model: GoldModel;
+}
+
+// Label-switch-safe validation (Oct 12): rows MUST carry the v2 label in
+// `dead`. The champion is scored by replaying ITS weights on the same test
+// slice under the same label — never via a stored accuracy measured on the
+// v1 label. With no same-label champion (champ = null: label just
+// switched, or dims changed) the bar is the all-red base-rate policy,
+// which the challenger must strictly beat (shouldPromote).
+export function timeSplitValidateV2(rows: TrainRow[], champ: GoldModel | null, opts: { l2?: number } = {}): SplitResultV2 {
+	const sorted = [...rows].sort((a, b) => a.ts - b.ts);
+	const n = sorted.length;
+	const k = Math.floor(n * 0.7);
+	const train = sorted.slice(0, k);
+	const test = sorted.slice(k);
+	const model = trainLRNewton(train.map((r) => ({ x: buildFeatures(r), y: r.dead })), { l2: opts.l2 ?? V2_L2 });
+	const champOk = champ !== null && champ.weights.length === FEATURES.length;
+	if (test.length < 5) {
+		return { labelV: LABEL_V, n, nTrain: train.length, nTest: test.length, base: null, auc: null, champAcc: null, champRedP: null, chalAcc: null, chalRedP: null, allRedAcc: null, allYellowAcc: null, champIsBaseline: !champOk, tiers: null, model };
+	}
+	const base = test.reduce((s, r) => s + r.dead, 0) / test.length;
+	const chal = scorePolicy(test, model);
+	const ch = scorePolicy(test, champOk ? champ : null);
+	const auc = aucOf(test.map((r) => predict(model, buildFeatures(r))), test.map((r) => r.dead));
+	return {
+		labelV: LABEL_V, n, nTrain: train.length, nTest: test.length, base, auc,
+		champAcc: ch.acc, champRedP: ch.redP, chalAcc: chal.acc, chalRedP: chal.redP,
+		allRedAcc: base, allYellowAcc: 1 - base, champIsBaseline: !champOk, tiers: chal.tiers, model,
+	};
+}
+// Shared retrain rowset (label v2, strictly first-sight features). Mirrored
+// by lib-local.mjs pullRows (offline gate/sweeps) — keep the two in sync.
+// - label = outcomes.dead_v2 (NULL = ungradeable, excluded);
+// - features from the FIRST snapshot, first-sight signals, and Jev factors;
+//   NO verdicts.p_red (overwritten by upgrades = leak);
+// - signals recomputed >10 min after first sight (signals-now) are not
+//   first-sight: nulled (unknown) instead of leaking later holder data.
+export const RETRAIN_SQL_V2 = "SELECT v.ts AS ts, o.dead_v2 AS dead, v.choice AS choice, r.first_seen AS seen, g.ts AS sigTs, "
+	+ "(SELECT liquidity_usd FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS liq, "
+	+ "(SELECT fdv FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS fdv, "
+	+ "(SELECT txns_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS txns, "
+	+ "(SELECT buys_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS buys, "
+	+ "(SELECT sells_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS sells, "
+	+ "(SELECT price_chg_h1 FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS chgH1, "
+	+ "(SELECT vol_h1 FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS volH1, "
+	+ "(SELECT pair_age_min FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS pairAge, "
+	+ "g.top1_pct AS top1, g.top2_11_pct AS t211, g.early_buys AS early, g.mint_age_min AS age, "
+	+ "g.pool_suspect AS pool, g.mint_auth_live AS mintLive, g.freeze_auth_live AS freezeLive, "
+	+ "g.simpson AS simpson, "
+	+ "v.f_whale AS fWhale, v.f_sell AS fSell, v.f_struct AS fStruct, r.source AS src FROM verdicts v "
+	+ "JOIN outcomes o ON o.mint = v.mint LEFT JOIN signals g ON g.mint = v.mint LEFT JOIN rounds r ON r.mint = v.mint "
+	+ "WHERE o.dead_v2 IS NOT NULL ORDER BY v.ts DESC LIMIT 8000";
+
+const nn = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+export const SIG_FIRST_SIGHT_MS = 10 * 60 * 1000;
+
+// One mapping for worker retrain and offline tools (lib-local.mjs).
+export function rowFromDb(r: Record<string, unknown>): TrainRow {
+	const seen = nn(r.seen), sigTs = nn(r.sigTs);
+	const sigOk = !(seen !== null && sigTs !== null && sigTs > seen + SIG_FIRST_SIGHT_MS);
+	const sg = (v: unknown) => (sigOk ? nn(v) : null);
+	return {
+		ts: Number(r.ts), dead: Number(r.dead) === 1 ? 1 : 0, choice: String(r.choice ?? "yellow"),
+		liq: nn(r.liq), fdv: nn(r.fdv), txns: nn(r.txns), buys: nn(r.buys), sells: nn(r.sells),
+		chgH1: nn(r.chgH1), volH1: nn(r.volH1), pairAge: nn(r.pairAge),
+		top1: sg(r.top1), t211: sg(r.t211), early: sg(r.early), age: sg(r.age), pool: sg(r.pool),
+		mintLive: sg(r.mintLive), freezeLive: sg(r.freezeLive), simpson: sg(r.simpson),
+		fWhale: nn(r.fWhale), fSell: nn(r.fSell), fStruct: nn(r.fStruct),
+		src: typeof r.src === "string" ? r.src : null,
 	};
 }

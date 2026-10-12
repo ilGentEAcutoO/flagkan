@@ -6,11 +6,12 @@
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { pullRows } from "./lib-local.mjs";
+import { compileTrain, pullRows } from "./lib-local.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const out = process.env.ROWS_OUT || "sweep-rows.json";
-const rows = pullRows(HERE);
-const doc = { dumpedAt: new Date().toISOString(), source: "radar-d1-main", n: rows.length, rows };
+const ml = await compileTrain(HERE, "dump-rows");
+const rows = pullRows(HERE, ml);
+const doc = { dumpedAt: new Date().toISOString(), source: "radar-d1-main", label: "v2", n: rows.length, rows };
 writeFileSync(path.join(HERE, out), JSON.stringify(doc));
 console.log(`dumped ${rows.length} rows -> ${out}`);

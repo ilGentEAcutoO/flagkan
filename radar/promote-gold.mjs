@@ -4,6 +4,7 @@
 // FEATURES match the current src/ml/train.ts exactly (order + length) —
 // prod builds features by position, so a dim mismatch would silently corrupt.
 // Dry run by default; pass --yes to actually write.
+// Requires migrate-v9.sql applied (models.label_v).
 // Usage: npm run promote          (from radar/, dry run)
 //        npm run promote -- --yes (writes to prod, then verifies via /api/diag)
 import { execSync } from "node:child_process";
@@ -48,22 +49,29 @@ if (!same) {
 	console.error("Retrain from current source (npm run train) before promoting.");
 	process.exit(1);
 }
-// Sweep gold carries its winning hyper params — the code defaults must match
-// (worker retrain + live bar use the defaults), else validation != live.
-if (gold.hyper) {
-	const dh = { posWeight: ml.DEFAULT_POS_WEIGHT, redBar: ml.DEFAULT_RED_BAR, l2: ml.DEFAULT_L2 };
-	if (gold.hyper.posWeight !== dh.posWeight || gold.hyper.redBar !== dh.redBar || gold.hyper.l2 !== dh.l2) {
-		console.error(`FAIL hyper drift: gold=${JSON.stringify(gold.hyper)} code=${JSON.stringify(dh)}`);
-		console.error("Set train.ts defaults to the winning hyper (and deploy) before promoting.");
+// Label-switch guard (Oct 12): the worker only loads champions whose
+// label_v equals train.ts LABEL_V, so a gold trained on another label
+// must never be promoted as if comparable.
+if (gold.labelV !== ml.LABEL_V) {
+	console.error(`FAIL label drift: gold labelV=${gold.labelV} code LABEL_V=${ml.LABEL_V} (retrain: npm run train)`);
+	process.exit(1);
+}
+// Gold carries the policy hyper it was validated with — code must match
+// (live policy thresholds + worker retrain use the code constants).
+{
+	const dh = { l2: ml.V2_L2, tRed: ml.T_RED, tSure: ml.T_SURE, tGreen: ml.T_GREEN };
+	const gh = gold.hyper ?? {};
+	if (gh.l2 !== dh.l2 || gh.tRed !== dh.tRed || gh.tSure !== dh.tSure || gh.tGreen !== dh.tGreen) {
+		console.error(`FAIL hyper drift: gold=${JSON.stringify(gh)} code=${JSON.stringify(dh)}`);
 		process.exit(1);
 	}
-	console.log(`hyper ok: ${JSON.stringify(gold.hyper)}`);
+	console.log(`hyper ok: ${JSON.stringify(gh)} labelV=${gold.labelV}`);
 }
 
 const m = gold.metrics ?? {};
 const f = (x) => (x === null || x === undefined ? "n/a" : Number(x).toFixed(4));
 console.log(`gold: savedAt=${gold.savedAt} gate=${gold.gate} dims=${gold.features.length} bias=${Number(gold.bias).toFixed(4)}`);
-console.log(`gold metrics: nTrain=${m.nTrain} chalAcc=${f(m.chalAcc)} chalRedP=${f(m.chalRedP)} silentReds=${m.chalRedSilent} (champ acc=${f(m.champAcc)} redP=${f(m.champRedP)})`);
+console.log(`gold metrics: nTrain=${m.nTrain} nTest=${m.nTest} base=${f(m.base)} AUC=${f(m.auc)} chalAcc=${f(m.chalAcc)} chalRedP=${f(m.chalRedP)} (all-red acc=${f(m.allRedAcc)})`);
 
 let prod = null;
 try {
@@ -82,9 +90,9 @@ if (!process.argv.includes("--yes")) {
 // names), so single-quoted SQL literals are safe. Write via temp --file.
 const q = (v) => (v === null || v === undefined ? "NULL" : String(Number(v)));
 const sql = `UPDATE models SET promoted = 0 WHERE promoted = 1;\n`
-	+ `INSERT INTO models (created_at, weights, bias, features, n_train, test_acc, test_n, champ_acc, promoted) VALUES (`
+	+ `INSERT INTO models (created_at, weights, bias, features, n_train, test_acc, test_n, champ_acc, promoted, label_v) VALUES (`
 	+ `${Date.now()}, '${JSON.stringify(gold.weights)}', ${q(gold.bias)}, '${JSON.stringify(gold.features)}', `
-	+ `${q(m.nTrain)}, ${q(m.chalAcc)}, ${q(m.nTest)}, ${q(m.champAcc)}, 1);`;
+	+ `${q(m.nTrain)}, ${q(m.chalAcc)}, ${q(m.nTest)}, ${q(m.champAcc)}, 1, ${q(gold.labelV)});`;
 const tmp = path.join(os.tmpdir(), `promote-gold-${Date.now()}.sql`);
 writeFileSync(tmp, sql);
 try {

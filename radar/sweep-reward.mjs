@@ -10,7 +10,7 @@ import { compileTrain, pullRows } from "./lib-local.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ml = await compileTrain(HERE, "sweep-reward");
-const rows = pullRows(HERE);
+const rows = pullRows(HERE, ml); // label v2 rows; this sweep is the LEGACY v1 GD/redBar search
 console.log(`rows: ${rows.length} dims: ${ml.FEATURES.length}`);
 
 const base = ml.timeSplitValidate(rows);

@@ -6,9 +6,10 @@ interface Env {
 	ADMIN_KEY: string;
 }
 
-import { hardRed, shadowGreen, timeSplitValidate, predict, buildFeatures, parseMintAuthorities, shouldPromote, memoryHit, FEATURES, demoteOneShot, DEMOTE_P_RED, DEFAULT_RED_BAR } from "./ml/train";
-import type { GoldModel, TrainRow, MemVector } from "./ml/train";
-import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence } from "./ml/upgrade";
+import { hardRed, shadowGreen, timeSplitValidateV2, RETRAIN_SQL_V2, rowFromDb, predict, buildFeatures, parseMintAuthorities, shouldPromote, FEATURES, LABEL_V, MODEL_V, POLICY_V, policyV2, BASE_RATE_P } from "./ml/train";
+import type { GoldModel, TrainRow } from "./ml/train";
+import { liqCrash, lateIlliquid, priceCrash, resolveDead, ruleConfidence, LABEL_V2 } from "./ml/upgrade";
+import type { SnapLite } from "./ml/upgrade";
 
 const DEX = "https://api.dexscreener.com";
 const UA = { "User-Agent": "Mozilla/5.0 (radar proof-of-concept)" };
@@ -105,44 +106,13 @@ async function jevVerdict(env: Env, state: Record<string, unknown>): Promise<any
 	return ((await r.json()) as any).answers;
 }
 
-// V4 demote (Oct 9, replay-verified on 2619 rows): illiquid/memory one-shot
-// reds become calibrated yellows with an audit marker. Runs AFTER every red
-// minter (rule override, model promote, memory) and BEFORE insert, so the
-// stored row is yellow and stays eligible for upgrade re-RED on measured
-// crashes. Shared by cron, verdict-now, signals-now and backfill.
-function applyDemote(a: any, vstate: Record<string, unknown>): void {
-	if (String(a.verdict?.choice ?? "") !== "red") return;
-	const dm = demoteOneShot(redSourceOf(a), hardRed(vstate));
-	if (!dm) return;
-	const pr = DEMOTE_P_RED[dm] ?? 0.15;
-	a.verdict = {
-		...(a.verdict ?? {}),
-		choice: "yellow",
-		confidence: Math.round((1 - pr) * 100) / 100,
-		probabilities: { red: pr, yellow: 1 - pr, green: 0 },
-	};
-	(a.verdict as any).redSource = dm;
-}
-
-function applyVerdictOverride(a: any, vstate: Record<string, unknown>, mint: string, tag: string): void {
-	const rule = hardRed(vstate);
+// Policy v2 (Oct 12): Jev answers yellow/green only (RED is code-owned);
+// anything else is sanitized to yellow before the policy runs. The V4
+// demote (illiquid/memory reds -> yellow) is REVERTED under label v2:
+// those channels die at 95-96% vs base 93.5% (see train.ts demoteOneShot).
+function sanitizeJev(a: any): string {
 	const llm = String(a.verdict?.choice ?? "yellow");
-	if (rule) {
-		const rc = ruleConfidence(rule);
-		a.verdict = {
-			...(a.verdict ?? {}),
-			choice: "red",
-			confidence: rc,
-			probabilities: { red: rc, yellow: 1 - rc, green: 0 },
-		};
-		(a.verdict as any).redSource = "rule:" + rule;
-		console.log(JSON.stringify({ [tag]: "hard_red", mint, rule }));
-	} else if (llm === "red") {
-		a.verdict = { ...(a.verdict ?? {}), choice: "yellow" };
-		console.log(JSON.stringify({ [tag]: "red_demoted", mint }));
-	} else if (llm !== "green" && llm !== "yellow") {
-		a.verdict = { ...(a.verdict ?? {}), choice: "yellow" };
-	}
+	return llm === "green" ? "green" : "yellow";
 }
 
 function numOrNull(v: unknown): number | null {
@@ -169,10 +139,14 @@ function memDistOf(a: any): number | null {
 	return Number.isFinite(d) ? d : null;
 }
 
+// Champion = newest promoted model trained on the CURRENT label version.
+// Label switch (v1 -> v2): v1-label champions are never loaded (label_v
+// filter) — the policy falls back to the all-red base rate until a v2
+// champion is promoted (promote-gold.mjs, or retrain beating all-red).
 async function loadChampion(env: Env): Promise<{ model: GoldModel; version: number } | null> {
 	const row = await env.DB_MAIN.prepare(
-		"SELECT version, weights, bias FROM models WHERE promoted = 1 ORDER BY version DESC LIMIT 1"
-	).first<{ version: number; weights: string; bias: number }>();
+		"SELECT version, weights, bias FROM models WHERE promoted = 1 AND label_v = ? ORDER BY version DESC LIMIT 1"
+	).bind(LABEL_V).first<{ version: number; weights: string; bias: number }>();
 	if (!row) return null;
 	try {
 		const w = JSON.parse(row.weights);
@@ -180,11 +154,6 @@ async function loadChampion(env: Env): Promise<{ model: GoldModel; version: numb
 		return { model: { weights: w.map(Number), bias: Number(row.bias), features: [...FEATURES] }, version: Number(row.version) };
 	} catch { return null; }
 }
-
-// Bar for the model to call red on its own: deliberately high so a model
-// red means strong measured evidence, not a coin flip. chalChoice in
-// train.ts mirrors this exact threshold for honest validation.
-const MODEL_RED_P = DEFAULT_RED_BAR;
 
 function liveRowFrom(a: any, vstate: Record<string, unknown>): TrainRow {
 	const txns = Number(vstate.txns_5m ?? 0);
@@ -196,7 +165,7 @@ function liveRowFrom(a: any, vstate: Record<string, unknown>): TrainRow {
 		early: numOrNull(vstate.early_buys), age: numOrNull(vstate.mint_age_min),
 		txns: Number.isFinite(txns) ? txns : null,
 		buys: Math.round((1 - ratio) * Math.max(0, txns)), sells: Math.round(ratio * Math.max(0, txns)),
-		pool: numOrNull(vstate.pool_suspect), pRed: Number(a.verdict?.probabilities?.red ?? 0.5),
+		pool: numOrNull(vstate.pool_suspect),
 		fWhale: noulOrNull(a.f_whale), fSell: noulOrNull(a.f_sell), fStruct: noulOrNull(a.f_struct),
 		src: typeof vstate.source === "string" ? vstate.source : null,
 		mintLive: numOrNull(vstate.mint_auth_live), freezeLive: numOrNull(vstate.freeze_auth_live),
@@ -205,87 +174,54 @@ function liveRowFrom(a: any, vstate: Record<string, unknown>): TrainRow {
 	};
 }
 
-async function maybeDemoteGreen(env: Env, a: any, vstate: Record<string, unknown>, mint: string, tag: string): Promise<void> {
-	if (String(a.verdict?.choice ?? "") !== "green") return;
+// Policy v2 decision, shared by cron, verdict-now, signals-now and
+// backfill. Code owns control flow: model P(dead_v2) on first-sight
+// features + hard rules decide RED / red_sure; Jev supplies its factor
+// judgments (model features) and yellow-vs-green; policyV2 (train.ts,
+// unit-tested) maps them to choice + tier. Writes a.verdict.{choice,
+// confidence, probabilities, redSource, tier}; p_red is the first-sight
+// P(dead) and is also stored as p_red_first (never touched by upgrades).
+async function decideV2(env: Env, a: any, vstate: Record<string, unknown>, mint: string, tag: string): Promise<void> {
+	const jev = sanitizeJev(a);
+	const rule = hardRed(vstate);
+	let p: number | null = null;
 	try {
 		const champ = await loadChampion(env);
-		if (!champ) return; // no model yet: gate open, keep the LLM green
-		if (predict(champ.model, buildFeatures(liveRowFrom(a, vstate))) >= 0.5) {
-			a.verdict = { ...(a.verdict ?? {}), choice: "yellow" };
-			console.log(JSON.stringify({ [tag]: "green_gated", mint }));
-		}
-	} catch { /* gate open on error: keep LLM green */ }
-}
-
-async function maybePromoteRed(env: Env, a: any, vstate: Record<string, unknown>, mint: string, tag: string): Promise<void> {
-	if (String(a.verdict?.choice ?? "") !== "yellow") return;
-	try {
-		const champ = await loadChampion(env);
-		if (!champ) return; // no model yet: no model reds
-		const p = predict(champ.model, buildFeatures(liveRowFrom(a, vstate)));
-		if (p >= MODEL_RED_P) {
-			a.verdict = {
-				...(a.verdict ?? {}),
-				choice: "red",
-				confidence: Math.round(p * 100) / 100,
-				probabilities: { red: p, yellow: 1 - p, green: 0 },
-			};
-			(a.verdict as any).redSource = "model";
-			console.log(JSON.stringify({ [tag]: "model_red", mint, p: Math.round(p * 1000) / 1000 }));
-		}
-	} catch { /* gate closed on error: keep LLM yellow */ }
-}
-
-// Rug memory recall (E3-4): every resolved-dead coin becomes a template vector;
-// a newcomer within cosine 0.98 of a known rug is flagged red. Near-duplicate
-// bar on purpose: uncalibrated recall must be conservative. Cached per isolate
-// (hourly refresh); precision tracked live via /api/proof memory_precision.
-const MEM_COS = 0.98;
-const MEM_CAP = 500;
-const MEM_TTL_MS = 3600 * 1000;
-let rugCache: { at: number; vecs: MemVector[] } | null = null;
-
-async function loadRugMemory(env: Env): Promise<MemVector[]> {
-	const now = Date.now();
-	if (rugCache && now - rugCache.at < MEM_TTL_MS) return rugCache.vecs;
-	const qr = await env.DB_MAIN.prepare(
-		"SELECT mint, vec FROM rug_vectors ORDER BY resolved_at DESC LIMIT ?"
-	).bind(MEM_CAP).all<{ mint: string; vec: string }>();
-	const vecs: MemVector[] = [];
-	for (const r of qr.results ?? []) {
-		try {
-			const v = JSON.parse(r.vec);
-			// Tolerant across feature growth: pad short (pre-src) vectors with
-			// neutral 0.5, truncate long ones, skip garbage.
-			if (!Array.isArray(v) || v.length < 10) continue;
-			const vv = v.map((x) => { const n = Number(x); return Number.isFinite(n) ? n : 0.5; });
-			while (vv.length < FEATURES.length) vv.push(0.5);
-			vecs.push({ mint: r.mint, v: vv.slice(0, FEATURES.length) });
-		} catch { /* skip corrupt rows */ }
+		if (champ) p = predict(champ.model, buildFeatures(liveRowFrom(a, vstate)));
+	} catch { p = null; /* no model: base-rate all-red fallback */ }
+	const { choice, tier } = policyV2(p, rule, jev);
+	// p_red: model p when available; else the measured stamp of whatever
+	// called it (rule precision / base rate).
+	const pRed = p ?? (rule ? ruleConfidence(rule) : BASE_RATE_P);
+	let conf: number;
+	let redSource: string | null = null;
+	if (choice === "red") {
+		conf = Math.max(pRed, rule ? ruleConfidence(rule) : 0);
+		redSource = tier === "red_sure" ? "model" : rule ? "rule:" + rule : p !== null ? "model" : "base_rate";
+	} else {
+		conf = 1 - pRed;
 	}
-	rugCache = { at: now, vecs };
-	return vecs;
+	a.verdict = {
+		...(a.verdict ?? {}),
+		choice,
+		confidence: Math.round(conf * 1000) / 1000,
+		probabilities: { red: pRed, yellow: choice === "green" ? 0 : 1 - pRed, green: choice === "green" ? 1 - pRed : 0 },
+	};
+	(a.verdict as any).redSource = redSource;
+	(a.verdict as any).tier = tier;
+	console.log(JSON.stringify({ [tag]: "policy_v2", mint, tier, p: p === null ? null : Math.round(p * 1000) / 1000, rule, jev }));
 }
 
-async function maybeMemoryRed(env: Env, a: any, vstate: Record<string, unknown>, mint: string, tag: string): Promise<void> {
-	if (String(a.verdict?.choice ?? "") === "red") return;
-	try {
-		const mem = await loadRugMemory(env);
-		if (mem.length === 0) return;
-		const hit = memoryHit(buildFeatures(liveRowFrom(a, vstate)), mem, mint, MEM_COS);
-		if (!hit) return;
-		const cos = Math.round(hit.cos * 10000) / 10000;
-		a.verdict = {
-			...(a.verdict ?? {}),
-			choice: "red",
-			confidence: Math.round(cos * 100) / 100,
-			probabilities: { red: cos, yellow: 1 - cos, green: 0 },
-		};
-		(a.verdict as any).redSource = "memory";
-		(a.verdict as any).memDist = Math.round((1 - cos) * 10000) / 10000;
-		console.log(JSON.stringify({ [tag]: "memory_red", mint, near: hit.mint.slice(0, 8), cos }));
-	} catch { /* memory is best-effort: never break verdicts */ }
+function tierOf(a: any): string | null {
+	const t = (a?.verdict as any)?.tier;
+	return typeof t === "string" ? t : null;
 }
+
+// Rug memory (E3-4) no longer mints RED under policy v2: with label v2
+// ~92% of resolved coins are dead, so "near a dead coin" carries no
+// information beyond the model. Dead vectors are still stored (audit).
+const MEM_CAP = 500;
+let rugCache: { at: number; vecs: Array<{ mint: string; v: number[] }> } | null = null;
 
 // Rebuild the 20-dim feature vector from stored first-seen state (first
 // snapshot + signals + verdict factors). Same inputs as training rows, so
@@ -325,10 +261,13 @@ async function vecForMint(env: Env, mint: string): Promise<number[] | null> {
 // 289 resolved rows: liq crash 50% (72.2%, same-feed only), fresh
 // illiquidity (12/12 dead, same-feed only), price crash 70% (66.7%,
 // feed-agnostic — the trigger dex-batch refresh drives for gecko
-// long-tail), or champion p>=0.85 on the latest tape. Never downgrades,
+// long-tail). Policy v2 dropped the model trigger (a first-sight model
+// scored on later tape, fed the leaky p_red stub). Never downgrades,
 // never fires post-resolution — proof counts the final pre-outcome call.
-const UPGRADE_P = 0.72;
-const PRICE_CRASH_P = 0.67;
+// Restamped to label-v2 measured precision (live history re-graded):
+// liq_crash 0.842 (n=19), price_crash 0.956 (n=1591).
+const UPGRADE_P = 0.84;
+const PRICE_CRASH_P = 0.95;
 
 async function maybeUpgrade(env: Env, mint: string, m: Market, now: number, feed: string): Promise<void> {
 	try {
@@ -354,78 +293,47 @@ async function maybeUpgrade(env: Env, mint: string, m: Market, now: number, feed
 		if (liqCrash(feed, feedFirst, liq1, m.liq)) why = "liq_crash";
 		else if (lateIlliquid(feed, feedFirst, liq1, m.liq)) { why = "late_illiquid"; p = 0.85; }
 		else if (priceCrash(px1, m.price)) { why = "price_crash"; p = PRICE_CRASH_P; }
-		if (!why) {
-			try {
-				const champ = await loadChampion(env);
-				if (champ) {
-					const sig = await env.DB_MAIN.prepare(
-						"SELECT top1_pct, top2_11_pct, pool_suspect, early_buys, mint_age_min, mint_auth_live, freeze_auth_live, simpson FROM signals WHERE mint = ?"
-					).bind(mint).first<any>();
-					const vs = marketToVstate(mint, m, (sig ?? {}) as Record<string, unknown>, r?.source ?? null);
-					const stub = { verdict: { probabilities: { red: Number(v.p_red ?? 0.5) } } };
-					const mp = predict(champ.model, buildFeatures(liveRowFrom(stub, vs)));
-					if (mp >= MODEL_RED_P) { why = "model"; p = mp; }
-				}
-			} catch { /* model upgrade best-effort */ }
-		}
 		if (!why) return;
 		await env.DB_MAIN.prepare(
-			"UPDATE verdicts SET choice = 'red', confidence = ?, p_red = ?, p_yellow = ?, p_green = 0, upgraded_from = ?, upgraded_ts = ?, red_source = 'upgrade', upgrade_why = ?, mem_dist = NULL WHERE mint = ?"
+			// p_red_first is deliberately NOT touched: it stays the first-sight
+			// P(dead) (leak-free training/audit column). tier follows the final call.
+			"UPDATE verdicts SET choice = 'red', confidence = ?, p_red = ?, p_yellow = ?, p_green = 0, upgraded_from = ?, upgraded_ts = ?, red_source = 'upgrade', upgrade_why = ?, mem_dist = NULL, tier = 'red' WHERE mint = ?"
 		).bind(Math.round(p * 100) / 100, p, 1 - p, String(v.choice), now, String(why), mint).run();
 		console.log(JSON.stringify({ upgrade: why, mint, from: String(v.choice), p: Math.round(p * 1000) / 1000, feed }));
 	} catch { /* upgrades never break the snapshot path */ }
 }
 
+// Retrain (label v2, model v8+). Label-switch promotion: the champion is
+// the newest promoted model with label_v = LABEL_V; v1-label models are
+// never compared (their accuracy was measured on a different label). The
+// champion is re-scored on THIS test slice under the v2 label; with no v2
+// champion the bar is the all-red base-rate policy (what live serves when
+// no champion loads). Strict accuracy win, ties on red precision.
 async function retrain(env: Env, dryRun: boolean): Promise<Record<string, unknown>> {
 	const now = Date.now();
-	const qr = await env.DB_MAIN.prepare(
-		"SELECT v.ts AS ts, o.dead AS dead, v.choice AS choice, "
-		+ "(SELECT liquidity_usd FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS liq, "
-		+ "(SELECT fdv FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS fdv, "
-		+ "(SELECT txns_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS txns, "
-		+ "(SELECT txns_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts DESC LIMIT 1) AS txnsLast, o.mult AS mult, "
-		+ "(SELECT buys_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS buys, "
-		+ "(SELECT sells_5m FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS sells, "
-		+ "(SELECT price_chg_h1 FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS chgH1, "
-		+ "(SELECT vol_h1 FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS volH1, "
-		+ "(SELECT pair_age_min FROM snapshots s WHERE s.mint = v.mint ORDER BY ts ASC LIMIT 1) AS pairAge, "
-		+ "g.top1_pct AS top1, g.top2_11_pct AS t211, g.early_buys AS early, g.mint_age_min AS age, "
-		+ "g.pool_suspect AS pool, g.mint_auth_live AS mintLive, g.freeze_auth_live AS freezeLive, "
-		+ "g.simpson AS simpson, v.p_red AS pRed, "
-		+ "v.f_whale AS fWhale, v.f_sell AS fSell, v.f_struct AS fStruct, r.source AS src FROM verdicts v "
-		+ "JOIN outcomes o ON o.mint = v.mint LEFT JOIN signals g ON g.mint = v.mint LEFT JOIN rounds r ON r.mint = v.mint "
-		+ "ORDER BY v.ts DESC LIMIT 5000"
-	).all<any>();
-	const rows: TrainRow[] = (qr.results ?? []).map((r: any) => ({
-		ts: Number(r.ts), dead: Number(r.dead) === 1 ? 1 : 0, choice: String(r.choice ?? "yellow"),
-		liq: numOrNull(r.liq), top1: numOrNull(r.top1), t211: numOrNull(r.t211), fdv: numOrNull(r.fdv),
-		early: numOrNull(r.early), age: numOrNull(r.age), txns: numOrNull(r.txns),
-		buys: numOrNull(r.buys), sells: numOrNull(r.sells), pool: numOrNull(r.pool), pRed: numOrNull(r.pRed),
-		mintLive: numOrNull(r.mintLive), freezeLive: numOrNull(r.freezeLive),
-		chgH1: numOrNull(r.chgH1), volH1: numOrNull(r.volH1), pairAge: numOrNull(r.pairAge),
-		simpson: numOrNull(r.simpson),
-		fWhale: numOrNull(r.fWhale), fSell: numOrNull(r.fSell), fStruct: numOrNull(r.fStruct),
-		src: typeof r.src === "string" ? r.src : null,
-		// E2-2: zombie = price exactly frozen with zero trading at both ends
-		// (mirrors resolveDead: null txns count as traded, never zombie).
-		zombie: Number(r.mult) === 1 && Number(r.txns) === 0 && Number(r.txnsLast) === 0
-			&& r.txns != null && r.txnsLast != null && r.mult != null,
-	}));
-	if (rows.length < 30) return { ok: false, reason: "not_enough_data", n: rows.length };
-	const res = timeSplitValidate(rows);
-	if (res.nSilentTrain < 30) return { ok: false, reason: "not_enough_silent", n: res.n, nSilentTrain: res.nSilentTrain };
-	const out: Record<string, unknown> = { ok: true, dryRun, n: res.n, nTrain: res.nTrain, nTest: res.nTest, champAcc: res.champAcc, chalAcc: res.chalAcc, champRedP: res.champRedP, chalRedP: res.chalRedP, nSilentTrain: res.nSilentTrain, nSilentTest: res.nSilentTest, chalAccSilent: res.chalAccSilent, chalRedPSilent: res.chalRedPSilent, chalRedSilent: res.chalRedSilent, nZombieDropped: res.nZombieDropped, promoted: false, version: null };
+	const qr = await env.DB_MAIN.prepare(RETRAIN_SQL_V2).all<Record<string, unknown>>();
+	const rows: TrainRow[] = (qr.results ?? []).map(rowFromDb);
+	if (rows.length < 200) return { ok: false, reason: "not_enough_data", n: rows.length, labelV: LABEL_V };
+	const champ = await loadChampion(env).catch(() => null);
+	const res = timeSplitValidateV2(rows, champ?.model ?? null);
+	const out: Record<string, unknown> = {
+		ok: true, dryRun, labelV: LABEL_V, modelV: MODEL_V, n: res.n, nTrain: res.nTrain, nTest: res.nTest,
+		base: res.base, auc: res.auc, allRedAcc: res.allRedAcc, allYellowAcc: res.allYellowAcc,
+		champVersion: champ?.version ?? null, champIsBaseline: res.champIsBaseline,
+		champAcc: res.champAcc, chalAcc: res.chalAcc, champRedP: res.champRedP, chalRedP: res.chalRedP,
+		tiers: res.tiers, promoted: false, version: null,
+	};
 	const promotable = res.chalAcc != null && res.champAcc != null
 		&& shouldPromote({ acc: res.champAcc, redP: res.champRedP }, { acc: res.chalAcc, redP: res.chalRedP });
 	if (!dryRun && promotable) {
 		await env.DB_MAIN.prepare("UPDATE models SET promoted = 0 WHERE promoted = 1").run();
 		const ins = await env.DB_MAIN.prepare(
-			"INSERT INTO models (created_at, weights, bias, features, n_train, test_acc, test_n, champ_acc, promoted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)"
-		).bind(now, JSON.stringify(res.model.weights), res.model.bias, JSON.stringify(res.model.features), res.nTrain, res.chalAcc, res.nTest, res.champAcc).run();
+			"INSERT INTO models (created_at, weights, bias, features, n_train, test_acc, test_n, champ_acc, promoted, label_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)"
+		).bind(now, JSON.stringify(res.model.weights), res.model.bias, JSON.stringify(res.model.features), res.nTrain, res.chalAcc, res.nTest, res.champAcc, LABEL_V).run();
 		out.promoted = true;
 		out.version = Number((ins.meta as any)?.last_row_id ?? 0);
 	}
-	console.log(JSON.stringify({ cron: "retrain", n: res.n, nSilentTrain: res.nSilentTrain, champAcc: res.champAcc, chalAcc: res.chalAcc, champRedP: res.champRedP, chalRedP: res.chalRedP, chalRedPSilent: res.chalRedPSilent, chalRedSilent: res.chalRedSilent, promoted: out.promoted }));
+	console.log(JSON.stringify({ cron: "retrain", labelV: LABEL_V, n: res.n, auc: res.auc, base: res.base, champAcc: res.champAcc, chalAcc: res.chalAcc, champRedP: res.champRedP, chalRedP: res.chalRedP, champIsBaseline: res.champIsBaseline, promoted: out.promoted }));
 	return out;
 }
 
@@ -717,14 +625,10 @@ async function recordMint(
 				}
 				const vstate = marketToVstate(mint, m, sig, source);
 				const a = await jevVerdict(env, vstate);
-				applyVerdictOverride(a, vstate, mint, "cron");
-				await maybeDemoteGreen(env, a, vstate, mint, "cron");
-				await maybePromoteRed(env, a, vstate, mint, "cron");
-				await maybeMemoryRed(env, a, vstate, mint, "cron");
-				applyDemote(a, vstate);
+				await decideV2(env, a, vstate, mint, "cron");
 				const shadow = shadowGreen(vstate) && String(a.verdict?.choice ?? "") !== "green" ? "green" : null;
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, shadow, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, shadow, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -742,7 +646,10 @@ async function recordMint(
 						noulOrNull(a.f_struct),
 						redSourceOf(a),
 						memDistOf(a),
-						hardRed(vstate)
+						hardRed(vstate),
+						Number(a.verdict?.probabilities?.red ?? 0),
+						tierOf(a),
+						POLICY_V
 					)
 					.run();
 				doVerdict.budget--;
@@ -947,27 +854,39 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 	for (const row of stale.results ?? []) {
 		try {
 			const first = await env.DB_MAIN.prepare(
-				"SELECT price_usd AS p, txns_5m AS t FROM snapshots WHERE mint = ? ORDER BY ts ASC LIMIT 1"
+				"SELECT ts, price_usd AS p, liquidity_usd AS l, txns_5m AS t, vol_h1 AS v, feed FROM snapshots WHERE mint = ? ORDER BY ts ASC LIMIT 1"
 			)
 				.bind(row.mint)
-				.first<{ p: number; t: number }>();
+				.first<{ ts: number; p: number; l: number | null; t: number; v: number | null; feed: string | null }>();
 			const last = await env.DB_MAIN.prepare(
-				"SELECT price_usd AS p, liquidity_usd AS l, txns_5m AS t, feed FROM snapshots WHERE mint = ? ORDER BY ts DESC LIMIT 1"
+				"SELECT ts, price_usd AS p, liquidity_usd AS l, txns_5m AS t, vol_h1 AS v, feed FROM snapshots WHERE mint = ? ORDER BY ts DESC LIMIT 1"
 			)
 				.bind(row.mint)
-				.first<{ p: number; l: number; t: number; feed: string | null }>();
+				.first<{ ts: number; p: number; l: number; t: number; v: number | null; feed: string | null }>();
 			const fp = Number(first?.p ?? 0);
 			const lp = Number(last?.p ?? 0);
 			if (fp <= 0) continue;
 			const mult = lp / fp;
-			// Feed-aware outcome: the <1000 liq clause needs same-feed liq
-			// (dex reports structural 0 for ungraduated coins — without the
-			// guard every healthy pump coin would resolve dead).
-			const { dead } = resolveDead(mult, last?.l ?? null, last?.feed ?? null, row.source, first?.t ?? null, last?.t ?? null);
+			// Label v2 idle check on feeds without h1 volume needs the
+			// earliest sample 55-120 min before the last one (frozen price).
+			let prior: { ts: number; p: number } | null = null;
+			if (last && last.v == null) {
+				prior = await env.DB_MAIN.prepare(
+					"SELECT ts, price_usd AS p FROM snapshots WHERE mint = ? AND ts >= ? AND ts <= ? ORDER BY ts ASC LIMIT 1"
+				).bind(row.mint, Number(last.ts) - LABEL_V2.priorMaxMs, Number(last.ts) - LABEL_V2.priorMinMs).first<{ ts: number; p: number }>();
+			}
+			const lite = (x: any): SnapLite | null => (x ? { ts: Number(x.ts), price: numOrNull(x.p), liq: numOrNull(x.l), feed: x.feed ?? null, tx5: numOrNull(x.t), volH1: numOrNull(x.v) } : null);
+			// v1 (legacy column `dead`, frozen semantics): feed-aware liq clause
+			// vs rounds.source. v2: same + idle clause; intake feed falls back to
+			// the first snapshot's feed for legacy rounds with NULL source.
+			const v1 = resolveDead(mult, last?.l ?? null, last?.feed ?? null, row.source, first?.t ?? null, last?.t ?? null);
+			const dead = v1.dead;
+			const v2 = resolveDead(mult, last?.l ?? null, last?.feed ?? null, row.source ?? first?.feed ?? null, first?.t ?? null, last?.t ?? null,
+				{ first: lite(first), last: lite(last), prior: prior ? { ts: Number(prior.ts), price: numOrNull(prior.p), liq: null, feed: null, tx5: null, volH1: null } : null, resolvedAt: now });
 			await env.DB_MAIN.prepare(
-				"INSERT OR REPLACE INTO outcomes (mint, resolved_at, first_price, last_price, mult, dead) VALUES (?, ?, ?, ?, ?, ?)"
+				"INSERT OR REPLACE INTO outcomes (mint, resolved_at, first_price, last_price, mult, dead, dead_v2, idle) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)
-				.bind(row.mint, now, fp, lp, mult, dead)
+				.bind(row.mint, now, fp, lp, mult, dead, v2.dead_v2 ?? null, v2.idle ?? null)
 				.run();
 			if (dead === 1) {
 				// Every rug becomes a memory template immediately — the system
@@ -1036,7 +955,7 @@ export default {
 				WHERE (o.mint IS NULL OR o.resolved_at > ?) AND (? = 0 OR o.mint IS NOT NULL)`;
 			const orderTail = resFlag ? "o.resolved_at DESC, r.mint ASC" : "r.first_seen DESC, r.mint ASC";
 			const rows = await env.DB_MAIN.prepare(
-				`SELECT r.mint, r.first_seen, r.name, v.choice, v.confidence, o.mult, o.dead,
+				`SELECT r.mint, r.first_seen, r.name, v.choice, v.confidence, o.mult, o.dead, v.tier, v.policy_v, o.dead_v2,
 				(SELECT price_usd FROM snapshots s WHERE s.mint = r.mint ORDER BY ts DESC LIMIT 1) AS last_price,
 				(SELECT liquidity_usd FROM snapshots s WHERE s.mint = r.mint ORDER BY ts DESC LIMIT 1) AS last_liq,
 				g.top1_pct AS top1, o.resolved_at AS resolved_at
@@ -1172,6 +1091,77 @@ export default {
 				return { lo: i / 10, n: b.n, accuracy: acc, avg_confidence: avg };
 			});
 			const r3 = (x: number | null) => (x === null ? null : Math.round(x * 1000) / 1000);
+			// Proof v2 contract (Oct 12) — ADDITIVE: every legacy top-level
+			// field above stays exactly as before (label v1). headline = live
+			// policy-v2 verdicts graded by label v2; v2_history_regrade = older
+			// verdicts re-graded with label v2 (transparency only). One grouped
+			// scan; fenced so a missing column (pre-migration) never breaks the
+			// legacy fields.
+			const v2: Record<string, unknown> = {
+				label: "v2",
+				label_def: {
+					horizon_h: LABEL_V2.horizonH, price_drop: LABEL_V2.priceDrop, liq_usd: LABEL_V2.liqUsd, idle_window_h: LABEL_V2.idleWindowH,
+					text_en: "Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
+					text_th: "ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
+				},
+			};
+			try {
+				const g = await env.DB_MAIN.prepare(
+					`SELECT CASE WHEN v.policy_v >= 2 THEN 2 ELSE 1 END AS pv, v.tier AS tier, v.choice AS choice,
+					COUNT(*) AS n, SUM(o.dead_v2) AS dead
+					FROM verdicts v JOIN outcomes o ON o.mint = v.mint
+					WHERE v.source = 'live' AND o.dead_v2 IS NOT NULL GROUP BY pv, v.tier, v.choice`
+				).all<{ pv: number; tier: string | null; choice: string; n: number; dead: number }>();
+				const sinceRow = await env.DB_MAIN.prepare(
+					"SELECT MIN(ts) AS t FROM verdicts WHERE source = 'live' AND policy_v >= 2"
+				).first<{ t: number | null }>();
+				const agg = (pv: number) => {
+					let n2 = 0, dead = 0, reds = 0, redDead = 0;
+					const tiers: Record<string, { n: number; dead: number }> = { red_sure: { n: 0, dead: 0 }, red: { n: 0, dead: 0 }, yellow: { n: 0, dead: 0 }, green: { n: 0, dead: 0 } };
+					for (const r of g.results ?? []) {
+						if (Number(r.pv) !== pv) continue;
+						const cn = Number(r.n), cd = Number(r.dead ?? 0);
+						n2 += cn; dead += cd;
+						const isRed = r.choice === "red";
+						if (isRed) { reds += cn; redDead += cd; }
+						const t = r.tier && tiers[r.tier] ? r.tier : isRed ? "red" : r.choice === "green" ? "green" : "yellow";
+						tiers[t].n += cn; tiers[t].dead += cd;
+					}
+					const nonRed = n2 - reds;
+					const nonRedAlive = nonRed - (dead - redDead);
+					const base = n2 ? dead / n2 : null;
+					const correct = redDead + nonRedAlive;
+					const aliveNR = nonRed ? nonRedAlive / nonRed : null;
+					return {
+						n: n2, base, acc: n2 ? correct / n2 : null, reds,
+						redP: reds ? redDead / reds : null, redRecall: dead ? redDead / dead : null,
+						aliveNR, lift: aliveNR !== null && base !== null && base < 1 ? aliveNR / (1 - base) : null,
+						tiers: (["red_sure", "red", "yellow", "green"] as const).map((t) => ({ tier: t, n: tiers[t].n, dead_rate: tiers[t].n ? r3(tiers[t].dead / tiers[t].n) : null })),
+					};
+				};
+				const h = agg(2);
+				const old = agg(1);
+				v2.headline = {
+					policy: POLICY_V, since: sinceRow?.t ?? null, n: h.n, ready: h.n >= 100,
+					base_dead_rate: r3(h.base), accuracy: r3(h.acc),
+					baseline_all_red_accuracy: r3(h.base), baseline_all_yellow_accuracy: h.base === null ? null : r3(1 - h.base),
+					red_precision: r3(h.redP), red_recall: r3(h.redRecall), reds: h.reds,
+					alive_rate_non_red: r3(h.aliveNR), lift_non_red: r3(h.lift),
+					tiers: h.tiers,
+				};
+				v2.v2_history_regrade = {
+					n: old.n, base_dead_rate: r3(old.base), accuracy: r3(old.acc), red_precision: r3(old.redP),
+					note: "verdicts made before policy v2, re-graded with label v2 — transparency only",
+				};
+			} catch (e) {
+				v2.headline = { policy: POLICY_V, since: null, n: 0, ready: false, base_dead_rate: null, accuracy: null, baseline_all_red_accuracy: null, baseline_all_yellow_accuracy: null, red_precision: null, red_recall: null, reds: 0, alive_rate_non_red: null, lift_non_red: null, tiers: (["red_sure", "red", "yellow", "green"] as const).map((t) => ({ tier: t, n: 0, dead_rate: null })) };
+				v2.v2_error = String(e).slice(0, 120);
+			}
+			v2.legacy_v1 = {
+				resolved_with_verdict: n,
+				accuracy: n ? Number(row?.correct ?? 0) / n : null,
+				red_precision: Number(row?.reds ?? 0) ? Number(row?.red_dead ?? 0) / Number(row?.reds) : null,
+			};
 			return json({
 				resolved_with_verdict: n,
 				correct: Number(row?.correct ?? 0),
@@ -1195,6 +1185,7 @@ export default {
 				conf_n: brierN,
 				conf_deciles: deciles.map((d) => ({ ...d, accuracy: r3(d.accuracy), avg_confidence: r3(d.avg_confidence) })),
 				note: n < 50 ? "warming up: need 50+ resolved rounds" : "ready",
+				...v2,
 			});
 		}
 
@@ -1243,14 +1234,15 @@ export default {
 		if (url.pathname === "/api/diag") {
 			let model: unknown = null;
 			try {
-				const m = await env.DB_MAIN.prepare("SELECT version, test_acc, n_train, created_at FROM models WHERE promoted = 1 ORDER BY version DESC LIMIT 1").first<{ version: number; test_acc: number; n_train: number; created_at: number }>();
-				if (m) model = { version: m.version, testAcc: m.test_acc, nTrain: m.n_train, createdAt: m.created_at };
+				const m = await env.DB_MAIN.prepare("SELECT version, test_acc, n_train, created_at, label_v FROM models WHERE promoted = 1 ORDER BY version DESC LIMIT 1").first<{ version: number; test_acc: number; n_train: number; created_at: number; label_v: number | null }>();
+				if (m) model = { version: m.version, testAcc: m.test_acc, nTrain: m.n_train, createdAt: m.created_at, labelV: m.label_v ?? 1, servesPolicy: (m.label_v ?? 1) === LABEL_V };
 			} catch { /* diag stays up without model info */ }
 			return json({
 				hasKey: Boolean(env.TYPESAFE_API_KEY),
 				keyLen: (env.TYPESAFE_API_KEY || "").length,
 				now: Date.now(),
 				model,
+				policy: { policyV: POLICY_V, labelV: LABEL_V, modelCodeV: MODEL_V, dims: FEATURES.length },
 			});
 		}
 
@@ -1303,13 +1295,9 @@ export default {
 				const rsrc = await env.DB_MAIN.prepare("SELECT source FROM rounds WHERE mint = ?").bind(mint).first<{ source: string | null }>();
 				const state = marketToVstate(mint, m, sig, rsrc?.source ?? null);
 				const a = await jevVerdict(env, state);
-				applyVerdictOverride(a, state, mint, "verdict_now");
-				await maybeDemoteGreen(env, a, state, mint, "verdict_now");
-				await maybePromoteRed(env, a, state, mint, "verdict_now");
-				await maybeMemoryRed(env, a, state, mint, "verdict_now");
-				applyDemote(a, state);
+				await decideV2(env, a, state, mint, "verdict_now");
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -1326,7 +1314,10 @@ export default {
 						noulOrNull(a.f_struct),
 						redSourceOf(a),
 						memDistOf(a),
-						hardRed(state)
+						hardRed(state),
+						Number(a.verdict?.probabilities?.red ?? 0),
+						tierOf(a),
+						POLICY_V
 					)
 					.run();
 				return json({ mint, state, answers: a });
@@ -1356,13 +1347,9 @@ export default {
 				const rsrc3 = await env.DB_MAIN.prepare("SELECT source FROM rounds WHERE mint = ?").bind(mint).first<{ source: string | null }>();
 				const vstate3 = marketToVstate(mint, m, s as unknown as Record<string, unknown>, rsrc3?.source ?? null);
 				const a = await jevVerdict(env, vstate3);
-				applyVerdictOverride(a, vstate3, mint, "signals_now");
-				await maybeDemoteGreen(env, a, vstate3, mint, "signals_now");
-				await maybePromoteRed(env, a, vstate3, mint, "signals_now");
-				await maybeMemoryRed(env, a, vstate3, mint, "signals_now");
-				applyDemote(a, vstate3);
+				await decideV2(env, a, vstate3, mint, "signals_now");
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -1379,7 +1366,10 @@ export default {
 						noulOrNull(a.f_struct),
 						redSourceOf(a),
 						memDistOf(a),
-						hardRed(vstate3)
+						hardRed(vstate3),
+						Number(a.verdict?.probabilities?.red ?? 0),
+						tierOf(a),
+						POLICY_V
 					)
 					.run();
 				return json({ mint, signals: s, answers: a });
@@ -1479,13 +1469,9 @@ export default {
 						}
 					}
 					const a = await jevVerdict(env, vstate);
-					applyVerdictOverride(a, vstate, c.mint, "backfill");
-					await maybeDemoteGreen(env, a, vstate, c.mint, "backfill");
-					await maybePromoteRed(env, a, vstate, c.mint, "backfill");
-					await maybeMemoryRed(env, a, vstate, c.mint, "backfill");
-					applyDemote(a, vstate);
+					await decideV2(env, a, vstate, c.mint, "backfill");
 					await env.DB_MAIN.prepare(
-						"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, source, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'backfill', ?, ?, ?, ?, ?, ?)"
+						"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, source, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'backfill', ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 					)
 						.bind(
 							c.mint,
@@ -1502,7 +1488,10 @@ export default {
 							noulOrNull(a.f_struct),
 							redSourceOf(a),
 							memDistOf(a),
-							hardRed(vstate)
+							hardRed(vstate),
+							Number(a.verdict?.probabilities?.red ?? 0),
+							tierOf(a),
+							POLICY_V
 						)
 						.run();
 					results.push({ mint: c.mint, choice: String(a.verdict?.choice ?? "yellow") });
