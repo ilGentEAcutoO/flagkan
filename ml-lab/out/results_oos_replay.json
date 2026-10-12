@@ -1,0 +1,187 @@
+{
+ "what": "Out-of-sample replay: coins first seen AFTER the GBM training dump cutoff, never in its training set",
+ "gbm_v": "gbm27-2026-10-12",
+ "lr_champion": {
+  "version": 9,
+  "n_train": 5600,
+  "created_at": 1791775068501
+ },
+ "v8_gold": {
+  "modelV": 8,
+  "savedAt": "2026-10-12T03:00:54.669Z"
+ },
+ "gbm_train_cutoff_first_seen": 1791767148432,
+ "gbm_train_cutoff_iso": "2026-10-12 01:05 UTC",
+ "n": 357,
+ "first_seen_range": [
+  "2026-10-12 01:10 UTC",
+  "2026-10-12 06:05 UTC"
+ ],
+ "dead_rate": 0.9412,
+ "all_red_acc": 0.9412,
+ "base_rate_brier": 0.0554,
+ "models": {
+  "gbm": {
+   "auc": 0.7759,
+   "auc_ci95": [
+    0.6523,
+    0.8817
+   ],
+   "acc_p05": 0.9412,
+   "n_red_p05": 353,
+   "red_precision_p05": 0.9462,
+   "brier": 0.0472,
+   "red_prec_cov50": {
+    "k": 178,
+    "precision": 0.9831
+   },
+   "red_prec_cov80": {
+    "k": 286,
+    "precision": 0.972
+   },
+   "survivor_low5": {
+    "k": 18,
+    "alive": 8,
+    "alive_rate": 0.4444
+   },
+   "survivor_low10": {
+    "k": 36,
+    "alive": 9,
+    "alive_rate": 0.25
+   },
+   "red_sure_0996": {
+    "n": 1,
+    "dead": 1,
+    "precision": 1.0
+   },
+   "mean_p": 0.9487
+  },
+  "lr_v9": {
+   "auc": 0.7358,
+   "auc_ci95": [
+    0.6127,
+    0.8515
+   ],
+   "acc_p05": 0.9412,
+   "n_red_p05": 355,
+   "red_precision_p05": 0.9437,
+   "brier": 0.0509,
+   "red_prec_cov50": {
+    "k": 178,
+    "precision": 0.9719
+   },
+   "red_prec_cov80": {
+    "k": 286,
+    "precision": 0.965
+   },
+   "survivor_low5": {
+    "k": 18,
+    "alive": 4,
+    "alive_rate": 0.2222
+   },
+   "survivor_low10": {
+    "k": 36,
+    "alive": 10,
+    "alive_rate": 0.2778
+   },
+   "red_sure_0996": {
+    "n": 0,
+    "dead": 0,
+    "precision": null
+   },
+   "mean_p": 0.9531
+  },
+  "gold_v8": {
+   "auc": 0.7214,
+   "auc_ci95": [
+    0.5918,
+    0.8462
+   ],
+   "acc_p05": 0.9412,
+   "n_red_p05": 357,
+   "red_precision_p05": 0.9412,
+   "brier": 0.0497,
+   "red_prec_cov50": {
+    "k": 178,
+    "precision": 0.9719
+   },
+   "red_prec_cov80": {
+    "k": 286,
+    "precision": 0.965
+   },
+   "survivor_low5": {
+    "k": 18,
+    "alive": 7,
+    "alive_rate": 0.3889
+   },
+   "survivor_low10": {
+    "k": 36,
+    "alive": 10,
+    "alive_rate": 0.2778
+   },
+   "red_sure_0996": {
+    "n": 1,
+    "dead": 1,
+    "precision": 1.0
+   },
+   "mean_p": 0.958
+  }
+ },
+ "policy_replay": {
+  "note": "simple = RED if P>0.5, GREEN if P<=0.3, else YELLOW (no rules); policyV2_rules = policyV2(p, hardRed(row), jev=null); stored_live = verdicts.choice (includes hard rules, Jev green lift and later upgrades, so not first-sight-only). acc counts RED correct iff dead, YELLOW/GREEN correct iff alive.",
+  "gbm_simple": {
+   "acc": 0.9412,
+   "red": 353,
+   "yellow": 4,
+   "green": 0,
+   "red_precision": 0.9462,
+   "green_alive_rate": null
+  },
+  "lr_v9_simple": {
+   "acc": 0.9412,
+   "red": 355,
+   "yellow": 2,
+   "green": 0,
+   "red_precision": 0.9437,
+   "green_alive_rate": null
+  },
+  "gbm_policyV2_rules": {
+   "acc": 0.9412,
+   "red": 353,
+   "yellow": 4,
+   "green": 0,
+   "red_precision": 0.9462,
+   "green_alive_rate": null
+  },
+  "lr_v9_policyV2_rules": {
+   "acc": 0.9412,
+   "red": 355,
+   "yellow": 2,
+   "green": 0,
+   "red_precision": 0.9437,
+   "green_alive_rate": null
+  },
+  "stored_live": {
+   "acc": 0.5434,
+   "red": 189,
+   "yellow": 168,
+   "green": 0,
+   "red_precision": 0.9577,
+   "green_alive_rate": null
+  },
+  "stored_live_upgraded_n": 25,
+  "gbm_vs_lr_simple_disagree": 6
+ },
+ "parity": {
+  "n": 93,
+  "graded": 0,
+  "lr_max_abs": 0.0,
+  "lr_within_1e-6": 93,
+  "gbm_max_abs": 0.0,
+  "gbm_within_1e-6": 93,
+  "lr_within_1e-3": 93,
+  "gbm_within_1e-3": 93,
+  "lr_median_abs": 0.0,
+  "gbm_median_abs": 0.0
+ }
+}

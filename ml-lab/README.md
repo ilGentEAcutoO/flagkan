@@ -202,3 +202,25 @@ Context features use only outcomes resolved before first sight.
 Export: `out/flagkan-gbm.json` (lightgbm-compact-v1, 419 trees, 27 inputs = `buildFeatures(row)` in
 `FEATURES` order, trained on all 12,984 rows), evaluated by `out/predict-live.mjs`. Parity: Python compact vs
 LightGBM is 0 and JS vs LightGBM is 5.6e-17 on 200 rows.
+
+## Study 4: out-of-sample replay, GBM shadow vs live LR (Oct 12)
+
+Coins first seen AFTER the GBM training dump (cutoff first_seen 2026-10-12 01:05 UTC), live verdicts only,
+dead_v2 graded, none in the training dump: **n = 357** (first seen 01:10 to 06:05 UTC), dead rate 0.941.
+Features rebuilt with the RETRAIN_SQL_V2 rowset (first non-look snapshot, signals within 10 min, Jev factors)
+and scored with the real `train.ts` / `gbm.ts` code. Pipeline: `src/fk_oos_pull.py` (SELECT only) ->
+`src/fk_oos_score.mjs <tsc out dir>` -> `src/fk_oos_eval.py` -> `out/results_oos_replay.json`.
+
+| model | AUC [95% boot CI] | acc P>0.5 (all-red 0.941) | Brier (base 0.0554) | RED prec @50% / @80% cov | alive in lowest 5% / 10% | P>=0.996 |
+|---|---|---|---|---|---|---|
+| GBM gbm27 | 0.776 [0.652, 0.882] | 0.941 | 0.0472 | 0.983 / 0.972 | 8/18 (44%) / 9/36 (25%) | 1, 1 dead |
+| LR v9 (champion) | 0.736 [0.613, 0.852] | 0.941 | 0.0509 | 0.972 / 0.965 | 4/18 (22%) / 10/36 (28%) | 0 |
+| LR v8 gold | 0.721 [0.592, 0.846] | 0.941 | 0.0497 | 0.972 / 0.965 | 7/18 (39%) / 10/36 (28%) | 1, 1 dead |
+
+Policy replay (RED P>0.5, GREEN P<=0.3, else YELLOW): GBM 353 red / 4 yellow (acc 0.941, red prec 0.946);
+LR v9 355 / 2 (acc 0.941, red prec 0.944); adding hardRed rules changes nothing. Stored live choice:
+189 red / 168 yellow (acc 0.543, red prec 0.958) -- includes rules, Jev, 25 upgrades and verdicts made before
+v9 / policy v2 went live, so it is not a first-sight model comparison.
+Parity: all 93 verdicts with stored p_lr_first + p_gbm_first rebuild exactly (max abs diff 0; none graded yet).
+Caveats: 21 alive coins only, so the AUC CIs overlap heavily; one 5-hour window (drift untested); at
+P>0.5 neither model ever beats all-red -- the GBM edge is ranking/calibration, not the 0.5 light.
