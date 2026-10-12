@@ -46,7 +46,11 @@ CREATE TABLE IF NOT EXISTS verdicts (
 	v_rule TEXT,
 	p_red_first REAL,
 	tier TEXT,
-	policy_v INTEGER
+	policy_v INTEGER,
+	-- migrate-v10: LightGBM shadow (first-sight, model-only; upgrades never touch)
+	p_lr_first REAL,
+	p_gbm_first REAL,
+	gbm_v TEXT
 );
 CREATE TABLE IF NOT EXISTS rug_vectors (
 	mint TEXT PRIMARY KEY,
