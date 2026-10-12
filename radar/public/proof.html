@@ -273,13 +273,14 @@ th+='<tr><td><span class="badge '+bc+'">'+esc(lab)+'</span></td><td class="num">
 document.getElementById("tierRows").innerHTML=th;ts.hidden=false}else{ts.hidden=true}
 }
 function loadProof(){if(PROOF){renderProof(PROOF);return}fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderProof(d)}).catch(function(){})}
+function deadOf(x){var v=x&&x.dead_v2;if(v===0||v===1||v===true||v===false||v==="0"||v==="1")return Number(v)===1;return x?x.dead:null}
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
 function loadRows(){fetch("/api/rounds?limit=100&resolved=1").then(function(r){return r.json()}).then(function(d){
 var h="",n=0;
 for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];if(x.resolved_at==null)continue;n++;
 var mv="—";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;mv='<span class="'+(up?"up":"down")+'">'+(up?"▲":"▼")+Math.round(Math.abs(x.mult-1)*100)+"%</span>"}
 var nm=esc((x.name||x.mint.slice(0,8))+"").slice(0,18);
-h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(x.dead?'<span class="oc dead"><i></i>'+esc(t("dead"))+"</span>":'<span class="oc alive"><i></i>'+esc(t("alive"))+"</span>")+"</td></tr>"}
+h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(deadOf(x)?'<span class="oc dead"><i></i>'+esc(t("dead"))+"</span>":'<span class="oc alive"><i></i>'+esc(t("alive"))+"</span>")+"</td></tr>"}
 document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="mut">'+esc(t("loading"))+"</td></tr>";
 }).catch(function(){})}
 applyLang();
