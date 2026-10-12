@@ -170,6 +170,7 @@ try{REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduc
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function clean(s){return String(s==null?"":s).replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g,"")}
 function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderBand();loadFresh()}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
@@ -205,11 +206,13 @@ function dot(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span 
 function hoursLeft(x){return Math.max(0,Math.ceil((Number(x.first_seen)+21600000-Date.now())/3600000))}
 function renderFresh(){var h="";for(var i=0;i<Math.min(6,ROUNDS.length);i++){var x=ROUNDS[i];
 var out=x.dead==null?'<span class="oc pend"><i></i>'+hoursLeft(x)+t("h")+"</span>":(x.dead?'<span class="oc dead"><i></i>'+t("dead")+"</span>":'<span class="oc alive"><i></i>'+t("alive")+"</span>");
-var nm=esc((x.name||x.mint.slice(0,8))+"").slice(0,20);
+var nm=esc(clean(x.name||x.mint.slice(0,8)).slice(0,20));
 h+='<div class="frow" data-href="/board.html"><span class="fname">'+nm+' <span class="fmint">'+esc(x.mint.slice(0,6))+"</span></span>"+badge(x.choice)+'<span class="fconf">'+(x.confidence==null?"—":Math.round(x.confidence*100)+"%")+'</span><span class="fout">'+out+"</span></div>"}
 document.getElementById("fresh").innerHTML=h;
 var rs=document.querySelectorAll("#fresh .frow");for(var j=0;j<rs.length;j++){rs[j].onclick=function(){location.href="/board.html"}}}
-function loadFresh(){if(ROUNDS.length){document.getElementById("liveTxt").textContent=t("liveA")+" · "+ROUNDS.length+" "+t("liveB");renderFresh();return}fetch("/api/rounds?limit=100").then(function(r){return r.json()}).then(function(d){ROUNDS=(d&&d.rounds)||[];document.getElementById("liveTxt").textContent=t("liveA")+" · "+ROUNDS.length+" "+t("liveB");renderFresh()}).catch(function(){})}
+function setLive(){document.getElementById("liveTxt").textContent=t("liveA")+" · "+(TOTAL!=null?TOTAL:ROUNDS.length)+" "+t("liveB")}
+var TOTAL=null,FETCHING=false;
+function loadFresh(){if(ROUNDS.length){setLive();renderFresh();return}if(FETCHING)return;FETCHING=true;fetch("/api/rounds?limit=100").then(function(r){return r.json()}).then(function(d){FETCHING=false;ROUNDS=(d&&d.rounds)||[];TOTAL=(d&&typeof d.total==="number")?d.total:ROUNDS.length;setLive();renderFresh()}).catch(function(){FETCHING=false})}
 (function(){var sh=document.getElementById("bandShell");if(REDUCED||!("IntersectionObserver" in window)){return}sh.classList.add("rv");var done=false;function show(){if(done)return;done=true;sh.classList.add("in")}var io=new IntersectionObserver(function(es){for(var i=0;i<es.length;i++){if(es[i].isIntersecting){show();io.disconnect()}}},{threshold:.12});io.observe(sh);setTimeout(show,2500)})();
 (function(){var v=document.getElementById("vslot");if(!v)return;var u=(v.getAttribute("data-video")||"").trim();if(!u)return;if(!/^https:\/\/(www\.youtube\.com\/embed\/|www\.youtube-nocookie\.com\/embed\/|player\.vimeo\.com\/video\/)/.test(u))return;var f=document.createElement("iframe");f.src=u;f.title="FlagKan demo video";f.setAttribute("allow","accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");f.setAttribute("allowfullscreen","");v.innerHTML="";v.appendChild(f);var sec=document.getElementById("vidSec");if(sec)sec.hidden=false})();
 applyLang();loadFresh();
