@@ -19,6 +19,7 @@
 .live-pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--dim);background:#fff;border:1px solid var(--line2);border-radius:99px;padding:5px 14px;font-variant-numeric:tabular-nums}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--grn);animation:pulse 2.2s var(--ease) infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.live-dot.reconnecting{background:var(--yeldot);animation:none}.live-dot.polling{background:var(--faint);animation:none}
 .hero h1{font-size:clamp(40px,6.4vw,60px);line-height:1.04;letter-spacing:-.035em;font-weight:800;margin-top:18px}
 .hero h1 .rd{color:var(--red)}
 .lede{margin-top:14px;font-size:17px;color:var(--dim);max-width:620px;line-height:1.65}
@@ -85,7 +86,7 @@
 </div></div>
 <div class="wrap">
   <div class="hero">
-    <span class="live-pill"><span class="live-dot"></span><span id="liveTxt">live</span></span>
+    <span class="live-pill" role="status" aria-live="polite"><span class="live-dot" id="liveDot"></span><span id="liveTxt">live</span></span>
     <h1 data-i18n-html="h1">Check before you buy.</h1>
     <p class="lede" data-i18n="sub"></p>
     <div class="cta"><a class="btn primary" href="/board.html"><span data-i18n="ctaBoard">Open the board</span><span class="arr">↗</span></a><a class="btn ghost" href="/proof.html"><span data-i18n="ctaProof">How we judge</span><span class="arr">→</span></a></div>
@@ -119,6 +120,7 @@
   <p class="risk" data-i18n-html="riskD"></p>
   <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
+<script src="/live.js"></script>
 <script>
 (function(){
 "use strict";
@@ -212,12 +214,21 @@ var nm="<bdi>"+esc(nameOf(x.name,x.mint,8,20))+"</bdi>";
 h+='<div class="frow" data-href="/board.html"><span class="fname">'+nm+' <span class="fmint">'+esc(x.mint.slice(0,6))+"</span></span>"+badge(x.choice)+'<span class="fconf">'+(x.confidence==null?"—":Math.round(x.confidence*100)+"%")+'</span><span class="fout">'+out+"</span></div>"}
 document.getElementById("fresh").innerHTML=h;
 var rs=document.querySelectorAll("#fresh .frow");for(var j=0;j<rs.length;j++){rs[j].onclick=function(){location.href="/board.html"}}}
-function setLive(){document.getElementById("liveTxt").textContent=t("liveA")+" · "+(TOTAL!=null?TOTAL:ROUNDS.length)+" "+t("liveB")}
+var LIVEST="";
+function setLive(){document.getElementById("liveTxt").textContent=(LIVEST?FlagLive.statusText(LIVEST,L):t("liveA"))+" · "+(TOTAL!=null?TOTAL:ROUNDS.length)+" "+t("liveB");document.getElementById("liveDot").className="live-dot"+(LIVEST&&LIVEST!=="live"?" "+LIVEST:"")}
 var TOTAL=null,FETCHING=false;
 function loadFresh(){if(ROUNDS.length){setLive();renderFresh();return}if(FETCHING)return;FETCHING=true;fetch("/api/rounds?limit=100").then(function(r){return r.json()}).then(function(d){FETCHING=false;ROUNDS=(d&&d.rounds)||[];TOTAL=(d&&typeof d.total==="number")?d.total:ROUNDS.length;setLive();renderFresh()}).catch(function(){FETCHING=false})}
 (function(){var sh=document.getElementById("bandShell");if(REDUCED||!("IntersectionObserver" in window)){return}sh.classList.add("rv");var done=false;function show(){if(done)return;done=true;sh.classList.add("in")}var io=new IntersectionObserver(function(es){for(var i=0;i<es.length;i++){if(es[i].isIntersecting){show();io.disconnect()}}},{threshold:.12});io.observe(sh);setTimeout(show,2500)})();
 (function(){var v=document.getElementById("vslot");if(!v)return;var u=(v.getAttribute("data-video")||"").trim();if(!u)return;if(!/^https:\/\/(www\.youtube\.com\/embed\/|www\.youtube-nocookie\.com\/embed\/|player\.vimeo\.com\/video\/)/.test(u))return;var f=document.createElement("iframe");f.src=u;f.title="FlagKan demo video";f.setAttribute("allow","accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");f.setAttribute("allowfullscreen","");v.innerHTML="";v.appendChild(f);var sec=document.getElementById("vidSec");if(sec)sec.hidden=false})();
+// LIVE-001: pushed ticks keep the band + fresh list current; REST only on load / fallback
+function loadProofNow(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d||{};renderBand()}).catch(function(){})}
+function reloadAll(){ROUNDS=[];loadFresh();loadProofNow()}
+function onTick(e){var rs=Array.isArray(e.rounds)?e.rounds:[];var u=FlagLive.upsertRows(ROUNDS,rs,FlagLive.inWindow(ROUNDS,false));if(u.added)ROUNDS.sort(FlagLive.byNewest);if(ROUNDS.length>200)ROUNDS.length=200;
+if(typeof e.total==="number")TOTAL=e.total;
+if(e.proof&&typeof e.proof==="object"){PROOF=FlagLive.mergeProof(PROOF||{},e.proof);renderBand()}
+setLive();if(u.changed.length)renderFresh()}
 applyLang();loadFresh();
+FlagLive.connect({onTick:onTick,onStatus:function(s){LIVEST=s;setLive()},poll:reloadAll,resync:reloadAll});
 })();
 </script>
 </body>

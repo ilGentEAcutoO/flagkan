@@ -17,6 +17,10 @@
 		}
 	],
 	"assets": { "directory": "./public", "binding": "ASSETS" },
+	"durable_objects": {
+		"bindings": [{ "name": "DO_LIVE", "class_name": "LiveFeed" }]
+	},
+	"migrations": [{ "tag": "v1-livefeed", "new_sqlite_classes": ["LiveFeed"] }],
 	"routes": [{ "pattern": "flag.sornkan.com", "custom_domain": true }],
 	"workers_dev": true
 }

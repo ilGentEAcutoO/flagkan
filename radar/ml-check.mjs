@@ -34,6 +34,14 @@ const ml = await import(pathToFileURL(path.join(CACHE, "train.js")).href);
 const up = await import(pathToFileURL(path.join(CACHE, "upgrade.js")).href);
 const gbm = await import(pathToFileURL(path.join(CACHE, "gbm.js")).href);
 const col = await import(pathToFileURL(path.join(CACHE, "collect.js")).href);
+// LIVE-001 pure helpers compile into their own dir (keeps rootDir of the ml set).
+try {
+	execSync(`"${process.execPath}" "${TSC}" src/live-core.ts --outDir "${path.join(CACHE, "live")}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`, { cwd: HERE, stdio: "pipe" });
+} catch (e) {
+	console.error("FAIL tsc compile live-core:", String(e.stdout ?? e.message).slice(0, 400));
+	process.exit(1);
+}
+const lc = await import(pathToFileURL(path.join(CACHE, "live", "live-core.js")).href);
 
 // --- b64ToBytes ---
 {
@@ -724,6 +732,110 @@ try {
 	const idxSrc = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
 	const ing = idxSrc.slice(idxSrc.indexOf("async function ingest("));
 	check("collectDev runs after intake signals (recordMint loops) in ingest()", ing.indexOf("collectDev(") > ing.lastIndexOf("recordMint(env, prow.mint"));
+}
+
+// --- LIVE-001: real-time push (Durable Object LiveFeed) ---
+{
+	const { readFileSync } = await import("node:fs");
+	// event builder: shape, dedupe, caps, null when nothing changed
+	const row = (i, extra = {}) => ({ mint: "M" + i, first_seen: 1, name: "n" + i, choice: "yellow", confidence: 0.5, mult: null, dead: null, tier: "yellow", policy_v: 2, dead_v2: null, last_price: 0.001, last_liq: 5000, top1: 12, resolved_at: null, ...extra });
+	check("tick: nothing changed -> null", lc.buildTickEvent({ ts: 1, rows: [], total: 5 }) === null);
+	const e1 = lc.buildTickEvent({ ts: 1700000000000, rows: [row(1), row(2), row(1)], total: 42 });
+	check("tick: shape {type,ts,rounds,total}, no proof key when absent", e1 && e1.type === "tick" && e1.ts === 1700000000000 && e1.total === 42 && e1.rounds.length === 2 && !("proof" in e1), JSON.stringify(e1).slice(0, 200));
+	check("tick: rows keep the /api/rounds shape untouched", JSON.stringify(e1.rounds[0]) === JSON.stringify(row(1)));
+	const many = Array.from({ length: 200 }, (_, i) => row(i));
+	const e2 = lc.buildTickEvent({ ts: 1, rows: many, total: 1 });
+	check("tick: row cap = TICK_MAX_ROWS (60)", lc.TICK_MAX_ROWS === 60 && e2.rounds.length === 60);
+	check("tick: under 32 KB byte cap", lc.TICK_MAX_BYTES === 32 * 1024 && JSON.stringify(e2).length <= lc.TICK_MAX_BYTES);
+	const fat = Array.from({ length: 60 }, (_, i) => row(i, { name: "x".repeat(2000) }));
+	const e3 = lc.buildTickEvent({ ts: 1, rows: fat, total: 1 });
+	check("tick: oversized rows trimmed from the tail to fit", e3 && e3.rounds.length < 60 && e3.rounds.length > 0 && JSON.stringify(e3).length <= lc.TICK_MAX_BYTES, String(e3 && e3.rounds.length));
+	const full = { resolved_with_verdict: 9, correct: 5, accuracy: 0.55, red_precision: 0.7, label: "v2", label_def: { text_en: "x" }, headline: { n: 3, ready: false }, v2_history_regrade: { n: 1 }, legacy_v1: { accuracy: 0.5 }, challenger: { n: 0 }, decider: { model: "lightgbm-27" }, by_rule: [1, 2, 3], conf_deciles: new Array(10).fill({}), brier: 0.1 };
+	const ps = lc.proofSummaryOf(full);
+	check("proof summary: keeps headline/legacy/challenger/decider + top line, drops heavy panels",
+		ps.headline && ps.legacy_v1 && ps.challenger && ps.decider && ps.accuracy === 0.55 && ps.resolved_with_verdict === 9 && !("by_rule" in ps) && !("conf_deciles" in ps) && !("brier" in ps));
+	const e4 = lc.buildTickEvent({ ts: 1, rows: [], total: 7, proof: ps });
+	check("tick: proof-only tick allowed (outcomes resolved, no visible rows)", e4 && e4.rounds.length === 0 && e4.proof && e4.proof.headline.n === 3);
+	// touched-coin collector: important changes first
+	const tset = new lc.TouchSet();
+	tset.add("a", 1); tset.add("b", 0); tset.add("c", 1); tset.add("a", 0); tset.add("b", 1);
+	check("TouchSet: prio-0 first, no dupes, downgrade ignored", JSON.stringify(tset.pick(10)) === JSON.stringify(["b", "a", "c"]) && tset.size === 3 && tset.pick(1).length === 1);
+	// origin gate
+	check("origin: absent allowed (non-browser)", lc.originAllowed(null, "flag.sornkan.com") && lc.originAllowed("", "flag.sornkan.com"));
+	check("origin: flag.sornkan.com + workers.dev allowed (https)", lc.originAllowed("https://flag.sornkan.com", "flag.sornkan.com") && lc.originAllowed("https://radar-worker-api.sornkan.workers.dev", "x"));
+	check("origin: cross-site / http / lookalike rejected",
+		!lc.originAllowed("https://evil.example", "flag.sornkan.com") && !lc.originAllowed("http://flag.sornkan.com", "flag.sornkan.com") &&
+		!lc.originAllowed("https://flag.sornkan.com.evil.io", "flag.sornkan.com") && !lc.originAllowed("https://xflag.sornkan.com", "flag.sornkan.com") &&
+		!lc.originAllowed("null", "flag.sornkan.com") && !lc.originAllowed("https://flag.sornkan.com:8443", "flag.sornkan.com"));
+	check("origin: localhost only when the request is local (wrangler dev)", lc.originAllowed("http://localhost:8787", "localhost:8787") && !lc.originAllowed("http://localhost:8787", "flag.sornkan.com"));
+	// monthly budget kill-switch
+	const T0 = Date.UTC(2026, 9, 15, 12);
+	check("budget: month key UTC", lc.monthKey(T0) === "2026-10" && lc.monthKey(Date.UTC(2026, 11, 31, 23, 59)) === "2026-12");
+	let b = lc.budgetAdd(null, T0, lc.LIVE_COST.upgrade);
+	b = lc.budgetAdd(b, T0, lc.LIVE_COST.broadcast);
+	b = lc.budgetAdd(b, T0, lc.LIVE_COST.clientMsg);
+	check("budget: units = upgrade 20 + broadcast 20 + client frame 1 (1/20 request)", b.units === 41 && b.month === "2026-10" && lc.LIVE_UNITS_PER_REQUEST === 20);
+	check("budget: under line not over", !lc.budgetOver(b, T0));
+	const atLine = { month: "2026-10", units: lc.LIVE_MONTH_BUDGET_UNITS };
+	check("budget: line = 800,000 requests; over only past it", lc.LIVE_MONTH_BUDGET_REQ === 800000 && !lc.budgetOver(atLine, T0) && lc.budgetOver(lc.budgetAdd(atLine, T0, 1), T0));
+	const nextMonth = Date.UTC(2026, 10, 1, 0, 0, 1);
+	check("budget: new UTC month resets", !lc.budgetOver(lc.budgetAdd(atLine, T0, 99), nextMonth) && lc.budgetAdd({ month: "2026-10", units: 5e9 }, nextMonth, 20).units === 20);
+	check("budget: worker stash over only for THIS month's row", lc.stashOver({ month: "2026-10", over: 1 }, T0) && !lc.stashOver({ month: "2026-09", over: 1 }, T0) && !lc.stashOver({ month: "2026-10", over: 0 }, T0) && !lc.stashOver(null, T0));
+	check("caps: 300 sockets total, 3 per IP, refusal close 4429, ping/pong", lc.LIVE_MAX_SOCKETS === 300 && lc.LIVE_MAX_PER_IP === 3 && lc.LIVE_CLOSE_REFUSED === 4429 && lc.LIVE_PING === "ping" && lc.LIVE_PONG === "pong");
+
+	// source guards: only /api/live reaches DO_LIVE, only for upgrades; broadcast has no HTTP path
+	const idx = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
+	const live = readFileSync(path.join(HERE, "src", "live.ts"), "utf8");
+	const doUses = idx.match(/env\.DO_LIVE\b/g) || [];
+	check("DO_LIVE referenced only inside liveStub()", doUses.length === 2 && /function liveStub\(env: Env\)[^{]*\{\s*return env\.DO_LIVE\.get\(env\.DO_LIVE\.idFromName\("global"\)\);\s*\}/.test(idx));
+	const stubCalls = idx.match(/liveStub\(env\)\.(\w+)\(/g) || [];
+	check("stub used only for .fetch (in liveUpgrade) and .broadcast (in pushTick)", stubCalls.length === 2 && stubCalls.includes("liveStub(env).fetch(") && stubCalls.includes("liveStub(env).broadcast("));
+	const up = idx.slice(idx.indexOf("async function liveUpgrade("), idx.indexOf("// Shared by /api/proof"));
+	const iFetch = up.indexOf("liveStub(env).fetch(");
+	check("liveUpgrade: kill flag, upgrade, origin, client-ip, budget checks all BEFORE the DO", iFetch > 0 &&
+		["liveEnabled(env)", '"websocket"', "originAllowed(", "CF-Connecting-IP", "stashOver("].every((k) => up.indexOf(k) >= 0 && up.indexOf(k) < iFetch) && /status: 426/.test(up) && /status: 503/.test(up));
+	check("route: only /api/live dispatches to liveUpgrade", (idx.match(/liveUpgrade\(request, env\)/g) || []).length === 1 && /url\.pathname === "\/api\/live"\) return liveUpgrade\(request, env\)/.test(idx));
+	const pt = idx.slice(idx.indexOf("async function pushTick("), idx.indexOf("async function liveUpgrade("));
+	check("pushTick: skips when unchanged / disabled / over budget before the RPC, never throws", pt.indexOf("touched.size === 0 && resolved === 0") < pt.indexOf(".broadcast(") && pt.indexOf("stashOver(") < pt.indexOf(".broadcast(") && /catch \(e\)/.test(pt));
+	check("scheduled: ONE pushTick per minutely run, after ingest", (idx.match(/await pushTick\(/g) || []).length === 1 && idx.indexOf("await pushTick(") > idx.indexOf("const stats = await ingest(env);"));
+	check("/api/rounds + tick share ROUND_COLS/ROUND_FROM (no SQL drift)", (idx.match(/\$\{ROUND_COLS\}/g) || []).length === 2 && !/SELECT r\.mint, r\.first_seen, r\.name, v\.choice/.test(idx.slice(idx.indexOf("export default {"))));
+	check("/api/proof + tick share proofCore()", (idx.match(/await proofCore\(env\)/g) || []).length === 2);
+	check("LiveFeed: hibernation accept, ping auto-response, no ws.accept on viewers, no fetch path to broadcast",
+		/this\.ctx\.acceptWebSocket\(server, \[tag\]\)/.test(live) && /setWebSocketAutoResponse\(new WebSocketRequestResponsePair\(LIVE_PING, LIVE_PONG\)\)/.test(live) &&
+		(live.match(/server\.accept\(\)/g) || []).length === 1 && /private refuse\(/.test(live) && /async broadcast\(msg: string\)/.test(live) &&
+		!/broadcast/.test(live.slice(live.indexOf("async fetch("), live.indexOf("async broadcast("))));
+	check("LiveFeed: non-ping client frame closes 1008; caps via getWebSockets(tag)", /ws\.close\(1008/.test(live) && /getWebSockets\(tag\)\.length >= LIVE_MAX_PER_IP/.test(live) && /getWebSockets\(\)\.length >= LIVE_MAX_SOCKETS/.test(live));
+	const wr = readFileSync(path.join(HERE, "wrangler.jsonc"), "utf8");
+	check("wrangler: DO_LIVE -> LiveFeed + v1-livefeed sqlite migration", /"name": "DO_LIVE", "class_name": "LiveFeed"/.test(wr) && /"tag": "v1-livefeed", "new_sqlite_classes": \["LiveFeed"\]/.test(wr));
+	check("worker entry exports LiveFeed", /export \{ LiveFeed \};/.test(idx));
+
+	// frontend client: upsert helper, backoff, polling only as fallback
+	const vm = await import("node:vm");
+	const ctx = { Math, JSON, Date, Array, Object, setTimeout, clearTimeout, setInterval, clearInterval };
+	ctx.globalThis = ctx;
+	vm.createContext(ctx);
+	vm.runInContext(readFileSync(path.join(HERE, "public", "live.js"), "utf8"), ctx);
+	const FL = ctx.FlagLive;
+	const list = [{ mint: "A", v: 1 }, { mint: "B", v: 1 }];
+	const u = FL.upsertRows(list, [{ mint: "B", v: 2 }, { mint: "N1", v: 1 }, { mint: "N2", v: 1 }, { mint: "N1", v: 9 }, { v: 0 }, null]);
+	check("live.js upsert: replaces in place, new on top in tick order, dedupes, skips junk",
+		list.map((x) => x.mint).join(",") === "N1,N2,A,B" && list[3].v === 2 && list[0].v === 1 && u.added === 2 && u.changed.join(",") === "B,N1,N2", list.map((x) => x.mint).join(","));
+	const win = [{ mint: "X", first_seen: 100 }, { mint: "Y", first_seen: 50 }];
+	const uw = FL.upsertRows(win, [{ mint: "OLD", first_seen: 10 }, { mint: "NEW", first_seen: 200 }, { mint: "Y", first_seen: 50, v: 3 }], FL.inWindow(win, false));
+	win.sort(FL.byNewest);
+	check("live.js window gate: old coins outside the loaded page are not injected; new ones sorted newest-first",
+		win.map((x) => x.mint).join(",") === "NEW,X,Y" && uw.added === 1 && uw.changed.join(",") === "NEW,Y" && win[2].v === 3, win.map((x) => x.mint).join(","));
+	const mp = FL.mergeProof({ by_rule: [1], accuracy: 0.1 }, { accuracy: 0.2, headline: { n: 1 } });
+	check("live.js mergeProof keeps heavy fields, overwrites live ones", mp.by_rule.length === 1 && mp.accuracy === 0.2 && mp.headline.n === 1);
+	check("live.js backoff: grows, jittered, capped at 30s", FL.backoff(0, 1) === 1000 && FL.backoff(3, 1) === 8000 && FL.backoff(20, 1) === 30000 && FL.backoff(20, 0) === 15000);
+	check("live.js: ping 25s, poll 60s fallback, slow retry >= 5 min, 3 fails, refusal 4429", FL.PING_MS === 25000 && FL.POLL_MS === 60000 && FL.SLOW_MS >= 300000 && FL.MAX_FAILS === 3 && FL.REFUSED === 4429);
+	check("live.js status text TH/EN", FL.statusText("live", "en") === "live" && FL.statusText("polling", "th") === "อัปเดตทุกนาที" && FL.statusText("reconnecting", "en") === "reconnecting…");
+	const ljs = readFileSync(path.join(HERE, "public", "live.js"), "utf8");
+	check("live.js keepalive sends exactly \"ping\"", /sock\.send\("ping"\)/.test(ljs) && (ljs.match(/\.send\(/g) || []).length === 1);
+	for (const pg of ["board.html", "index.html", "proof.html"]) {
+		const h = readFileSync(path.join(HERE, "public", pg), "utf8");
+		check(pg + ": loads /live.js, connects, no 60s setInterval polling", /<script src="\/live\.js"><\/script>/.test(h) && /FlagLive\.connect\(\{onTick:onTick/.test(h) && !/setInterval\(load\w*,\s*60000\)/.test(h));
+	}
 }
 
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }

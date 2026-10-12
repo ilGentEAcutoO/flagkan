@@ -4,6 +4,8 @@ interface Env {
 	TYPESAFE_API_KEY: string;
 	SOLAMI_API_KEY: string;
 	ADMIN_KEY: string;
+	DO_LIVE: DurableObjectNamespace<LiveFeed>;
+	LIVE_ENABLED?: string; // "false"/"0" = kill /api/live without touching the DO
 }
 
 import { hardRed, shadowGreen, timeSplitValidateV2, RETRAIN_SQL_V2, rowFromDb, predict, buildFeatures, parseMintAuthorities, shouldPromote, FEATURES, LABEL_V, MODEL_V, POLICY_V, policyV2, BASE_RATE_P, pickDecider, DECIDER, T_SURE } from "./ml/train";
@@ -14,6 +16,17 @@ import { scoreGbm, gbmModelOk, challengerStats } from "./ml/gbm";
 import GBM_MODEL from "./ml/gbm-model.json";
 import { RESOLVE_FIRST_SQL, RESOLVE_LAST_SQL, RESOLVE_PRIOR_SQL } from "./ml/collect";
 import { collectLooks, collectDev, collectCounters } from "./dev";
+import { LiveFeed } from "./live";
+import type { LiveState } from "./live";
+import { buildTickEvent, originAllowed, proofSummaryOf, stashOver, monthKey, TouchSet, TICK_MAX_ROWS } from "./live-core";
+export { LiveFeed };
+
+// LIVE-001: coins touched by the running cron(s), for the push tick. Each
+// scheduled run registers its own TouchSet; overlapping runs only add rows.
+const ACTIVE_TOUCH = new Set<TouchSet>();
+function touch(mint: string, prio: 0 | 1): void {
+	for (const t of ACTIVE_TOUCH) t.add(mint, prio);
+}
 
 const DEX = "https://api.dexscreener.com";
 const UA = { "User-Agent": "Mozilla/5.0 (radar proof-of-concept)" };
@@ -342,6 +355,7 @@ async function maybeUpgrade(env: Env, mint: string, m: Market, now: number, feed
 			// P(dead) (leak-free training/audit column). tier follows the final call.
 			"UPDATE verdicts SET choice = 'red', confidence = ?, p_red = ?, p_yellow = ?, p_green = 0, upgraded_from = ?, upgraded_ts = ?, red_source = 'upgrade', upgrade_why = ?, mem_dist = NULL, tier = 'red' WHERE mint = ?"
 		).bind(Math.round(p * 100) / 100, p, 1 - p, String(v.choice), now, String(why), mint).run();
+		touch(mint, 0);
 		console.log(JSON.stringify({ upgrade: why, mint, from: String(v.choice), p: Math.round(p * 1000) / 1000, feed }));
 	} catch { /* upgrades never break the snapshot path */ }
 }
@@ -641,6 +655,7 @@ async function recordMint(
 		)
 			.bind(mint, now, m.pair, m.name, source)
 			.run();
+		touch(mint, 0);
 		const wantVerdict = doVerdict.budget > 0 && Boolean(env.TYPESAFE_API_KEY)
 			&& (source !== "gecko" || m.liq >= GECKO_MIN_VERDICT_LIQ);
 		if (wantVerdict) {
@@ -699,6 +714,7 @@ async function recordMint(
 						...shadowCols(a)
 					)
 					.run();
+				touch(mint, 0);
 				doVerdict.budget--;
 			} catch (e) {
 				console.log(JSON.stringify({ cron: "verdict_fail", mint, err: String(e).slice(0, 120) }));
@@ -710,6 +726,7 @@ async function recordMint(
 	)
 		.bind(mint, now, m.price, m.liq, m.fdv, m.tx5, m.buys5, m.sells5, m.chgH1, m.volH1, m.pairAgeMin, source)
 		.run();
+	touch(mint, 1);
 	if (seen) await maybeUpgrade(env, mint, m, now, source);
 	return "snap";
 }
@@ -939,6 +956,7 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 			)
 				.bind(row.mint, now, fp, lp, mult, dead, v2.dead_v2 ?? null, v2.idle ?? null)
 				.run();
+			touch(row.mint, 0);
 			if (dead === 1) {
 				// Every rug becomes a memory template immediately — the system
 				// literally learns a new pattern the moment it resolves.
@@ -964,6 +982,269 @@ async function ingest(env: Env, forceRefresh = false): Promise<Record<string, nu
 	return stats;
 }
 
+// Board row shape, shared by /api/rounds and the live push tick (one SQL
+// source so the two can never drift).
+const ROUND_COLS = `r.mint, r.first_seen, r.name, v.choice, v.confidence, o.mult, o.dead, v.tier, v.policy_v, o.dead_v2,
+	(SELECT price_usd FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL ORDER BY ts DESC LIMIT 1) AS last_price,
+	(SELECT liquidity_usd FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL ORDER BY ts DESC LIMIT 1) AS last_liq,
+	g.top1_pct AS top1, o.resolved_at AS resolved_at`;
+const ROUND_FROM = `FROM rounds r LEFT JOIN verdicts v ON v.mint = r.mint LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN signals g ON g.mint = r.mint
+	WHERE (o.mint IS NULL OR o.resolved_at > ?) AND (? = 0 OR o.mint IS NOT NULL)`;
+
+async function roundRows(env: Env, resolvedOnly: boolean, limit: number, offset: number): Promise<Array<Record<string, unknown>>> {
+	// resolved=1 serves the proof table: newest SETTLED coins. The board
+	// mix is newest-first, which post-flood is all unresolved.
+	const orderTail = resolvedOnly ? "o.resolved_at DESC, r.mint ASC" : "r.first_seen DESC, r.mint ASC";
+	const rows = await env.DB_MAIN.prepare(`SELECT ${ROUND_COLS} ${ROUND_FROM} ORDER BY ${orderTail} LIMIT ? OFFSET ?`)
+		.bind(Date.now() - BOARD_RETENTION_MS, resolvedOnly ? 1 : 0, limit, offset)
+		.all<Record<string, unknown>>();
+	return rows.results ?? [];
+}
+
+async function roundTotal(env: Env, resolvedOnly: boolean): Promise<number> {
+	const tot = await env.DB_MAIN.prepare(`SELECT COUNT(*) AS n ${ROUND_FROM}`)
+		.bind(Date.now() - BOARD_RETENTION_MS, resolvedOnly ? 1 : 0)
+		.first<{ n: number }>();
+	return Number(tot?.n ?? 0);
+}
+
+/** Same rows as /api/rounds, for a given set of mints (live tick). */
+async function roundRowsFor(env: Env, mints: string[]): Promise<Array<Record<string, unknown>>> {
+	const ms = mints.slice(0, TICK_MAX_ROWS);
+	if (ms.length === 0) return [];
+	const rows = await env.DB_MAIN.prepare(
+		`SELECT ${ROUND_COLS} ${ROUND_FROM} AND r.mint IN (${ms.map(() => "?").join(",")}) ORDER BY r.first_seen DESC, r.mint ASC`
+	)
+		.bind(Date.now() - BOARD_RETENTION_MS, 0, ...ms)
+		.all<Record<string, unknown>>();
+	return rows.results ?? [];
+}
+
+// --- LIVE-001 wiring -----------------------------------------------------
+// Budget/state stash: the cron's broadcast RPC returns the DO's budget state
+// and we keep it in D1 (one tiny row, written by the worker itself) so
+// /api/diag and the /api/live gate can read it WITHOUT any DO request.
+let liveTableReady = false;
+async function liveStashEnsure(env: Env): Promise<void> {
+	if (liveTableReady) return;
+	await env.DB_MAIN.prepare(
+		"CREATE TABLE IF NOT EXISTS live_state (id INTEGER PRIMARY KEY CHECK (id = 1), month TEXT, requests INTEGER, budget INTEGER, over INTEGER, sockets INTEGER, sent INTEGER, ts INTEGER)"
+	).run();
+	liveTableReady = true;
+}
+type LiveStash = { month: string; requests: number; budget: number; over: number; sockets: number; sent: number | null; ts: number };
+let liveStashMemo: { at: number; row: LiveStash | null } | null = null;
+async function liveStashRead(env: Env, maxAgeMs: number): Promise<LiveStash | null> {
+	if (liveStashMemo && Date.now() - liveStashMemo.at < maxAgeMs) return liveStashMemo.row;
+	let row: LiveStash | null = null;
+	try {
+		row = await env.DB_MAIN.prepare("SELECT month, requests, budget, over, sockets, sent, ts FROM live_state WHERE id = 1").first<LiveStash>();
+	} catch { row = null; /* table not created yet = nothing stashed */ }
+	liveStashMemo = { at: Date.now(), row };
+	return row;
+}
+async function liveStashWrite(env: Env, st: LiveState): Promise<void> {
+	await liveStashEnsure(env);
+	await env.DB_MAIN.prepare(
+		"INSERT OR REPLACE INTO live_state (id, month, requests, budget, over, sockets, sent, ts) VALUES (1, ?, ?, ?, ?, ?, ?, ?)"
+	).bind(st.month, st.requests, st.budget, st.over ? 1 : 0, st.sockets, st.sent ?? null, Date.now()).run();
+	liveStashMemo = null;
+}
+
+function liveEnabled(env: Env): boolean {
+	const v = String(env.LIVE_ENABLED ?? "true").trim().toLowerCase();
+	return !(v === "false" || v === "0" || v === "off" || v === "no");
+}
+
+function liveStub(env: Env): DurableObjectStub<LiveFeed> {
+	return env.DO_LIVE.get(env.DO_LIVE.idFromName("global"));
+}
+
+/** End of a cron run: ONE tick per run, only when something changed; never throws. */
+async function pushTick(env: Env, touched: TouchSet, resolved: number): Promise<void> {
+	try {
+		if (!liveEnabled(env)) return;
+		if (touched.size === 0 && resolved === 0) return;
+		const stash = await liveStashRead(env, 0);
+		if (stashOver(stash, Date.now())) return; // monthly budget hit: no DO request at all
+		const rows = await roundRowsFor(env, touched.pick(TICK_MAX_ROWS));
+		let proof: Record<string, unknown> | undefined;
+		if (resolved > 0) {
+			try { proof = proofSummaryOf((await proofCore(env)).base); } catch { proof = undefined; }
+		}
+		const total = await roundTotal(env, false);
+		const evt = buildTickEvent({ ts: Date.now(), rows, total, proof });
+		if (!evt) return;
+		const st = await liveStub(env).broadcast(JSON.stringify(evt));
+		await liveStashWrite(env, st);
+		console.log(JSON.stringify({ live: "tick", rows: evt.rounds.length, proof: !!evt.proof, sent: st.sent ?? 0, sockets: st.sockets, req_month: st.requests, over: st.over }));
+	} catch (e) {
+		console.log(JSON.stringify({ live: "tick_fail", err: String(e).slice(0, 160) }));
+	}
+}
+
+/** GET /api/live: every reject happens here BEFORE the DO is touched. */
+async function liveUpgrade(request: Request, env: Env): Promise<Response> {
+	if (!liveEnabled(env)) return new Response("live disabled", { status: 503, headers: { "X-Live-State": "disabled" } });
+	if (request.method !== "GET" || (request.headers.get("Upgrade") ?? "").toLowerCase() !== "websocket") {
+		return new Response("expected websocket upgrade", { status: 426, headers: { Upgrade: "websocket" } });
+	}
+	if (!originAllowed(request.headers.get("Origin"), new URL(request.url).host)) return new Response("forbidden origin", { status: 403 });
+	if (!request.headers.get("CF-Connecting-IP")) return new Response("missing client ip", { status: 400 });
+	if (stashOver(await liveStashRead(env, 60_000), Date.now())) {
+		return new Response("live budget reached", { status: 503, headers: { "X-Live-State": "budget" } });
+	}
+	return liveStub(env).fetch(request);
+}
+
+// Shared by /api/proof and the live push tick (one SQL source, no drift):
+// legacy top-line counts + the v2 contract (headline / regrade / decider /
+// challenger / legacy_v1). /api/proof adds its heavier diagnostic panels.
+type ProofRow = { n: number; correct: number; reds: number; red_dead: number; greens: number; green_ok: number; upgrades: number; up_dead: number; shadows: number; shadow_ok: number; mems: number; mem_dead: number; demoted: number; dem_dead: number };
+const r3 = (x: number | null) => (x === null ? null : Math.round(x * 1000) / 1000);
+async function proofCore(env: Env): Promise<{ row: ProofRow | null; base: Record<string, unknown> }> {
+	const row = await env.DB_MAIN.prepare(
+		`SELECT COUNT(*) AS n,
+		SUM(CASE WHEN (v.choice = 'red' AND o.dead = 1) OR (v.choice != 'red' AND o.dead = 0) THEN 1 ELSE 0 END) AS correct,
+		SUM(CASE WHEN v.choice = 'red' THEN 1 ELSE 0 END) AS reds,
+		SUM(CASE WHEN v.choice = 'red' AND o.dead = 1 THEN 1 ELSE 0 END) AS red_dead,
+		SUM(CASE WHEN v.choice = 'green' THEN 1 ELSE 0 END) AS greens,
+		SUM(CASE WHEN v.choice = 'green' AND o.dead = 0 THEN 1 ELSE 0 END) AS green_ok,
+		SUM(CASE WHEN v.upgraded_from IS NOT NULL THEN 1 ELSE 0 END) AS upgrades,
+		SUM(CASE WHEN v.upgraded_from IS NOT NULL AND o.dead = 1 THEN 1 ELSE 0 END) AS up_dead,
+		SUM(CASE WHEN v.shadow = 'green' THEN 1 ELSE 0 END) AS shadows,
+		SUM(CASE WHEN v.shadow = 'green' AND o.dead = 0 THEN 1 ELSE 0 END) AS shadow_ok,
+		SUM(CASE WHEN v.red_source = 'memory' THEN 1 ELSE 0 END) AS mems,
+		SUM(CASE WHEN v.red_source = 'memory' AND o.dead = 1 THEN 1 ELSE 0 END) AS mem_dead,
+		SUM(CASE WHEN v.red_source LIKE 'demoted:%' THEN 1 ELSE 0 END) AS demoted,
+		SUM(CASE WHEN v.red_source LIKE 'demoted:%' AND o.dead = 1 THEN 1 ELSE 0 END) AS dem_dead
+		FROM verdicts v JOIN outcomes o ON o.mint = v.mint WHERE v.source = 'live'`
+	).first<ProofRow>();
+	const n = Number(row?.n ?? 0);
+	// Proof v2 contract (Oct 12) — ADDITIVE: every legacy top-level
+	// field above stays exactly as before (label v1). headline = live
+	// policy-v2 verdicts graded by label v2; v2_history_regrade = older
+	// verdicts re-graded with label v2 (transparency only). One grouped
+	// scan; fenced so a missing column (pre-migration) never breaks the
+	// legacy fields.
+	const v2: Record<string, unknown> = {
+		label: "v2",
+		label_def: {
+			horizon_h: LABEL_V2.horizonH, price_drop: LABEL_V2.priceDrop, liq_usd: LABEL_V2.liqUsd, idle_window_h: LABEL_V2.idleWindowH,
+			text_en: "Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
+			text_th: "ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
+		},
+	};
+	try {
+		const g = await env.DB_MAIN.prepare(
+			`SELECT CASE WHEN v.policy_v >= 2 THEN 2 ELSE 1 END AS pv, v.tier AS tier, v.choice AS choice,
+			COUNT(*) AS n, SUM(o.dead_v2) AS dead
+			FROM verdicts v JOIN outcomes o ON o.mint = v.mint
+			WHERE v.source = 'live' AND o.dead_v2 IS NOT NULL GROUP BY pv, v.tier, v.choice`
+		).all<{ pv: number; tier: string | null; choice: string; n: number; dead: number }>();
+		const sinceRow = await env.DB_MAIN.prepare(
+			"SELECT MIN(ts) AS t FROM verdicts WHERE source = 'live' AND policy_v >= 2"
+		).first<{ t: number | null }>();
+		const agg = (pv: number) => {
+			let n2 = 0, dead = 0, reds = 0, redDead = 0;
+			const tiers: Record<string, { n: number; dead: number }> = { red_sure: { n: 0, dead: 0 }, red: { n: 0, dead: 0 }, yellow: { n: 0, dead: 0 }, green: { n: 0, dead: 0 } };
+			for (const r of g.results ?? []) {
+				if (Number(r.pv) !== pv) continue;
+				const cn = Number(r.n), cd = Number(r.dead ?? 0);
+				n2 += cn; dead += cd;
+				const isRed = r.choice === "red";
+				if (isRed) { reds += cn; redDead += cd; }
+				const t = r.tier && tiers[r.tier] ? r.tier : isRed ? "red" : r.choice === "green" ? "green" : "yellow";
+				tiers[t].n += cn; tiers[t].dead += cd;
+			}
+			const nonRed = n2 - reds;
+			const nonRedAlive = nonRed - (dead - redDead);
+			const base = n2 ? dead / n2 : null;
+			const correct = redDead + nonRedAlive;
+			const aliveNR = nonRed ? nonRedAlive / nonRed : null;
+			return {
+				n: n2, base, acc: n2 ? correct / n2 : null, reds,
+				redP: reds ? redDead / reds : null, redRecall: dead ? redDead / dead : null,
+				aliveNR, lift: aliveNR !== null && base !== null && base < 1 ? aliveNR / (1 - base) : null,
+				tiers: (["red_sure", "red", "yellow", "green"] as const).map((t) => ({ tier: t, n: tiers[t].n, dead_rate: tiers[t].n ? r3(tiers[t].dead / tiers[t].n) : null })),
+			};
+		};
+		const h = agg(2);
+		const old = agg(1);
+		v2.headline = {
+			policy: POLICY_V, since: sinceRow?.t ?? null, n: h.n, ready: h.n >= 100,
+			base_dead_rate: r3(h.base), accuracy: r3(h.acc),
+			baseline_all_red_accuracy: r3(h.base), baseline_all_yellow_accuracy: h.base === null ? null : r3(1 - h.base),
+			red_precision: r3(h.redP), red_recall: r3(h.redRecall), reds: h.reds,
+			alive_rate_non_red: r3(h.aliveNR), lift_non_red: r3(h.lift),
+			tiers: h.tiers,
+		};
+		v2.v2_history_regrade = {
+			n: old.n, base_dead_rate: r3(old.base), accuracy: r3(old.acc), red_precision: r3(old.redP),
+			note: "verdicts made before policy v2, re-graded with label v2 — transparency only",
+		};
+	} catch (e) {
+		v2.headline = { policy: POLICY_V, since: null, n: 0, ready: false, base_dead_rate: null, accuracy: null, baseline_all_red_accuracy: null, baseline_all_yellow_accuracy: null, red_precision: null, red_recall: null, reds: 0, alive_rate_non_red: null, lift_non_red: null, tiers: (["red_sure", "red", "yellow", "green"] as const).map((t) => ({ tier: t, n: 0, dead_rate: null })) };
+		v2.v2_error = String(e).slice(0, 120);
+	}
+	// Decider (SWITCH-001): which model drives the lights. since = ts of
+	// the first verdict decided by LightGBM (null before migrate-v13 or
+	// before the first such verdict). Fenced like the challenger.
+	const decActive = DECIDER === "gbm" && GBM_V ? "gbm" : "lr";
+	const decInfo: Record<string, unknown> = {
+		model: decActive === "gbm" ? "lightgbm-27" : "logistic-regression", pref: DECIDER, fallback: "logistic-regression",
+		gbm_v: GBM_V, t_sure: decActive === "gbm" ? (GBM_T_SURE ?? T_SURE) : T_SURE, since: null,
+	};
+	try {
+		const ds = await env.DB_MAIN.prepare("SELECT MIN(ts) AS t FROM verdicts WHERE decider = 'gbm'").first<{ t: number | null }>();
+		decInfo.since = ds?.t ?? null;
+	} catch (e) {
+		decInfo.error = String(e).slice(0, 120);
+	}
+	v2.decider = decInfo;
+	// Challenger head-to-head (Oct 12): LR vs LightGBM model-only
+	// first-sight P(dead) on the same graded live policy-v2 rows.
+	// Since SWITCH-001 LightGBM decides; LR is the comparison. Fenced:
+	// pre-migration (no columns) or any failure leaves every other
+	// field intact.
+	const chEmpty = { n: 0, auc_lr: null, auc_gbm: null, acc_lr: null, acc_gbm: null, baseline_all_red_accuracy: null, brier_lr: null, brier_gbm: null, survivor_top5_lr: null, survivor_top5_gbm: null };
+	try {
+		const cq = await env.DB_MAIN.prepare(
+			`SELECT v.p_lr_first AS pl, v.p_gbm_first AS pg, o.dead_v2 AS d
+			FROM verdicts v JOIN outcomes o ON o.mint = v.mint
+			WHERE v.source = 'live' AND v.policy_v = 2 AND o.dead_v2 IS NOT NULL
+			AND v.p_lr_first IS NOT NULL AND v.p_gbm_first IS NOT NULL
+			ORDER BY v.ts DESC LIMIT 20000`
+		).all<{ pl: number; pg: number; d: number }>();
+		const st = challengerStats((cq.results ?? []).map((r) => ({ pLr: Number(r.pl), pGbm: Number(r.pg), dead: Number(r.d) === 1 ? 1 : 0 })));
+		v2.challenger = {
+			model: "lightgbm-27", gbm_v: GBM_V, n: st.n, ready: st.n >= 100,
+			auc_lr: r3(st.auc_lr), auc_gbm: r3(st.auc_gbm), acc_lr: r3(st.acc_lr), acc_gbm: r3(st.acc_gbm),
+			baseline_all_red_accuracy: r3(st.baseline_all_red_accuracy),
+			brier_lr: r3(st.brier_lr), brier_gbm: r3(st.brier_gbm),
+			survivor_top5_lr: r3(st.survivor_top5_lr), survivor_top5_gbm: r3(st.survivor_top5_gbm),
+			t_sure_gbm: GBM_T_SURE,
+		};
+	} catch (e) {
+		v2.challenger = { model: "lightgbm-27", gbm_v: GBM_V, ...chEmpty, ready: false, t_sure_gbm: GBM_T_SURE, error: String(e).slice(0, 120) };
+	}
+	v2.legacy_v1 = {
+		resolved_with_verdict: n,
+		accuracy: n ? Number(row?.correct ?? 0) / n : null,
+		red_precision: Number(row?.reds ?? 0) ? Number(row?.red_dead ?? 0) / Number(row?.reds) : null,
+	};
+	return {
+		row,
+		base: {
+			resolved_with_verdict: n,
+			correct: Number(row?.correct ?? 0),
+			accuracy: n ? Number(row?.correct ?? 0) / n : null,
+			red_precision: Number(row?.reds ?? 0) ? Number(row?.red_dead ?? 0) / Number(row?.reds) : null,
+			...v2,
+		},
+	};
+}
+
 function json(data: unknown, status = 200): Response {
 	return new Response(JSON.stringify(data), {
 		status,
@@ -982,11 +1263,17 @@ export default {
 		}
 		ctx.waitUntil(
 			(async () => {
+				const touched = new TouchSet();
+				ACTIVE_TOUCH.add(touched);
 				try {
 					const stats = await ingest(env);
 					console.log(JSON.stringify({ cron: "ok", ...stats }));
+					ACTIVE_TOUCH.delete(touched);
+					await pushTick(env, touched, Number(stats.resolved ?? 0)); // never throws
 				} catch (e) {
 					console.log(JSON.stringify({ cron: "fail", err: String(e).slice(0, 200) }));
+				} finally {
+					ACTIVE_TOUCH.delete(touched);
 				}
 			})()
 		);
@@ -999,26 +1286,14 @@ export default {
 		if (url.pathname === "/api/rounds") {
 			const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? 20) || 20, 1), 100);
 			const offset = Math.max(Number(url.searchParams.get("offset") ?? 0) || 0, 0);
-			// resolved=1 serves the proof table: newest SETTLED coins. The board
-			// mix is newest-first, which post-flood is all unresolved.
-			const resFlag = url.searchParams.get("resolved") === "1" ? 1 : 0;
-			const fromWhere = `FROM rounds r LEFT JOIN verdicts v ON v.mint = r.mint LEFT JOIN outcomes o ON o.mint = r.mint LEFT JOIN signals g ON g.mint = r.mint
-				WHERE (o.mint IS NULL OR o.resolved_at > ?) AND (? = 0 OR o.mint IS NOT NULL)`;
-			const orderTail = resFlag ? "o.resolved_at DESC, r.mint ASC" : "r.first_seen DESC, r.mint ASC";
-			const rows = await env.DB_MAIN.prepare(
-				`SELECT r.mint, r.first_seen, r.name, v.choice, v.confidence, o.mult, o.dead, v.tier, v.policy_v, o.dead_v2,
-				(SELECT price_usd FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL ORDER BY ts DESC LIMIT 1) AS last_price,
-				(SELECT liquidity_usd FROM snapshots s WHERE s.mint = r.mint AND s.look IS NULL ORDER BY ts DESC LIMIT 1) AS last_liq,
-				g.top1_pct AS top1, o.resolved_at AS resolved_at
-				${fromWhere} ORDER BY ${orderTail} LIMIT ? OFFSET ?`
-			)
-				.bind(Date.now() - BOARD_RETENTION_MS, resFlag, limit, offset)
-				.all();
-			const tot = await env.DB_MAIN.prepare(`SELECT COUNT(*) AS n ${fromWhere}`)
-				.bind(Date.now() - BOARD_RETENTION_MS, resFlag)
-				.first<{ n: number }>();
-			return json({ rounds: rows.results ?? [], total: Number(tot?.n ?? 0) });
+			const resolvedOnly = url.searchParams.get("resolved") === "1";
+			const rows = await roundRows(env, resolvedOnly, limit, offset);
+			const total = await roundTotal(env, resolvedOnly);
+			return json({ rounds: rows, total });
 		}
+
+		// LIVE-001: the ONLY route that reaches DO_LIVE, and only for upgrades.
+		if (url.pathname === "/api/live") return liveUpgrade(request, env);
 
 		if (url.pathname === "/api/coin") {
 			const mint = url.searchParams.get("mint") ?? "";
@@ -1068,23 +1343,7 @@ export default {
 		}
 
 		if (url.pathname === "/api/proof") {
-			const row = await env.DB_MAIN.prepare(
-				`SELECT COUNT(*) AS n,
-				SUM(CASE WHEN (v.choice = 'red' AND o.dead = 1) OR (v.choice != 'red' AND o.dead = 0) THEN 1 ELSE 0 END) AS correct,
-				SUM(CASE WHEN v.choice = 'red' THEN 1 ELSE 0 END) AS reds,
-				SUM(CASE WHEN v.choice = 'red' AND o.dead = 1 THEN 1 ELSE 0 END) AS red_dead,
-				SUM(CASE WHEN v.choice = 'green' THEN 1 ELSE 0 END) AS greens,
-				SUM(CASE WHEN v.choice = 'green' AND o.dead = 0 THEN 1 ELSE 0 END) AS green_ok,
-				SUM(CASE WHEN v.upgraded_from IS NOT NULL THEN 1 ELSE 0 END) AS upgrades,
-				SUM(CASE WHEN v.upgraded_from IS NOT NULL AND o.dead = 1 THEN 1 ELSE 0 END) AS up_dead,
-				SUM(CASE WHEN v.shadow = 'green' THEN 1 ELSE 0 END) AS shadows,
-				SUM(CASE WHEN v.shadow = 'green' AND o.dead = 0 THEN 1 ELSE 0 END) AS shadow_ok,
-				SUM(CASE WHEN v.red_source = 'memory' THEN 1 ELSE 0 END) AS mems,
-				SUM(CASE WHEN v.red_source = 'memory' AND o.dead = 1 THEN 1 ELSE 0 END) AS mem_dead,
-				SUM(CASE WHEN v.red_source LIKE 'demoted:%' THEN 1 ELSE 0 END) AS demoted,
-				SUM(CASE WHEN v.red_source LIKE 'demoted:%' AND o.dead = 1 THEN 1 ELSE 0 END) AS dem_dead
-				FROM verdicts v JOIN outcomes o ON o.mint = v.mint WHERE v.source = 'live'`
-			).first<{ n: number; correct: number; reds: number; red_dead: number; greens: number; green_ok: number; upgrades: number; up_dead: number; shadows: number; shadow_ok: number; mems: number; mem_dead: number; demoted: number; dem_dead: number }>();
+			const { row, base } = await proofCore(env);
 			const n = Number(row?.n ?? 0);
 			const ups = Number(row?.upgrades ?? 0);
 			const shs = Number(row?.shadows ?? 0);
@@ -1146,124 +1405,7 @@ export default {
 				if (acc !== null && avg !== null && brierN) ece += (b.n / brierN) * Math.abs(avg - acc);
 				return { lo: i / 10, n: b.n, accuracy: acc, avg_confidence: avg };
 			});
-			const r3 = (x: number | null) => (x === null ? null : Math.round(x * 1000) / 1000);
-			// Proof v2 contract (Oct 12) — ADDITIVE: every legacy top-level
-			// field above stays exactly as before (label v1). headline = live
-			// policy-v2 verdicts graded by label v2; v2_history_regrade = older
-			// verdicts re-graded with label v2 (transparency only). One grouped
-			// scan; fenced so a missing column (pre-migration) never breaks the
-			// legacy fields.
-			const v2: Record<string, unknown> = {
-				label: "v2",
-				label_def: {
-					horizon_h: LABEL_V2.horizonH, price_drop: LABEL_V2.priceDrop, liq_usd: LABEL_V2.liqUsd, idle_window_h: LABEL_V2.idleWindowH,
-					text_en: "Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
-					text_th: "ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
-				},
-			};
-			try {
-				const g = await env.DB_MAIN.prepare(
-					`SELECT CASE WHEN v.policy_v >= 2 THEN 2 ELSE 1 END AS pv, v.tier AS tier, v.choice AS choice,
-					COUNT(*) AS n, SUM(o.dead_v2) AS dead
-					FROM verdicts v JOIN outcomes o ON o.mint = v.mint
-					WHERE v.source = 'live' AND o.dead_v2 IS NOT NULL GROUP BY pv, v.tier, v.choice`
-				).all<{ pv: number; tier: string | null; choice: string; n: number; dead: number }>();
-				const sinceRow = await env.DB_MAIN.prepare(
-					"SELECT MIN(ts) AS t FROM verdicts WHERE source = 'live' AND policy_v >= 2"
-				).first<{ t: number | null }>();
-				const agg = (pv: number) => {
-					let n2 = 0, dead = 0, reds = 0, redDead = 0;
-					const tiers: Record<string, { n: number; dead: number }> = { red_sure: { n: 0, dead: 0 }, red: { n: 0, dead: 0 }, yellow: { n: 0, dead: 0 }, green: { n: 0, dead: 0 } };
-					for (const r of g.results ?? []) {
-						if (Number(r.pv) !== pv) continue;
-						const cn = Number(r.n), cd = Number(r.dead ?? 0);
-						n2 += cn; dead += cd;
-						const isRed = r.choice === "red";
-						if (isRed) { reds += cn; redDead += cd; }
-						const t = r.tier && tiers[r.tier] ? r.tier : isRed ? "red" : r.choice === "green" ? "green" : "yellow";
-						tiers[t].n += cn; tiers[t].dead += cd;
-					}
-					const nonRed = n2 - reds;
-					const nonRedAlive = nonRed - (dead - redDead);
-					const base = n2 ? dead / n2 : null;
-					const correct = redDead + nonRedAlive;
-					const aliveNR = nonRed ? nonRedAlive / nonRed : null;
-					return {
-						n: n2, base, acc: n2 ? correct / n2 : null, reds,
-						redP: reds ? redDead / reds : null, redRecall: dead ? redDead / dead : null,
-						aliveNR, lift: aliveNR !== null && base !== null && base < 1 ? aliveNR / (1 - base) : null,
-						tiers: (["red_sure", "red", "yellow", "green"] as const).map((t) => ({ tier: t, n: tiers[t].n, dead_rate: tiers[t].n ? r3(tiers[t].dead / tiers[t].n) : null })),
-					};
-				};
-				const h = agg(2);
-				const old = agg(1);
-				v2.headline = {
-					policy: POLICY_V, since: sinceRow?.t ?? null, n: h.n, ready: h.n >= 100,
-					base_dead_rate: r3(h.base), accuracy: r3(h.acc),
-					baseline_all_red_accuracy: r3(h.base), baseline_all_yellow_accuracy: h.base === null ? null : r3(1 - h.base),
-					red_precision: r3(h.redP), red_recall: r3(h.redRecall), reds: h.reds,
-					alive_rate_non_red: r3(h.aliveNR), lift_non_red: r3(h.lift),
-					tiers: h.tiers,
-				};
-				v2.v2_history_regrade = {
-					n: old.n, base_dead_rate: r3(old.base), accuracy: r3(old.acc), red_precision: r3(old.redP),
-					note: "verdicts made before policy v2, re-graded with label v2 — transparency only",
-				};
-			} catch (e) {
-				v2.headline = { policy: POLICY_V, since: null, n: 0, ready: false, base_dead_rate: null, accuracy: null, baseline_all_red_accuracy: null, baseline_all_yellow_accuracy: null, red_precision: null, red_recall: null, reds: 0, alive_rate_non_red: null, lift_non_red: null, tiers: (["red_sure", "red", "yellow", "green"] as const).map((t) => ({ tier: t, n: 0, dead_rate: null })) };
-				v2.v2_error = String(e).slice(0, 120);
-			}
-			// Decider (SWITCH-001): which model drives the lights. since = ts of
-			// the first verdict decided by LightGBM (null before migrate-v13 or
-			// before the first such verdict). Fenced like the challenger.
-			const decActive = DECIDER === "gbm" && GBM_V ? "gbm" : "lr";
-			const decInfo: Record<string, unknown> = {
-				model: decActive === "gbm" ? "lightgbm-27" : "logistic-regression", pref: DECIDER, fallback: "logistic-regression",
-				gbm_v: GBM_V, t_sure: decActive === "gbm" ? (GBM_T_SURE ?? T_SURE) : T_SURE, since: null,
-			};
-			try {
-				const ds = await env.DB_MAIN.prepare("SELECT MIN(ts) AS t FROM verdicts WHERE decider = 'gbm'").first<{ t: number | null }>();
-				decInfo.since = ds?.t ?? null;
-			} catch (e) {
-				decInfo.error = String(e).slice(0, 120);
-			}
-			v2.decider = decInfo;
-			// Challenger head-to-head (Oct 12): LR vs LightGBM model-only
-			// first-sight P(dead) on the same graded live policy-v2 rows.
-			// Since SWITCH-001 LightGBM decides; LR is the comparison. Fenced:
-			// pre-migration (no columns) or any failure leaves every other
-			// field intact.
-			const chEmpty = { n: 0, auc_lr: null, auc_gbm: null, acc_lr: null, acc_gbm: null, baseline_all_red_accuracy: null, brier_lr: null, brier_gbm: null, survivor_top5_lr: null, survivor_top5_gbm: null };
-			try {
-				const cq = await env.DB_MAIN.prepare(
-					`SELECT v.p_lr_first AS pl, v.p_gbm_first AS pg, o.dead_v2 AS d
-					FROM verdicts v JOIN outcomes o ON o.mint = v.mint
-					WHERE v.source = 'live' AND v.policy_v = 2 AND o.dead_v2 IS NOT NULL
-					AND v.p_lr_first IS NOT NULL AND v.p_gbm_first IS NOT NULL
-					ORDER BY v.ts DESC LIMIT 20000`
-				).all<{ pl: number; pg: number; d: number }>();
-				const st = challengerStats((cq.results ?? []).map((r) => ({ pLr: Number(r.pl), pGbm: Number(r.pg), dead: Number(r.d) === 1 ? 1 : 0 })));
-				v2.challenger = {
-					model: "lightgbm-27", gbm_v: GBM_V, n: st.n, ready: st.n >= 100,
-					auc_lr: r3(st.auc_lr), auc_gbm: r3(st.auc_gbm), acc_lr: r3(st.acc_lr), acc_gbm: r3(st.acc_gbm),
-					baseline_all_red_accuracy: r3(st.baseline_all_red_accuracy),
-					brier_lr: r3(st.brier_lr), brier_gbm: r3(st.brier_gbm),
-					survivor_top5_lr: r3(st.survivor_top5_lr), survivor_top5_gbm: r3(st.survivor_top5_gbm),
-					t_sure_gbm: GBM_T_SURE,
-				};
-			} catch (e) {
-				v2.challenger = { model: "lightgbm-27", gbm_v: GBM_V, ...chEmpty, ready: false, t_sure_gbm: GBM_T_SURE, error: String(e).slice(0, 120) };
-			}
-			v2.legacy_v1 = {
-				resolved_with_verdict: n,
-				accuracy: n ? Number(row?.correct ?? 0) / n : null,
-				red_precision: Number(row?.reds ?? 0) ? Number(row?.red_dead ?? 0) / Number(row?.reds) : null,
-			};
 			return json({
-				resolved_with_verdict: n,
-				correct: Number(row?.correct ?? 0),
-				accuracy: n ? Number(row?.correct ?? 0) / n : null,
-				red_precision: Number(row?.reds ?? 0) ? Number(row?.red_dead ?? 0) / Number(row?.reds) : null,
 				greens: grns,
 				green_precision: grns ? Number(row?.green_ok ?? 0) / grns : null,
 				upgrades: ups,
@@ -1282,7 +1424,7 @@ export default {
 				conf_n: brierN,
 				conf_deciles: deciles.map((d) => ({ ...d, accuracy: r3(d.accuracy), avg_confidence: r3(d.avg_confidence) })),
 				note: n < 50 ? "warming up: need 50+ resolved rounds" : "ready",
-				...v2,
+				...base,
 			});
 		}
 
@@ -1346,6 +1488,10 @@ export default {
 				policy: { policyV: POLICY_V, labelV: LABEL_V, modelCodeV: MODEL_V, dims: FEATURES.length },
 				// decider = configured model; gbm_v null => LightGBM failed its
 				// guard and the LR champion is deciding (fallback).
+				live: await (async () => {
+					const st = await liveStashRead(env, 0);
+					return { enabled: liveEnabled(env), month_now: monthKey(Date.now()), stash: st, over: stashOver(st, Date.now()), note: "stash written by the cron broadcast; no DO request on this endpoint" };
+				})(),
 				decider: { pref: DECIDER, active: DECIDER === "gbm" && GBM_V ? "gbm" : "lr", gbm_v: GBM_V, t_sure: DECIDER === "gbm" && GBM_V ? (GBM_T_SURE ?? T_SURE) : T_SURE, t_sure_gbm: GBM_T_SURE, t_sure_lr: T_SURE },
 			});
 		}

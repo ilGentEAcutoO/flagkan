@@ -151,7 +151,7 @@ details.meth p.raw{font-family:var(--mono);font-size:11px;color:var(--faint)}
   <div class="bhead">
     <div>
       <h1 data-i18n="boardT">Live board</h1>
-      <p class="bstat"><b id="cAcc">–</b> <span data-i18n="acc">accuracy</span><span class="old" id="cOld" hidden></span><span class="sep">·</span><b id="cN">–</b> <span data-i18n="res">resolved</span><span class="sep">·</span><b id="cT">–</b> <span data-i18n="trk">tracked</span><span class="hint"><span class="sep">·</span><span data-i18n="hint">click a row for details</span></span></p>
+      <p class="bstat"><b id="cAcc">–</b> <span data-i18n="acc">accuracy</span><span class="old" id="cOld" hidden></span><span class="sep">·</span><b id="cN">–</b> <span data-i18n="res">resolved</span><span class="sep">·</span><b id="cT">–</b> <span data-i18n="trk">tracked</span><span class="hint"><span class="sep">·</span><span data-i18n="hint">click a row for details</span></span><span class="sep">·</span><span class="livest" id="liveSt" hidden><i></i><span id="liveStT"></span></span></p>
     </div>
     <div class="check"><input id="mint" data-i18n-ph="mintph" placeholder="Paste a mint address…" autocomplete="off" spellcheck="false" aria-label="Mint address"><button id="go" type="button" data-i18n="gobtn">Check</button></div>
   </div>
@@ -181,6 +181,7 @@ details.meth p.raw{font-family:var(--mono);font-size:11px;color:var(--faint)}
   <details class="meth"><summary data-i18n="methT">Our rules</summary><p data-i18n="methB" style="white-space:pre-line"></p><p class="raw" id="dRaw"></p></details>
   <div class="mactions"><button id="dCopy" class="primary" type="button" data-i18n="copy">Copy verdict</button><button id="dWatch" type="button">★</button></div>
 </div></div>
+<script src="/live.js"></script>
 <script>
 (function(){
 "use strict";
@@ -211,7 +212,7 @@ if(z<3)return String(Number(n.toPrecision(4)));
 var d=Math.round(n*Math.pow(10,z+4));if(d>=10000){d=Math.round(d/10);z--}
 var ds=String(d);
 return html?'0.0<sub class="z">'+z+"</sub>"+ds:"0.0"+subNum(z)+ds}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var ph=document.querySelectorAll("[data-i18n-ph]");for(var p=0;p<ph.length;p++){ph[p].placeholder=t(ph[p].getAttribute("data-i18n-ph"))}var ti=document.querySelectorAll("[data-i18n-t]");for(var q2=0;q2<ti.length;q2++){ti[q2].title=t(ti[q2].getAttribute("data-i18n-t"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";if(PROOF)renderProofLine();else loadProof();renderRows();if(LAST)openModal(LAST)}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var ph=document.querySelectorAll("[data-i18n-ph]");for(var p=0;p<ph.length;p++){ph[p].placeholder=t(ph[p].getAttribute("data-i18n-ph"))}var ti=document.querySelectorAll("[data-i18n-t]");for(var q2=0;q2<ti.length;q2++){ti[q2].title=t(ti[q2].getAttribute("data-i18n-t"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";if(PROOF)renderProofLine();else loadProof();renderRows();renderLive();if(LAST)openModal(LAST)}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 function setFilter(f){FILTER=f;PAGE=1;document.getElementById("fAll").className=f==="all"?"on":"";document.getElementById("fRed").className=f==="red"?"on":"";document.getElementById("fYel").className=f==="yellow"?"on":"";document.getElementById("fGrn").className=f==="green"?"on":"";document.getElementById("fStar").className=f==="star"?"on":"";renderRows()}
@@ -382,7 +383,16 @@ loadRounds();openModal(m);
 }).catch(function(){btn.textContent=t("gobtn");bad()})};
 document.getElementById("mint").addEventListener("keydown",function(ev){if(ev.key==="Enter"){ev.preventDefault();document.getElementById("go").click()}});
 window.FlagKan={setData:function(r){ROUNDS=r||[];LOADED=true;PAGE=1;TOTAL=(r||[]).length;OFFSET=TOTAL;syncT();renderRows()},render:renderRows,state:function(){return{sort:SORT.key+":"+SORT.dir,filter:FILTER,query:QUERY,page:PAGE,per:PER,shown:document.querySelectorAll("#rows tr[data-m]").length,matched:document.getElementById("cShow").textContent,total:ROUNDS.length}}};
-applyLang();loadRounds();setInterval(loadProof,60000);setInterval(loadRounds,60000);
+var LIVEST="";
+function renderLive(){var el=document.getElementById("liveSt");if(!el||!LIVEST)return;el.className="livest "+LIVEST;document.getElementById("liveStT").textContent=FlagLive.statusText(LIVEST,L);el.hidden=false}
+// LIVE-001: cron ticks are pushed; upsert by mint and keep filter/sort/page/star/modal state
+function onTick(e){var rs=Array.isArray(e.rounds)?e.rounds:[];var u=FlagLive.upsertRows(ROUNDS,rs,FlagLive.inWindow(ROUNDS,TOTAL!=null&&ROUNDS.length>=TOTAL));if(u.added)ROUNDS.sort(FlagLive.byNewest);OFFSET+=u.added;
+if(typeof e.total==="number")TOTAL=e.total;
+if(e.proof&&typeof e.proof==="object"){PROOF=FlagLive.mergeProof(PROOF,e.proof);renderProofLine()}
+if(ROUNDS.length)LOADED=true;syncT();if(u.changed.length)renderRows();
+if(LAST&&u.changed.indexOf(LAST)>=0)openModal(LAST)}
+applyLang();loadRounds();
+FlagLive.connect({onTick:onTick,onStatus:function(s){LIVEST=s;renderLive()},poll:function(){loadProof();loadRounds()},resync:function(){loadProof();loadRounds()}});
 })();
 </script>
 </body>

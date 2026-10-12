@@ -115,6 +115,7 @@ details.legacy p{margin-top:6px;max-width:68ch}
 <div class="wrap">
   <h1 data-i18n="h1">Proof, not promises.</h1>
   <p class="lead" data-i18n="sub"></p>
+  <p style="margin-top:8px"><span class="livest" id="liveSt" role="status" aria-live="polite" hidden><i></i><span id="liveStT"></span></span></p>
   <div class="score" id="legacyScore">
     <div class="stat"><div class="v green" id="sAcc">–</div><div class="k" data-i18n="sAcc">accuracy</div><div class="s" data-i18n="sAccS"></div></div>
     <div class="stat"><div class="v" id="sRes">–</div><div class="k" data-i18n="sRes">coins judged</div><div class="s" data-i18n="sResS"></div></div>
@@ -139,6 +140,7 @@ details.legacy p{margin-top:6px;max-width:68ch}
   </section>
   <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
+<script src="/live.js"></script>
 <script>
 (function(){
 "use strict";
@@ -249,7 +251,7 @@ function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"
 function clean(s){return String(s==null?"":s).replace(/[\p{Cf}\p{Cc}\p{Zl}\p{Zp}\u034F\u115F\u1160\u17B4\u17B5\u3164\uFFA0\u{E0100}-\u{E01EF}]/gu,"").replace(/\s+/g," ").trim()}
 function nameOf(n,mint,k,max){var c=clean(n);if(!c)c=clean(String(mint||"").slice(0,k));var a=Array.from(c);return max&&a.length>max?a.slice(0,max).join(""):c}
 function pct(x){return (x==null||isNaN(Number(x)))?"—":Math.round(Number(x)*100)+"%"}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderRules();loadProof();loadRows()}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderRules();loadProof();loadRows();renderLive()}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 (function(){var as=document.querySelectorAll(".nav a");for(var i=0;i<as.length;i++){if(as[i].getAttribute("data-nav")==="proof")as[i].className="on"}})();
@@ -327,15 +329,26 @@ el.innerHTML=h;sec.hidden=false}
 function loadProof(){if(PROOF){renderProof(PROOF);return}fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderProof(d)}).catch(function(){})}
 function deadOf(x){var v=x&&x.dead_v2;if(v===0||v===1||v===true||v===false||v==="0"||v==="1")return Number(v)===1;return x?x.dead:null}
 function badge(c){c=(c==="red"||c==="yellow"||c==="green")?c:"none";return '<span class="badge '+c+'">'+c+"</span>"}
-function loadRows(){fetch("/api/rounds?limit=100&resolved=1").then(function(r){return r.json()}).then(function(d){
+var PROWS=null;
+function renderRowsP(){if(!PROWS)return;
 var h="",n=0;
-for(var i=0;i<d.rounds.length;i++){var x=d.rounds[i];if(x.resolved_at==null)continue;n++;
+for(var i=0;i<PROWS.length;i++){var x=PROWS[i];if(x.resolved_at==null)continue;n++;
 var mv="—";if(x.mult!=null&&x.mult>0){var up=x.mult>=1;var mp=Math.round(Math.abs(x.mult-1)*100),big=up&&mp>9999;mv='<span class="'+(up?"up":"down")+'"'+(big?' title="'+(up?"▲":"▼")+mp.toLocaleString("en-US")+"% (×"+esc(Number(x.mult).toFixed(1))+')"':"")+'>'+(up?"▲":"▼")+(big?"&gt;9,999":mp)+"%</span>"}
 var nm=esc(nameOf(x.name,x.mint,8,18));
 h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(deadOf(x)?'<span class="oc dead"><i></i>'+esc(t("dead"))+"</span>":'<span class="oc alive"><i></i>'+esc(t("alive"))+"</span>")+"</td></tr>"}
 document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="mut">'+esc(t("loading"))+"</td></tr>";
-}).catch(function(){})}
+}
+function fetchRows(){fetch("/api/rounds?limit=100&resolved=1").then(function(r){return r.json()}).then(function(d){PROWS=(d&&Array.isArray(d.rounds))?d.rounds:[];renderRowsP()}).catch(function(){})}
+function loadRows(){if(PROWS){renderRowsP();return}fetchRows()}
+function fetchProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderProof(d)}).catch(function(){})}
+var LIVEST="";
+function renderLive(){var el=document.getElementById("liveSt");if(!el||!LIVEST)return;el.className="livest "+LIVEST;document.getElementById("liveStT").textContent=FlagLive.statusText(LIVEST,L);el.hidden=false}
+// LIVE-001: pushed ticks: resolved rows join the table (newest settled first), proof summary refreshes the score
+function onTick(e){var rs=(Array.isArray(e.rounds)?e.rounds:[]).filter(function(x){return x&&x.resolved_at!=null});
+if(rs.length&&PROWS){FlagLive.upsertRows(PROWS,rs);PROWS.sort(function(a,b){return (Number(b.resolved_at)||0)-(Number(a.resolved_at)||0)});if(PROWS.length>100)PROWS.length=100;renderRowsP()}
+if(e.proof&&typeof e.proof==="object"&&PROOF){PROOF=FlagLive.mergeProof(PROOF,e.proof);renderProof(PROOF)}}
 applyLang();
+FlagLive.connect({onTick:onTick,onStatus:function(s){LIVEST=s;renderLive()},poll:function(){fetchProof();fetchRows()},resync:function(){fetchProof();fetchRows()}});
 })();
 </script>
 </body>
