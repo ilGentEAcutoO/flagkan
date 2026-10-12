@@ -106,7 +106,8 @@ CREATE TABLE IF NOT EXISTS dev_signals (
 	creator_prior_graded INTEGER,
 	creator_prior_dead INTEGER,
 	err TEXT,
-	fetched_at INTEGER
+	fetched_at INTEGER,
+	attempts INTEGER DEFAULT 1 -- migrate-v12: tries so far (transient errs retried, max 3)
 );
 CREATE INDEX IF NOT EXISTS idx_dev_creator ON dev_signals (creator);
 CREATE INDEX IF NOT EXISTS idx_dev_fetched ON dev_signals (fetched_at);

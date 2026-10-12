@@ -562,7 +562,7 @@ try {
 		const picked = db.prepare(col.LOOK_PICK_SQL).all(fr, to, 15).map((r) => r.mint);
 		check("look pick: in-window coins without that look only", picked.join() === "w1", picked.join());
 		addR.run("fresh1", T - 2 * 60e3); addR.run("zzpump", T - 60e3); addR.run("done1", T - 60e3); addD.run("done1", "Q", T);
-		const dp = db.prepare(col.DEV_PICK_SQL).all(T - col.DEV_WINDOW_MS, 10).map((r) => r.mint);
+		const dp = db.prepare(col.DEV_PICK_SQL).all(T - col.DEV_WINDOW_MS, T - col.DEV_RETRY_AFTER_MS, T - col.DEV_RETRY_WINDOW_MS, 10).map((r) => r.mint);
 		check("dev pick: first-sight window, no dev row yet, pump-style first", dp.join() === "zzpump,fresh1", dp.join());
 	} catch (e) {
 		check("DATA-001 sqlite checks", false, String(e).slice(0, 200));
@@ -571,7 +571,7 @@ try {
 
 // --- dev collector: concurrency pool + stop on 429 ---
 {
-	check("DEV_CONCURRENCY is 3", col.DEV_CONCURRENCY === 3);
+	check("DEV_CONCURRENCY is 1 (sequential), DEV_PER_RUN is 3", col.DEV_CONCURRENCY === 1 && col.DEV_PER_RUN === 3);
 	check("isRateLimited: solami 429 / rate limit yes, 500 / timeout no",
 		col.isRateLimited(new Error("solami 429")) && col.isRateLimited("Too Many Requests") && !col.isRateLimited(new Error("solami 500")) && !col.isRateLimited(new Error("TimeoutError")));
 	let inflight = 0, peak = 0;
@@ -585,6 +585,94 @@ try {
 	check("collectDev uses runPool(DEV_CONCURRENCY) + 429 stop, no unbounded Promise.all over picks", /runPool\(picks, DEV_CONCURRENCY/.test(dev) && /isRateLimited\(e\)/.test(dev) && !/Promise\.all\(picks/.test(dev));
 	const idx = (await import("node:fs")).readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
 	check("solamiRpc has an 8s AbortSignal.timeout", /async function solamiRpc[\s\S]{0,600}AbortSignal\.timeout\(8000\)/.test(idx));
+}
+
+// FIX-003: tx v1, sequential + 429 backoff, transient retries
+{
+	const { readFileSync } = await import("node:fs");
+	const MINT = "Mint111pump", DEV = "Dev1111";
+	const meta = {
+		fee: 5000, preBalances: [2_000_000_000, 0, 0], postBalances: [974_995_000 + 1, 0, 0],
+		preTokenBalances: [], postTokenBalances: [{ accountIndex: 1, mint: MINT, owner: DEV, uiTokenAmount: { uiAmountString: "35000000" } }],
+	};
+	// v1 (SIMD-0385): inline keys, message.transactionConfig, version: 1.
+	const v1 = { blockTime: 1760000000, version: 1, meta, transaction: { message: {
+		accountKeys: [{ pubkey: DEV, signer: true, writable: true, source: "transaction" }, { pubkey: "Ata1", signer: false, writable: true, source: "transaction" }, { pubkey: "Curve1", signer: false, writable: true, source: "transaction" }],
+		instructions: [], recentBlockhash: "x", transactionConfig: { computeUnitLimit: 30000, heapSize: null, loadedAccountsDataSizeLimit: 200000, priorityFee: null } } } };
+	const f1 = col.parseCreateTx(v1, MINT);
+	check("parseCreateTx v1 shape: creator = fee payer, buy parsed", f1.creator === DEV && f1.devBuyTokens === 35_000_000 && f1.createTs === 1760000000000, JSON.stringify(f1));
+	// v0: static keys first, lookup-table keys appended (never signers).
+	const v0 = { ...v1, version: 0, transaction: { message: { accountKeys: [{ pubkey: DEV, signer: true, writable: true, source: "transaction" }, { pubkey: "Ata1", signer: false, writable: true, source: "transaction" }, { pubkey: "Alt1", signer: false, writable: true, source: "lookupTable" }] } } };
+	check("parseCreateTx v0 with loaded addresses: creator = first signer", col.parseCreateTx(v0, MINT).creator === DEV);
+	const odd = { ...v1, meta: { ...meta, preBalances: [0, 3_000_000_000], postBalances: [0, 1_999_995_000] }, transaction: { message: { accountKeys: [{ pubkey: "NotSigner", signer: false }, { pubkey: DEV, signer: true }] } } };
+	const fo = col.parseCreateTx(odd, MINT);
+	check("parseCreateTx: first signer wins, lamports read at its index", fo.creator === DEV && approx(fo.devBuySol, 1.0, 1e-12), JSON.stringify(fo));
+	check("DEV_TX_MAX_VERSION is the integer 1", col.DEV_TX_MAX_VERSION === 1);
+	const e32015 = new Error('solami {"code":-32015,"message":"Transaction version (2) is not supported by the requesting client. Please try the request again with the following configuration parameter: \\"maxSupportedTransactionVersion\\": 2"}');
+	check("txVersionFromErr parses -32015", col.txVersionFromErr(e32015) === 2 && col.txVersionFromErr(new Error("solami 429")) === null);
+	const seen = [];
+	const fake = async (m, p) => { seen.push(p[1].maxSupportedTransactionVersion); if (p[1].maxSupportedTransactionVersion < 2) throw e32015; return { ok: 1 }; };
+	const got = await col.getTxAnyVersion(fake, "sig1");
+	check("getTxAnyVersion: asks v1 first, retries once with the version -32015 names", got.ok === 1 && seen.join() === "1,2", seen.join());
+	const seen2 = [];
+	let threw = "";
+	try { await col.getTxAnyVersion(async () => { seen2.push(1); throw new Error("solami 429"); }, "s"); } catch (e) { threw = String(e); }
+	check("getTxAnyVersion: non -32015 errors are not retried", seen2.length === 1 && /429/.test(threw));
+
+	const errs = ["solami 429", "solami dev_stopped_429", "owner_Error: solami 429", "no_supply", "supply_Error: solami 429",
+		'solami {"code":-32015,"message":"Transaction version (1) is not supported"}', "TimeoutError: The operation was aborted due to timeout",
+		"sigs_gt_5000", "tx_no_payer", "no_sigs", null];
+	check("isTransientDevErr: 429/timeout/-32015/no_supply yes, sigs_gt_5000/tx_no_payer/no_sigs/null no",
+		errs.map((e) => (col.isTransientDevErr(e) ? 1 : 0)).join("") === "11111110000");
+	const NOW = 100_000_000;
+	const R = col.DEV_RETRY_AFTER_MS;
+	check("devRetryEligible: transient + >= 30 min old + < 3 attempts",
+		col.devRetryEligible({ err: "solami 429", fetched_at: NOW - R, attempts: 1 }, NOW)
+		&& col.devRetryEligible({ err: "no_supply", fetched_at: NOW - R - 1, attempts: null }, NOW)
+		&& !col.devRetryEligible({ err: "solami 429", fetched_at: NOW - R + 1, attempts: 1 }, NOW)
+		&& !col.devRetryEligible({ err: "solami 429", fetched_at: NOW - R, attempts: 3 }, NOW)
+		&& !col.devRetryEligible({ err: "sigs_gt_5000", fetched_at: NOW - 10 * R, attempts: 1 }, NOW));
+	try {
+		const { DatabaseSync } = await import("node:sqlite");
+		const db = new DatabaseSync(":memory:");
+		db.exec(readFileSync(path.join(HERE, "schema.sql"), "utf8"));
+		// SQL clause agrees with isTransientDevErr on every sample.
+		db.exec("CREATE TABLE t (err TEXT)");
+		const ins = db.prepare("INSERT INTO t (err) VALUES (?)");
+		for (const e of errs) ins.run(e);
+		const sqlFlags = db.prepare("SELECT CASE WHEN " + col.DEV_TRANSIENT_SQL.replaceAll("d.err", "err") + " THEN 1 ELSE 0 END AS f FROM t ORDER BY rowid").all().map((r) => r.f).join("");
+		check("DEV_TRANSIENT_SQL agrees with isTransientDevErr", sqlFlags === "11111110000", sqlFlags);
+		const addR = db.prepare("INSERT INTO rounds (mint, first_seen) VALUES (?, ?)");
+		const addD = db.prepare("INSERT INTO dev_signals (mint, err, fetched_at, attempts) VALUES (?, ?, ?, ?)");
+		const T = 500_000_000;
+		addR.run("new1", T - 60e3);
+		addR.run("r429", T - 60 * 60e3); addD.run("r429", "solami 429", T - R - 1, 1);
+		addR.run("rsup", T - 50 * 60e3); addD.run("rsup", "no_supply", T - R - 1, null);
+		addR.run("rtoo_soon", T - 40 * 60e3); addD.run("rtoo_soon", "solami 429", T - R + 60e3, 1);
+		addR.run("rmax", T - 90 * 60e3); addD.run("rmax", "solami 429", T - R - 1, 3);
+		addR.run("rperm", T - 60 * 60e3); addD.run("rperm", "sigs_gt_5000", T - R - 1, 1);
+		addR.run("rold", T - 5 * 3600e3); addD.run("rold", "solami 429", T - R - 1, 1);
+		addR.run("rok", T - 60 * 60e3); addD.run("rok", null, T - R - 1, 1);
+		const pk = db.prepare(col.DEV_PICK_SQL).all(T - col.DEV_WINDOW_MS, T - R, T - col.DEV_RETRY_WINDOW_MS, 10);
+		const pks = pk.map((r) => r.mint + ":" + r.attempts).join();
+		check("dev pick: new coins first, then transient retries (30 min, < 3 tries, 3h window), never permanent/ok", pks === "new1:0,r429:1,rsup:1", pks);
+		const lim = db.prepare(col.DEV_PICK_SQL).all(T - col.DEV_WINDOW_MS, T - R, T - col.DEV_RETRY_WINDOW_MS, col.DEV_PER_RUN);
+		check("dev pick: at most DEV_PER_RUN (3) mints", lim.length <= 3);
+		const bo = (now) => db.prepare(col.DEV_BACKOFF_SQL).get(now - col.DEV_BACKOFF_MS).n;
+		check("backoff: no 429 in last 5 min -> 0", bo(T) === 0);
+		addR.run("hot", T - 60e3); addD.run("hot", "owner_Error: solami 429", T - 60e3, 1);
+		check("backoff: a 429 row in last 5 min -> skip", bo(T) === 1 && bo(T + col.DEV_BACKOFF_MS + 60e3) === 0);
+		db.prepare(col.DEV_UPSERT_SQL).run("r429", "C", null, null, null, null, null, null, 0, 0, 0, null, T, 2);
+		check("upsert stores attempts", db.prepare("SELECT attempts FROM dev_signals WHERE mint = 'r429'").get().attempts === 2);
+	} catch (e) {
+		check("FIX-003 sqlite checks", false, String(e).slice(0, 200));
+	}
+	const devSrc = readFileSync(path.join(HERE, "src", "dev.ts"), "utf8");
+	check("collectDev: backoff query before any RPC, getTxAnyVersion, sequential supply (no swallowed catch)",
+		/DEV_BACKOFF_SQL[\s\S]*runPool\(picks, DEV_CONCURRENCY/.test(devSrc) && /getTxAnyVersion\(rpc/.test(devSrc) && !/getTokenSupply", \[mint\]\)\.catch/.test(devSrc) && !/maxSupportedTransactionVersion: 0/.test(devSrc));
+	const idxSrc = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
+	const ing = idxSrc.slice(idxSrc.indexOf("async function ingest("));
+	check("collectDev runs after intake signals (recordMint loops) in ingest()", ing.indexOf("collectDev(") > ing.lastIndexOf("recordMint(env, prow.mint"));
 }
 
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }

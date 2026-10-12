@@ -44,7 +44,8 @@ export function lookWindow(now: number, w: { fromAgoMs: number; toAgoMs: number 
 
 // ---------------------------------------------------------------------------
 // Dev / creator signals.
-export const DEV_PER_RUN = 10;
+// FIX-003: at most 3 mints per cron run, strictly sequential.
+export const DEV_PER_RUN = 3;
 // Graduated pump coins often arrive with > 1000 signatures (sample of 12
 // recent pump mints: 8 fit one page, 1 needed 4, 3 needed > 5). Walk back at
 // most DEV_SIG_PAGES pages; beyond that the create tx is marked unknown.
@@ -59,10 +60,42 @@ export const SIGNAL_RPC_PER_ROW = 4; // computeSignals in index.ts
 export const SOLAMI_SOFT_CAP_24H = 40000;
 export const DEV_WINDOW_MS = 10 * 60 * 1000; // "first sight" = first 10 min
 
-// pump.fun-style mints first, then the rest, FIFO inside the first-sight window.
+// Transient dev-row errors (FIX-003): rate limits, timeouts, tx-version
+// rejections (-32015) and missing supply (getTokenSupply hit a 429). They
+// become eligible again after DEV_RETRY_AFTER_MS, up to DEV_MAX_ATTEMPTS
+// total; every other err (sigs_gt_5000, tx_no_payer, ...) is permanent.
+// isTransientDevErr and DEV_TRANSIENT_SQL MUST agree (ml-check proves it).
+export const DEV_TRANSIENT_PATTERNS = ["429", "imeout", "abort", "-32015", "no_supply"] as const;
+export function isTransientDevErr(err: string | null | undefined): boolean {
+	if (!err) return false;
+	return DEV_TRANSIENT_PATTERNS.some((p) => err.includes(p));
+}
+export const DEV_TRANSIENT_SQL = "(" + DEV_TRANSIENT_PATTERNS.map((p) => "instr(d.err, '" + p + "') > 0").join(" OR ") + ")";
+export const DEV_RETRY_AFTER_MS = 30 * 60 * 1000;
+export const DEV_MAX_ATTEMPTS = 3;
+// Retries only for coins first seen in the last 3h (3 attempts x 30 min fit).
+export const DEV_RETRY_WINDOW_MS = 3 * 3600 * 1000;
+// Backoff: any 429 stored in the last 5 min skips the whole dev run.
+export const DEV_BACKOFF_MS = 5 * 60 * 1000;
+export const DEV_BACKOFF_SQL =
+	"SELECT COUNT(*) AS n FROM dev_signals WHERE fetched_at > ? AND instr(err, '429') > 0";
+
+// Pure mirror of the retry clause in DEV_PICK_SQL (tests + docs).
+export function devRetryEligible(row: { err: string | null; fetched_at: number | null; attempts: number | null }, now: number): boolean {
+	if (!isTransientDevErr(row.err)) return false;
+	if ((row.attempts ?? 1) >= DEV_MAX_ATTEMPTS) return false;
+	return row.fetched_at !== null && row.fetched_at <= now - DEV_RETRY_AFTER_MS;
+}
+
+// New first-sight coins first (pump.fun-style before the rest, FIFO), then
+// transient-error retries. attempts = tries so far (0 for a new coin).
+// Bind: firstSightFrom, retryFetchedBefore, retryFirstSeenFrom, limit.
 export const DEV_PICK_SQL =
-	"SELECT r.mint AS mint, r.first_seen AS first_seen FROM rounds r LEFT JOIN dev_signals d ON d.mint = r.mint "
-	+ "WHERE d.mint IS NULL AND r.first_seen > ? ORDER BY (CASE WHEN r.mint LIKE '%pump' THEN 0 ELSE 1 END) ASC, r.first_seen ASC LIMIT ?";
+	"SELECT r.mint AS mint, r.first_seen AS first_seen, COALESCE(d.attempts, CASE WHEN d.mint IS NULL THEN 0 ELSE 1 END) AS attempts "
+	+ "FROM rounds r LEFT JOIN dev_signals d ON d.mint = r.mint "
+	+ "WHERE (d.mint IS NULL AND r.first_seen > ?) "
+	+ "OR (d.mint IS NOT NULL AND " + DEV_TRANSIENT_SQL + " AND d.fetched_at <= ? AND COALESCE(d.attempts, 1) < " + DEV_MAX_ATTEMPTS + " AND r.first_seen > ?) "
+	+ "ORDER BY (CASE WHEN d.mint IS NULL THEN 0 ELSE 1 END) ASC, (CASE WHEN r.mint LIKE '%pump' THEN 0 ELSE 1 END) ASC, r.first_seen ASC LIMIT ?";
 
 export const SOLAMI_EST_24H_SQL =
 	"SELECT (SELECT COUNT(*) FROM signals WHERE ts > ?) AS sig, (SELECT COUNT(*) FROM dev_signals WHERE fetched_at > ?) AS dev";
@@ -79,8 +112,8 @@ export const CREATOR_HISTORY_SQL =
 	+ "WHERE d.creator = ? AND d.mint != ? AND r.first_seen < ?";
 
 export const DEV_UPSERT_SQL =
-	"INSERT OR REPLACE INTO dev_signals (mint, creator, create_sig, create_ts, dev_buy_sol, dev_buy_tokens, dev_share_initial, dev_share_now, creator_prior_n, creator_prior_graded, creator_prior_dead, err, fetched_at) "
-	+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	"INSERT OR REPLACE INTO dev_signals (mint, creator, create_sig, create_ts, dev_buy_sol, dev_buy_tokens, dev_share_initial, dev_share_now, creator_prior_n, creator_prior_graded, creator_prior_dead, err, fetched_at, attempts) "
+	+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 const fin = (v: unknown): number | null => {
 	const n = typeof v === "string" ? Number(v) : v;
@@ -115,25 +148,34 @@ export interface CreateTxFacts {
 	devBuySol: number | null; // creator's SOL out, fee excluded (see note)
 }
 
-// Parse a getTransaction(sig, {encoding: "jsonParsed", maxSupportedTransactionVersion: 0})
-// result. creator = fee payer (first signer, accountKeys[0]).
+// Parse a getTransaction(sig, {encoding: "jsonParsed", maxSupportedTransactionVersion: DEV_TX_MAX_VERSION})
+// result. creator = fee payer = first signer. Layouts: legacy (string keys or
+// {pubkey, signer}), v0 (static keys first, then lookup-table keys tagged
+// source:"lookupTable" — never signers), v1 (all keys inline, plus
+// message.transactionConfig). The fee payer is accountKeys[0] in all three;
+// we take the first key flagged signer (falling back to index 0) and read the
+// lamport balances at that same index.
 // devBuySol = (pre - post lamports of the fee payer - fee) / 1e9. APPROXIMATE:
 // on pump.fun create+buy it also includes rent for the new mint / curve /
 // ATA accounts (~0.02 SOL) and any platform/creator fee legs.
 export function parseCreateTx(tx: any, mint: string): CreateTxFacts | { err: string } {
 	if (!tx || typeof tx !== "object") return { err: "tx_missing" };
-	const keys: any[] = Array.isArray(tx?.transaction?.message?.accountKeys) ? tx.transaction.message.accountKeys : [];
+	const msg = tx?.transaction?.message ?? {};
+	const keys: any[] = Array.isArray(msg.accountKeys) ? msg.accountKeys
+		: Array.isArray(msg.staticAccountKeys) ? msg.staticAccountKeys : [];
 	if (keys.length === 0) return { err: "tx_no_keys" };
-	const k0 = keys[0];
-	const creator = typeof k0 === "string" ? k0 : typeof k0?.pubkey === "string" ? k0.pubkey : "";
+	const keyOf = (k: any): string => (typeof k === "string" ? k : typeof k?.pubkey === "string" ? k.pubkey : "");
+	let payerIdx = keys.findIndex((k) => typeof k === "object" && k !== null && k.signer === true && k.source !== "lookupTable");
+	if (payerIdx < 0) payerIdx = 0;
+	const creator = keyOf(keys[payerIdx]);
 	if (!creator) return { err: "tx_no_payer" };
 	const meta = tx.meta ?? {};
 	const sumFor = (arr: unknown) => (Array.isArray(arr) ? arr : [])
 		.filter((b: any) => b?.mint === mint && b?.owner === creator)
 		.reduce((s: number, b: any) => s + uiAmt(b), 0);
 	const devBuyTokens = sumFor(meta.postTokenBalances) - sumFor(meta.preTokenBalances);
-	const pre0 = fin(Array.isArray(meta.preBalances) ? meta.preBalances[0] : null);
-	const post0 = fin(Array.isArray(meta.postBalances) ? meta.postBalances[0] : null);
+	const pre0 = fin(Array.isArray(meta.preBalances) ? meta.preBalances[payerIdx] : null);
+	const post0 = fin(Array.isArray(meta.postBalances) ? meta.postBalances[payerIdx] : null);
 	const fee = fin(meta.fee) ?? 0;
 	const devBuySol = pre0 !== null && post0 !== null ? Math.round((pre0 - post0 - fee)) / 1e9 : null;
 	const bt = fin(tx.blockTime);
@@ -154,9 +196,36 @@ export function shareOf(tokens: number | null, supply: number | null): number | 
 	return Math.round((tokens / supply) * 1e6) / 1e6;
 }
 
-// Per-run concurrency for dev lookups: DEV_PER_RUN mints, at most this many
-// in flight, so intake's own signal calls are not starved.
-export const DEV_CONCURRENCY = 3;
+// Dev lookups run strictly one at a time (FIX-003: concurrency 3 still drew
+// solami 429s that cost intake signal coverage), with a small gap between
+// dev RPCs, and stop starting new mints once the run is DEV_RUN_BUDGET_MS
+// old so a slow tail never overlaps the next minute's intake.
+export const DEV_CONCURRENCY = 1;
+export const DEV_RPC_GAP_MS = 250;
+export const DEV_RUN_BUDGET_MS = 25 * 1000;
+
+// Highest transaction version Solana ships today (v1, SIMD-0385, live on
+// mainnet). 0 fails v1 txs with -32015.
+export const DEV_TX_MAX_VERSION = 1;
+// -32015 "Transaction version (N) is not supported by the requesting client"
+// -> N, else null. Used to retry getTransaction once with a higher ceiling.
+export function txVersionFromErr(e: unknown): number | null {
+	const s = String((e as any)?.message ?? e ?? "");
+	if (!/-32015/.test(s)) return null;
+	const m = /version \((\d+)\)/i.exec(s);
+	return m ? Number(m[1]) : null;
+}
+// getTransaction with the v1 ceiling; on -32015 naming a higher version,
+// retry once with that version.
+export async function getTxAnyVersion(rpc: (method: string, params: unknown[]) => Promise<any>, sig: string): Promise<any> {
+	const call = (v: number) => rpc("getTransaction", [sig, { encoding: "jsonParsed", maxSupportedTransactionVersion: v, commitment: "confirmed" }]);
+	try { return await call(DEV_TX_MAX_VERSION); }
+	catch (e) {
+		const v = txVersionFromErr(e);
+		if (v === null || v <= DEV_TX_MAX_VERSION) throw e;
+		return await call(v);
+	}
+}
 
 // True when an RPC error looks like an HTTP 429 / rate limit.
 export function isRateLimited(e: unknown): boolean {

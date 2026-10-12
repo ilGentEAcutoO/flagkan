@@ -7,6 +7,8 @@ import {
 	DEV_PICK_SQL, SOLAMI_EST_24H_SQL, CREATOR_HISTORY_SQL, DEV_UPSERT_SQL,
 	oldestSig, parseCreateTx, ownerBalance, shareOf,
 	DEV_CONCURRENCY, isRateLimited, runPool,
+	DEV_RETRY_AFTER_MS, DEV_RETRY_WINDOW_MS, DEV_BACKOFF_MS, DEV_BACKOFF_SQL,
+	DEV_RPC_GAP_MS, DEV_RUN_BUDGET_MS, getTxAnyVersion,
 } from "./ml/collect";
 
 export interface LookMarket {
@@ -56,7 +58,7 @@ export async function solamiEst24h(db: D1Database, now: number): Promise<{ signa
 	return { signals, dev, est: signals * SIGNAL_RPC_PER_ROW + dev * DEV_RPC_PER_ROW };
 }
 
-async function devForMint(db: D1Database, rpc: RpcFn, mint: string, firstSeen: number, now: number): Promise<string | null> {
+async function devForMint(db: D1Database, rpc: RpcFn, mint: string, firstSeen: number, attempts: number, now: number): Promise<string | null> {
 	let creator: string | null = null, createSig: string | null = null, createTs: number | null = null;
 	let buySol: number | null = null, buyTok: number | null = null, shareInit: number | null = null, shareNow: number | null = null;
 	let priorN: number | null = null, priorG: number | null = null, priorD: number | null = null;
@@ -81,18 +83,21 @@ async function devForMint(db: D1Database, rpc: RpcFn, mint: string, firstSeen: n
 		if ("err" in os) err = os.err;
 		else {
 			createSig = os.sig; createTs = os.ts;
-			const [tx, sup] = await Promise.all([
-				rpc("getTransaction", [os.sig, { encoding: "jsonParsed", maxSupportedTransactionVersion: 0, commitment: "confirmed" }]),
-				rpc("getTokenSupply", [mint]).catch(() => null),
-			]);
+			// Sequential (FIX-003): getTokenSupply used to run in parallel with
+			// getTransaction behind .catch(() => null), so its 429s surfaced as
+			// "no_supply". Now its error is kept and the row retried later.
+			const tx = await getTxAnyVersion(rpc, os.sig);
 			const f = parseCreateTx(tx, mint);
 			if ("err" in f) err = f.err;
 			else {
 				creator = f.creator; buyTok = f.devBuyTokens; buySol = f.devBuySol;
 				if (f.createTs !== null) createTs = f.createTs;
+				let sup: any = null;
+				try { sup = await rpc("getTokenSupply", [mint]); }
+				catch (e) { err = "supply_" + String(e).slice(0, 80); }
 				const supply = Number(sup?.value?.uiAmountString ?? sup?.value?.uiAmount ?? NaN);
 				const supplyOk = Number.isFinite(supply) && supply > 0 ? supply : null;
-				if (supplyOk === null) err = "no_supply";
+				if (supplyOk === null && err === null) err = "no_supply";
 				shareInit = shareOf(buyTok, supplyOk);
 				try {
 					const bal = ownerBalance(await rpc("getTokenAccountsByOwner", [creator, { mint }, { encoding: "jsonParsed" }]));
@@ -107,41 +112,62 @@ async function devForMint(db: D1Database, rpc: RpcFn, mint: string, firstSeen: n
 	} catch (e) {
 		err = String(e).slice(0, 160);
 	}
-	await db.prepare(DEV_UPSERT_SQL).bind(mint, creator, createSig, createTs, buySol, buyTok, shareInit, shareNow, priorN, priorG, priorD, err, now).run();
+	await db.prepare(DEV_UPSERT_SQL).bind(mint, creator, createSig, createTs, buySol, buyTok, shareInit, shareNow, priorN, priorG, priorD, err, now, attempts + 1).run();
 	return err;
 }
 
-// Dev/creator facts at first sight: <= DEV_PER_RUN coins per tick, skipped
-// without a Solami key or when the 24h RPC estimate reaches the soft cap.
+// Dev/creator facts at first sight: <= DEV_PER_RUN coins per tick, strictly
+// sequential, run AFTER intake (and its signal RPCs) finished in ingest().
+// Skipped without a Solami key, when any dev row hit a 429 in the last
+// DEV_BACKOFF_MS, or when the 24h RPC estimate reaches the soft cap.
+// Transient failures (429 / timeout / -32015 / no_supply) are retried after
+// DEV_RETRY_AFTER_MS, at most DEV_MAX_ATTEMPTS tries per coin.
 export async function collectDev(db: D1Database, rpc: RpcFn, hasKey: boolean, now: number): Promise<Record<string, number>> {
 	const out: Record<string, number> = { dev_want: 0, dev_ok: 0, dev_err: 0 };
 	try {
 		if (!hasKey) { out.dev_skip_nokey = 1; return out; }
-		const rows = await db.prepare(DEV_PICK_SQL).bind(now - DEV_WINDOW_MS, DEV_PER_RUN).all<{ mint: string; first_seen: number }>();
+		const rows = await db.prepare(DEV_PICK_SQL)
+			.bind(now - DEV_WINDOW_MS, now - DEV_RETRY_AFTER_MS, now - DEV_RETRY_WINDOW_MS, DEV_PER_RUN)
+			.all<{ mint: string; first_seen: number; attempts: number }>();
 		const picks = rows.results ?? [];
 		out.dev_want = picks.length;
 		if (picks.length === 0) return out; // most ticks: skip the budget query too
+		const recent429 = await db.prepare(DEV_BACKOFF_SQL).bind(now - DEV_BACKOFF_MS).first<{ n: number }>();
+		if (Number(recent429?.n ?? 0) > 0) {
+			out.dev_skip_backoff = 1;
+			console.log(JSON.stringify({ cron: "dev_skip_backoff" }));
+			return out;
+		}
 		const est = await solamiEst24h(db, now);
 		if (est.est >= SOLAMI_SOFT_CAP_24H) {
 			out.dev_skip_budget = est.est;
 			console.log(JSON.stringify({ cron: "dev_skip_budget", est: est.est }));
 			return out;
 		}
-		// At most DEV_CONCURRENCY lookups in flight. The first 429 stops the
-		// collector for the rest of this run (no new mints, no further calls)
-		// so intake's own signal RPCs are not starved.
-		let limited = false;
+		// One lookup at a time, DEV_RPC_GAP_MS between dev RPCs. The first 429
+		// stops the collector for the rest of this run (no new mints, no
+		// further calls) so intake's own signal RPCs are not starved; so does
+		// the wall-time budget.
+		let limited = false, lastCall = 0;
 		const guarded: RpcFn = async (m, p) => {
 			if (limited) throw new Error("solami dev_stopped_429");
+			const wait = lastCall + DEV_RPC_GAP_MS - Date.now();
+			if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+			lastCall = Date.now();
 			try { return await rpc(m, p); }
 			catch (e) { if (isRateLimited(e)) limited = true; throw e; }
 		};
+		const overBudget = () => Date.now() - now > DEV_RUN_BUDGET_MS;
 		const pool = await runPool(picks, DEV_CONCURRENCY, (p) =>
-			devForMint(db, guarded, p.mint, Number(p.first_seen), now).catch((e) => "write_" + String(e).slice(0, 60)), () => limited);
+			devForMint(db, guarded, p.mint, Number(p.first_seen), Number(p.attempts ?? 0), now).catch((e) => "write_" + String(e).slice(0, 60)),
+			() => limited || overBudget());
 		for (const r of pool.results.slice(0, pool.started)) { if (r) out.dev_err++; else out.dev_ok++; }
+		out.dev_retry = picks.filter((p) => Number(p.attempts ?? 0) > 0).length;
 		if (limited) {
 			out.dev_stop_429 = 1; out.dev_skipped = pool.skipped;
 			console.log(JSON.stringify({ cron: "dev_stop_429", skipped: pool.skipped }));
+		} else if (pool.skipped > 0) {
+			out.dev_stop_budget = 1; out.dev_skipped = pool.skipped;
 		}
 	} catch (e) {
 		out.dev_fail = 1;
