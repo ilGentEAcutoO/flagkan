@@ -1,8 +1,9 @@
-// LightGBM SHADOW challenger (Oct 12). Pure module: no Worker APIs, no deps.
-// Port of ml-lab/out/predict-live.mjs (lightgbm-compact-v1). It scores the
-// SAME 27-dim buildFeatures(row) vector as the live LR, at first sight only;
-// the result is stored (verdicts.p_gbm_first) and graded on /api/proof. It
-// NEVER feeds policyV2: no light, tier or verdict depends on it.
+// LightGBM decider (shadow Oct 12; decides since SWITCH-001, Oct 12). Pure
+// module: no Worker APIs, no deps. Port of ml-lab/out/predict-live.mjs
+// (lightgbm-compact-v1). It scores the SAME 27-dim buildFeatures(row) vector
+// as the live LR, at first sight only; the result is stored
+// (verdicts.p_gbm_first), graded on /api/proof, and — when train.ts DECIDER
+// is "gbm" and scoring succeeds — drives policyV2 (see pickDecider).
 import { FEATURES, aucOf } from "./train.js";
 
 export interface GbmTree {

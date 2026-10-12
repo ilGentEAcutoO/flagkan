@@ -19,7 +19,7 @@ DexScreener boosts ────────────────────�
 Solami RPC ──► on-chain signals: whale share, top-holder spread, early buys,
                coin age, mint/freeze authority
                                               │
-Leak-free logistic-regression model + explicit rules ──► the light
+Leak-free LightGBM model (LR fallback) + explicit rules ──► the light
 TypeSafe Jev (jev-latest) ──► AI judge: wallet coordination + human-readable reasons
 Crash re-checks ──► a coin that measurably crashes before grading is re-armed red
                                               │
@@ -32,9 +32,10 @@ Public /proof page + /api/proof: every number next to its baseline
 - **Inspect.** Solami RPC (`getTokenSupply`, `getTokenLargestAccounts`, `getSignaturesForAddress`,
   `getAccountInfo`) gives holder concentration, early buy pressure, coin age and authority flags.
   Market fields (liquidity, FDV, volume, trades) come from GeckoTerminal / DexScreener.
-- **Judge.** A logistic-regression model trained on FlagKan's own graded history (feature list in
-  [`radar/src/ml/train.ts`](radar/src/ml/train.ts); retrained on the edge, a challenger is only
-  promoted on a measured test-split improvement) combines with explicit rules. The Jev judge from
+- **Judge.** A model trained on FlagKan's own graded history combines with explicit rules.
+  LightGBM (27 leak-free first-sight features) decides the light since 2026-10-12, after an out-of-sample test on 357 resolved coins neither model had seen beat the logistic regression (AUC 0.776 vs 0.736; the confidence intervals overlap, so the edge is real but modest). The LR stays as the automatic fallback and as the live comparison; live head-to-head numbers are in [`/api/proof`](https://flag.sornkan.com/api/proof). The LR (feature list in
+  [`radar/src/ml/train.ts`](radar/src/ml/train.ts)) is still retrained on the edge, and a challenger
+  is only promoted on a measured test-split improvement. The Jev judge from
   TypeSafe scores wallet coordination and writes the reasons you see. The six checks shown in the UI
   are reference levels that explain the verdict — the light itself comes from model + rules.
 - **Grade.** About 6 hours after first sight the outcome is settled from market data and the verdict

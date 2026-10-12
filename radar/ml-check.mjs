@@ -485,13 +485,64 @@ try {
 	check("challenger acc threshold strictly > 0.5", gbm.challengerStats([{ pLr: 0.5, pGbm: 0.51, dead: 1 }]).acc_lr === 0 && gbm.challengerStats([{ pLr: 0.5, pGbm: 0.51, dead: 1 }]).acc_gbm === 1);
 	check("challenger empty", gbm.challengerStats([]).n === 0 && gbm.challengerStats([]).auc_gbm === null);
 	// source guards: shadow columns written only by first-verdict INSERTs,
-	// never by an UPDATE; policyV2 never sees the GBM probability.
+	// never by an UPDATE (decider wiring: SWITCH-001 block below).
 	const src = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
 	const updates = src.match(/UPDATE verdicts[^"`]*/g) ?? [];
 	check("upgrade UPDATE never sets p_gbm_first/p_lr_first/gbm_v", updates.length > 0 && updates.every((u) => !/p_gbm_first|p_lr_first|gbm_v/.test(u)), updates.join(" | ").slice(0, 200));
 	const inserts = src.match(/INSERT OR REPLACE INTO verdicts \([^)]*\)/g) ?? [];
 	check("every verdict INSERT stores p_lr_first, p_gbm_first, gbm_v", inserts.length >= 4 && inserts.every((q) => /p_lr_first, p_gbm_first, gbm_v/.test(q)), String(inserts.length));
-	check("policyV2 call never takes the GBM p", /policyV2\(p, rule, jev\)/.test(src) && !/policyV2\([^)]*gbm/i.test(src));
+}
+
+// --- SWITCH-001: LightGBM decides, LR automatic fallback ---
+{
+	const { readFileSync } = await import("node:fs");
+	const pd = ml.pickDecider;
+	check("DECIDER defaults to gbm", ml.DECIDER === "gbm");
+	const g = pd("gbm", 0.2, 0.8, 0.996, null);
+	check("gbm decides when it scored", g.decider === "gbm" && g.p === 0.2 && g.tSure === 0.996, JSON.stringify(g));
+	const f = pd("gbm", null, 0.8, 0.996, null);
+	check("lr fallback when gbm null (guard failed / no score)", f.decider === "lr" && f.p === 0.8 && f.tSure === ml.T_SURE, JSON.stringify(f));
+	check("lr fallback when gbm NaN", pd("gbm", NaN, 0.7, 0.996, null).decider === "lr");
+	check("gbm without meta t_sure uses T_SURE", pd("gbm", 0.5, 0.8, null, null).tSure === ml.T_SURE);
+	check("rule when no model p + rule", JSON.stringify(pd("gbm", null, null, 0.996, "mint_live")) === JSON.stringify({ p: null, tSure: ml.T_SURE, decider: "rule" }));
+	check("base when no model p, no rule", pd("gbm", null, null, 0.996, null).decider === "base");
+	const l = pd("lr", 0.2, 0.8, 0.996, null);
+	check("DECIDER=lr ignores gbm (rollback switch)", l.decider === "lr" && l.p === 0.8 && l.tSure === ml.T_SURE, JSON.stringify(l));
+	check("DECIDER=lr, no LR champion -> base (never gbm)", pd("lr", 0.2, null, 0.996, null).decider === "base");
+	// a newly promoted LR champion only changes pLr: with gbm scoring it can't decide
+	check("new LR champion can't take over while DECIDER=gbm", pd("gbm", 0.4, 0.999, 0.996, null).decider === "gbm" && pd("gbm", 0.4, 0.001, 0.996, null).p === 0.4);
+	// red_sure threshold per decider
+	const P = ml.policyV2;
+	check("red_sure gbm: 0.995 < 0.996 is plain red", P(0.995, null, null, 0.996).tier === "red");
+	check("red_sure gbm: 0.996 is red_sure", P(0.996, null, null, 0.996).tier === "red_sure");
+	check("red_sure lr (default 0.99) unchanged", P(0.99, null, null).tier === "red_sure" && P(0.995, null, null, ml.T_SURE).tier === "red_sure");
+	check("green / red bars shared", P(0.3, null, null, 0.996).tier === "green" && P(0.51, null, null, 0.996).choice === "red" && P(0.4, null, null, 0.996).tier === "yellow");
+	// source guards: decider wired + written only on first-verdict INSERTs
+	const src = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
+	check("decideV2 routes through pickDecider(DECIDER, pGbm, pLr, GBM_T_SURE, rule)", /pickDecider\(DECIDER, pGbm, pLr, GBM_T_SURE, rule\)/.test(src) && /policyV2\(p, rule, jev, pick\.tSure\)/.test(src));
+	const inserts = src.match(/INSERT OR REPLACE INTO verdicts \([^)]*\)/g) ?? [];
+	check("every verdict INSERT stores decider", inserts.length >= 4 && inserts.every((q) => /gbm_v, decider\)/.test(q)), String(inserts.length));
+	const updates = src.match(/UPDATE verdicts[^"`]*/g) ?? [];
+	check("upgrade UPDATE never sets decider", updates.length > 0 && updates.every((u) => !/decider/.test(u)));
+	check("schema.sql + migrate-v13 add verdicts.decider", /decider TEXT/.test(readFileSync(path.join(HERE, "schema.sql"), "utf8")) && /ALTER TABLE verdicts ADD COLUMN decider TEXT/.test(readFileSync(path.join(HERE, "migrate-v13.sql"), "utf8")));
+	// placeholders == columns on every INSERT (decider added one each)
+	const full = src.match(/INSERT OR REPLACE INTO verdicts \([^)]*\) VALUES \([^)]*\)/g) ?? [];
+	check("verdict INSERT placeholder count == column count", full.length >= 4 && full.every((q) => {
+		const [cols, vals] = q.match(/\(([^)]*)\)/g).map((x) => x.slice(1, -1).split(",").length);
+		return cols === vals;
+	}), String(full.length));
+	// sqlite: decider column round-trips through a real insert, upgrade leaves it
+	try {
+		const { DatabaseSync } = await import("node:sqlite");
+		const db = new DatabaseSync(":memory:");
+		db.exec(readFileSync(path.join(HERE, "schema.sql"), "utf8"));
+		db.prepare("INSERT INTO verdicts (mint, ts, choice, confidence, decider) VALUES ('m', 1, 'red', 0.9, 'gbm')").run();
+		const up = updates[0].replace(/\?/g, "0").replace("WHERE mint = 0", "WHERE mint = 'm'");
+		db.exec(up);
+		check("upgrade UPDATE keeps decider (sqlite)", db.prepare("SELECT decider, choice FROM verdicts WHERE mint = 'm'").get().decider === "gbm");
+	} catch (e) {
+		check("SWITCH-001 sqlite check", false, String(e).slice(0, 200));
+	}
 }
 
 // --- DATA-001: look-snapshot isolation (static) + dev/creator parsing ---

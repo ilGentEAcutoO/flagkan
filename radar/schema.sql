@@ -50,8 +50,11 @@ CREATE TABLE IF NOT EXISTS verdicts (
 	-- migrate-v10: LightGBM shadow (first-sight, model-only; upgrades never touch)
 	p_lr_first REAL,
 	p_gbm_first REAL,
-	gbm_v TEXT
+	gbm_v TEXT,
+	-- migrate-v13: model that decided the first-sight light (gbm|lr|rule|base; upgrades never touch)
+	decider TEXT
 );
+CREATE INDEX IF NOT EXISTS idx_verdicts_decider_ts ON verdicts (decider, ts);
 CREATE TABLE IF NOT EXISTS rug_vectors (
 	mint TEXT PRIMARY KEY,
 	resolved_at INTEGER NOT NULL,

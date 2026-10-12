@@ -29,7 +29,7 @@ its numbers are kept in `legacy_v1`.
 ```
 GeckoTerminal new pools + DexScreener boosts ──► new Solana mints ──► cron (every minute)
 Solami RPC ──► on-chain signals (top holders, early buys, coin age, authorities)
-model (logistic regression) + rules ──► light; crash re-checks can re-arm red before grading
+model (LightGBM, LR fallback) + rules ──► light; crash re-checks can re-arm red before grading
 TypeSafe Jev ──► wallet coordination + written reasons
 Cloudflare D1 ──► rounds / snapshots / signals / verdicts / outcomes
 ```
@@ -39,9 +39,10 @@ Cloudflare D1 ──► rounds / snapshots / signals / verdicts / outcomes
 - On-chain data: Solami RPC (`getTokenSupply`, `getTokenLargestAccounts`,
   `getSignaturesForAddress`, `getAccountInfo`) — holder spread, early buys, coin age, plus
   mint/freeze authority flags
-- Model: leak-free logistic regression trained on first-sight state only (feature list and
-  count in [`src/ml/train.ts`](src/ml/train.ts)); retrained on a schedule, and a challenger is
-  only promoted on a measured test-split improvement
+- Model: LightGBM (27 leak-free first-sight features) decides the light since 2026-10-12, after an out-of-sample test on 357 resolved coins neither model had seen beat the logistic regression (AUC 0.776 vs 0.736; the confidence intervals overlap, so the edge is real but modest). The LR stays as the automatic fallback and as the live comparison; live head-to-head numbers are in [`/api/proof`](https://flag.sornkan.com/api/proof). Rollback is one line: `DECIDER` in
+  [`src/ml/train.ts`](src/ml/train.ts). The LR (feature list in the same file) is still retrained
+  on a schedule and a challenger is only promoted on a measured test-split improvement; a new LR
+  champion cannot take over the light while `DECIDER = "gbm"`
 - Judge: Jev (`jev-latest`) — coordination score, severity and the human-readable reasons
 - Board lifecycle: unresolved coins count down to their outcome; resolved coins stay 7 days
   then drop off (history kept for proof stats)

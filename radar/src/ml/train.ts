@@ -512,8 +512,10 @@ export type Tier = "red_sure" | "red" | "yellow" | "green";
 
 // Pure policy: control flow in code. p = model P(dead_v2) at first sight
 // (null = no model), rule = hardRed(), jev = Jev's yellow/green choice.
-export function policyV2(p: number | null, rule: string | null, jev: string | null): { choice: "red" | "yellow" | "green"; tier: Tier } {
-	if (p !== null && p >= T_SURE) return { choice: "red", tier: "red_sure" };
+// tSure = the DECIDER's red_sure bar (LR: T_SURE 0.99; LightGBM: its
+// meta.t_sure 0.996). RED / GREEN thresholds are shared by both models.
+export function policyV2(p: number | null, rule: string | null, jev: string | null, tSure: number = T_SURE): { choice: "red" | "yellow" | "green"; tier: Tier } {
+	if (p !== null && p >= tSure) return { choice: "red", tier: "red_sure" };
 	if (rule) return { choice: "red", tier: "red" };
 	if (p === null || p > T_RED) return { choice: "red", tier: "red" };
 	if (p <= T_GREEN) return { choice: "green", tier: "green" };
@@ -521,6 +523,34 @@ export function policyV2(p: number | null, rule: string | null, jev: string | nu
 	// all-conditions bar), otherwise yellow.
 	if (jev === "green") return { choice: "green", tier: "green" };
 	return { choice: "yellow", tier: "yellow" };
+}
+
+// ---------------------------------------------------------------------------
+// Decider (Oct 12, SWITCH-001). LightGBM decides the lights; the LR champion
+// is the automatic fallback and stays the head-to-head comparison. Out-of-
+// sample replay on 357 unseen resolved coins: GBM AUC 0.776 vs LR v9 0.736
+// (CIs overlap). ROLLBACK = set DECIDER to "lr" here and deploy. The weekly
+// LR retrain only swaps the champion used when the decider is "lr" or when
+// LightGBM can't score, so a newly promoted LR can never take over silently.
+export type DeciderPref = "gbm" | "lr";
+export type Decider = "gbm" | "lr" | "rule" | "base";
+export const DECIDER: DeciderPref = "gbm";
+
+// Pure: which model's P(dead_v2) drives policyV2. pGbm is null when the
+// LightGBM model failed its feature-order guard or could not score.
+// decider = the model whose p was used; with no model p at all it is
+// "rule" (a hard rule fired: red) or "base" (base-rate all-red fallback).
+export function pickDecider(
+	pref: DeciderPref,
+	pGbm: number | null,
+	pLr: number | null,
+	gbmTSure: number | null,
+	rule: string | null
+): { p: number | null; tSure: number; decider: Decider } {
+	const ok = (v: number | null): v is number => typeof v === "number" && Number.isFinite(v);
+	if (pref === "gbm" && ok(pGbm)) return { p: pGbm, tSure: ok(gbmTSure) ? gbmTSure : T_SURE, decider: "gbm" };
+	if (ok(pLr)) return { p: pLr, tSure: T_SURE, decider: "lr" };
+	return { p: null, tSure: T_SURE, decider: rule ? "rule" : "base" };
 }
 
 function solveLinear(A: number[][], b: number[]): number[] {
