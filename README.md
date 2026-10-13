@@ -4,7 +4,7 @@
 
 Thousands of Solana tokens launch every day and most of them are dead within hours.
 FlagKan looks at every new token as soon as it appears, gives it a **RED (don't buy) /
-YELLOW (caution) / GREEN (lower risk — not safe)** light with written reasons, and then **grades its
+YELLOW (caution) / GREEN (lower risk — not safe)** light with the signals behind it, and then **grades its
 own verdict ~6 hours later** against what actually happened. Every graded coin is public,
 and every headline number is shown next to the "do-nothing" baseline it has to beat.
 
@@ -28,7 +28,7 @@ Solami RPC ──► on-chain signals: whale share, top-holder spread, early buy
                coin age, mint/freeze authority
                                               │
 Leak-free LightGBM model (LR fallback) + explicit rules ──► the light
-TypeSafe Jev (jev-latest) ──► AI judge: wallet coordination + human-readable reasons
+TypeSafe Jev (jev-latest) ──► AI judge: wallet-coordination + risk-factor scores
 Crash re-checks ──► a coin that measurably crashes before grading is re-armed red
                                               │
 ~6h later: graded from the same market feed (label v2) ──► Cloudflare D1
@@ -44,7 +44,8 @@ Public /proof page + /api/proof: every number next to its baseline
   LightGBM (27 leak-free first-sight features) decides the light since 2026-10-12, after an out-of-sample test on 357 resolved coins neither model had seen ranked better than the logistic regression (AUC 0.776 vs 0.736 — suggestive, not statistically significant: the confidence intervals overlap heavily with only 21 surviving coins). The LR stays as the automatic fallback and as the live comparison; live head-to-head numbers are in [`/api/proof`](https://flag.sornkan.com/api/proof). The LR (feature list in
   [`radar/src/ml/train.ts`](radar/src/ml/train.ts)) is still retrained on the edge, and a challenger
   is only promoted on a measured test-split improvement. The Jev judge from
-  TypeSafe scores wallet coordination and writes the reasons you see. The six checks shown in the UI
+  TypeSafe is a structured sensor: it scores wallet coordination and whale / sell-pressure /
+  structure risk; it writes no reason text. The six checks shown in the UI
   are reference levels that explain the verdict — the light itself comes from model + rules.
 - **Grade.** About 6 hours after first sight the outcome is settled from market data and the verdict
   is scored. Resolved coins stay on the board for 7 days; history is kept for the proof stats.
@@ -150,12 +151,12 @@ live on Solana data) tracks. Built solo by SORNKan in Thailand.
 
 ## สรุปภาษาไทย
 
-**FlagKan** ติดไฟ **แดง / เหลือง / เขียว** ให้เหรียญ Solana ที่เพิ่งเกิด ทันทีที่เจอ พร้อมเหตุผลเป็นข้อ ๆ
+**FlagKan** ติดไฟ **แดง / เหลือง / เขียว** ให้เหรียญ Solana ที่เพิ่งเกิด ทันทีที่เจอ พร้อมสัญญาณที่อยู่เบื้องหลังเป็นข้อ ๆ
 แล้ว **ตรวจคำชี้ของตัวเองอีกครั้งราว 6 ชั่วโมงต่อมา** จากสิ่งที่เกิดขึ้นจริง ผลทุกเหรียญเปิดเผยที่
 [หน้า Proof](https://flag.sornkan.com/proof)
 
 - **ข้อมูล:** เหรียญใหม่จาก GeckoTerminal (ส่วนใหญ่) + DexScreener boosts → สัญญาณบนเชนผ่าน Solami RPC
-- **การชี้:** โมเดล LightGBM (มี logistic regression เป็นตัวสำรอง) + กฎเด็ดขาด 2 ข้อ + AI Jev (TypeSafe) ให้เหตุผล
+- **การชี้:** โมเดล LightGBM (มี logistic regression เป็นตัวสำรอง) + กฎเด็ดขาด 2 ข้อ + AI Jev (TypeSafe) ให้คะแนน wallet coordination และปัจจัยเสี่ยง
   และ re-check เมื่อราคาร่วงจริง ผลตัดสินอ่านจากแหล่งข้อมูลตลาดเดียวกับตอนเจอ ไม่ได้ตัดสินบนเชน
 - **ตัวเลขที่ซื่อตรง:** เหรียญใหม่ส่วนใหญ่ (ราว 97% ดูค่าสดที่ /api/proof) ตายเองใน 6 ชม. ความแม่นจึงไม่ใช่ฝีมือ ฝีมือคือการจัดอันดับ:
   10% ที่คะแนนปลอดภัยสุดรอด 8.8% เทียบสุ่ม 5.6% (~1.6×, 11,375 เหรียญใหม่ที่ระบบเจอเอง ตั้งแต่ 5 ต.ค. ไม่นับเหรียญที่สั่งเช็คเอง ณ 13 ต.ค.) ไฟเขียวยังมีน้อยเกินจะอ้างอัตราถูก

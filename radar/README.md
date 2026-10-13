@@ -30,7 +30,7 @@ its numbers are kept in `legacy_v1`.
 GeckoTerminal new pools + DexScreener boosts ──► new Solana mints ──► cron (discovery every 5 min)
 Solami RPC ──► on-chain signals (top holders, early buys, coin age, authorities)
 model (LightGBM, LR fallback) + rules ──► light; crash re-checks can re-arm red before grading
-TypeSafe Jev ──► wallet coordination + written reasons
+TypeSafe Jev ──► AI judge: wallet-coordination + risk-factor scores
 Cloudflare D1 ──► rounds / snapshots / signals / verdicts / outcomes
 ```
 
@@ -43,7 +43,7 @@ Cloudflare D1 ──► rounds / snapshots / signals / verdicts / outcomes
   [`src/ml/train.ts`](src/ml/train.ts). The LR (feature list in the same file) is still retrained
   on a schedule and a challenger is only promoted on a measured test-split improvement; a new LR
   champion cannot take over the light while `DECIDER = "gbm"`
-- Judge: Jev (`jev-latest`) — coordination score, severity and the human-readable reasons
+- Judge: Jev (`jev-latest`) — structured sensor: wallet-coordination, severity and whale / sell-pressure / structure risk-factor scores (no reason text)
 - Board lifecycle: unresolved coins count down to their outcome; resolved coins stay 7 days
   then drop off (history kept for proof stats)
 
