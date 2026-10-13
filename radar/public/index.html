@@ -81,7 +81,7 @@
 <body data-page="home">
 <div class="topbar"><div class="in">
   <a class="brand" href="/"><span class="mark" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span><span class="f">Flag</span>Kan</a>
-  <nav class="nav" aria-label="Pages"><a href="/board.html" data-nav="board" data-i18n="navBoard">Board</a><a href="/proof.html" data-nav="proof" data-i18n="navProof">Proof</a><a href="/about.html" data-nav="about" data-i18n="navAbout">About</a></nav>
+  <nav class="nav" aria-label="Pages"><a href="/board.html" data-nav="board" data-i18n="navBoard">Board</a><a href="/proof.html" data-nav="proof" data-i18n="navProof">Criteria</a><a href="/about.html" data-nav="about" data-i18n="navAbout">About</a></nav>
   <span class="lang"><button id="bEN" class="on" type="button">EN</button><button id="bTH" type="button">ไทย</button></span>
 </div></div>
 <div class="wrap">
@@ -97,7 +97,7 @@
       <div class="bstat"><div class="v" id="sAcc">–</div><div class="k" id="kAcc">accuracy</div><div class="bs" id="bsAcc" hidden></div></div>
       <div class="bstat"><div class="v green" id="sRed">–</div><div class="k" id="kRed">safest 10% vs random</div><div class="bs" id="bsRed" hidden></div></div>
     </div>
-    <div class="bfoot"><p id="bandLine"></p><a href="/proof.html" data-i18n="bandLink">See the proof</a></div>
+    <div class="bfoot"><p id="bandLine"></p><a href="/proof.html" data-i18n="bandLink">See the criteria</a></div>
   </div>
   <!-- Demo video: the whole section stays hidden until data-video holds an embed URL,
        e.g. https://www.youtube.com/embed/VIDEO_ID (youtube / youtube-nocookie / vimeo player only) -->
@@ -124,7 +124,7 @@
 (function(){
 "use strict";
 var T={
-en:{navBoard:"Board",navProof:"Proof",navAbout:"About",
+en:{navBoard:"Board",navProof:"Criteria",navAbout:"About",
 liveA:"live",liveB:"tracked",
 h1:'Check before you buy<span class="rd">.</span>',
 sub:"FlagKan watches brand-new Solana tokens and gives each one a risk light — red, yellow, or green. Six hours later we grade every verdict against what actually happened.",
@@ -133,8 +133,8 @@ kBase:"die within 6h",kAcc:"accuracy",kLift:"safest 10% vs random",
 defFb:"Dead = within 6 hours the price fell 90%+, OR liquidity dropped under $1,000 (same data source as first sight), OR nobody traded it in the final hour.",
 bandHead:"About {k} of every 100 new coins die on their own — so accuracy is easy.",
 bandRest:"Our skill is ranking: the coins we score safest survive more often than a random pick. Every number is live, next to its baseline.",
-bsBase:"of {n} new coins graded since {since}",bsVs:"calling every coin red: {b}",bsLift:"survived {a} vs {b} random · {n} coins · old scoring era, ties averaged",bsWait:"ranking still being computed",
-bandLink:"See the proof",
+bsBase:"of {n} new coins graded since {since}",bsVs:"calling every coin red: {b}",bsLift:"survived {a} vs {b} random · {n} coins · old scoring era, ties averaged",bsWait:"ranking still being computed",bsLiftM:"survived {a} vs {b} random · {n} coins · model era since 12 Oct",
+bandLink:"See the criteria",
 vidT:"Watch the demo",vidSub:"90 seconds: a live verdict, then how it is graded 6 hours later.",vidSoon:"Demo video coming soon",
 howT:"How it works",
 s1t:"Spot",s1d:"Every minute we pull the newest Solana pools (GeckoTerminal) and boosted tokens (DexScreener).",
@@ -145,7 +145,7 @@ boardLink:"Open the full board →",
 dead:"dead",alive:"alive",h:"h",
 tracks:"Built for Colosseum Crypto World's Fair 2026 · AI × Solana Thailand · Solami",
 riskD:"<b>Not financial advice.</b> FlagKan flags risk patterns — it can't see private chats, planned unlocks, or off-chain deals. Most new coins die; a green light means lower risk, not safe. Past results don't promise future ones. Never bet more than you can lose."},
-th:{navBoard:"กระดาน",navProof:"หลักฐาน",navAbout:"เกี่ยวกับ",
+th:{navBoard:"กระดาน",navProof:"หลักเกณฑ์",navAbout:"เกี่ยวกับ",
 liveA:"สด",liveB:"ติดตาม",
 h1:'เช็กก่อนซื้อ<span class="rd">.</span>',
 sub:"FlagKan เฝ้าเหรียญ Solana ที่เพิ่งเกิด แล้วติดไฟให้ทุกเหรียญ — แดง เหลือง หรือเขียว อีก 6 ชั่วโมงต่อมาเราตัดสินทุกคำชี้จากสิ่งที่เกิดขึ้นจริง",
@@ -154,8 +154,8 @@ kBase:"ตายใน 6 ชม.",kAcc:"ความแม่น",kLift:"10% ป
 defFb:"ตาย = ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000 (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย",
 bandHead:"เหรียญใหม่ราว {k} ใน 100 ตัวตายเอง — ความแม่นจึงได้มาง่าย",
 bandRest:"ฝีมือของเราคือการจัดอันดับ: เหรียญที่เราให้คะแนนปลอดภัยสุดรอดบ่อยกว่าการสุ่มเลือก ทุกตัวเลขเป็นค่าสด แสดงคู่กับ baseline",
-bsBase:"จาก {n} เหรียญใหม่ที่ตัดสินแล้ว ตั้งแต่ {since}",bsVs:"ชี้แดงทุกเหรียญ: {b}",bsLift:"รอด {a} เทียบสุ่ม {b} · {n} เหรียญ · ยุคคะแนนเก่า เฉลี่ยคะแนนเท่ากัน",bsWait:"กำลังคำนวณการจัดอันดับ",
-bandLink:"ดูหลักฐาน",
+bsBase:"จาก {n} เหรียญใหม่ที่ตัดสินแล้ว ตั้งแต่ {since}",bsVs:"ชี้แดงทุกเหรียญ: {b}",bsLift:"รอด {a} เทียบสุ่ม {b} · {n} เหรียญ · ยุคคะแนนเก่า เฉลี่ยคะแนนเท่ากัน",bsWait:"กำลังคำนวณการจัดอันดับ",bsLiftM:"รอด {a} เทียบสุ่ม {b} · {n} เหรียญ · ยุคโมเดล ตั้งแต่ 12 ต.ค.",
+bandLink:"ดูหลักเกณฑ์",
 vidT:"ดูวิดีโอสาธิต",vidSub:"90 วินาที: คำชี้สด แล้วดูว่า 6 ชั่วโมงต่อมาตัดสินผลยังไง",vidSoon:"วิดีโอสาธิตกำลังมา",
 howT:"ทำงานยังไง",
 s1t:"จับ",s1d:"ทุกนาทีเราดึงพูล Solana ใหม่ล่าสุด (GeckoTerminal) และเหรียญที่ถูกบูสต์ (DexScreener)",
@@ -192,12 +192,14 @@ function fmtDay(ts){if(!isNum(ts))return "—";try{return new Date(Number(ts)).t
 // band: the honest story in three numbers — base rate, accuracy beside the all-red baseline, ranking lift
 function renderBand(){var d=PROOF||{},hd=(d.headline&&typeof d.headline==="object")?d.headline:{};
 var rk=d.ranking&&d.ranking.first_sight,t10=null;if(rk&&Array.isArray(rk.top))for(var i=0;i<rk.top.length;i++)if(Math.abs(Number(rk.top[i].frac)-0.1)<1e-9)t10=rk.top[i];
+var v2=d.ranking&&d.ranking.policy_v2,v10=null;if(v2&&Array.isArray(v2.top))for(var j=0;j<v2.top.length;j++)if(Math.abs(Number(v2.top[j].frac)-0.1)<1e-9)v10=v2.top[j];
+var useM=!!(v2&&v2.ready&&v10&&isNum(v10.lift));if(useM){rk=v2;t10=v10}
 var lift=rk&&rk.ready&&t10&&isNum(t10.lift)?Number(t10.lift):null;
 document.getElementById("kRes").textContent=t("kBase");document.getElementById("kAcc").textContent=t("kAcc");document.getElementById("kRed").textContent=t("kLift");
 document.getElementById("bandLine").innerHTML="<b>"+esc(fill(t("bandHead"),{k:isNum(hd.base_dead_rate)?Math.round(Number(hd.base_dead_rate)*100):"—"}))+"</b> "+esc(t("bandRest"));
 setBs("bsRes",isNum(hd.n)?fill(t("bsBase"),{n:fmtInt(hd.n),since:fmtDay(hd.since)}):"");
 setBs("bsAcc",isNum(hd.baseline_all_red_accuracy)?fill(t("bsVs"),{b:fmtPct1(p100(hd.baseline_all_red_accuracy))}):"");
-setBs("bsRed",lift!=null?fill(t("bsLift"),{a:fmtPct1(p100(t10.survival)),b:fmtPct1(p100(rk.survival)),n:fmtInt(rk.n)}):t("bsWait"));
+setBs("bsRed",lift!=null?fill(t(useM?"bsLiftM":"bsLift"),{a:fmtPct1(p100(t10.survival)),b:fmtPct1(p100(rk.survival)),n:fmtInt(rk.n)}):t("bsWait"));
 var e1=document.getElementById("sAcc"),e2=document.getElementById("sRes"),e3=document.getElementById("sRed");
 if(!PROOF)return;
 var vA=p100(hd.accuracy),vB=p100(hd.base_dead_rate);
