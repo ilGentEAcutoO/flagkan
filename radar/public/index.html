@@ -61,8 +61,21 @@
 .fout{font-family:var(--mono);font-size:12px;flex:none;min-width:64px;text-align:right}
 .plink{display:inline-block;margin-top:12px;font-weight:800;font-size:13.5px;text-decoration:none}
 .plink:hover{text-decoration:underline}
-.vslot{position:relative;aspect-ratio:16/9;background:var(--ink);border-radius:16px;overflow:hidden;margin-top:12px;box-shadow:var(--sh)}
+.vids{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:14px}
+.vcard{min-width:0}
+.vcard h3{font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:8px;display:flex;align-items:baseline;gap:8px}
+.vcard h3 .dur{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--faint);font-variant-numeric:tabular-nums}
+.vslot{position:relative;aspect-ratio:16/9;background:var(--ink);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);border:1px solid var(--line)}
 .vslot iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vfac{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:var(--ink);cursor:pointer;display:block}
+.vfac img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92;transition:opacity .3s var(--ease)}
+.vfac:hover img{opacity:1}
+.vfac .play{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:var(--acc);box-shadow:0 6px 20px -6px rgba(38,33,27,.5);transition:transform .3s var(--ease)}
+.vfac .play::after{content:"";position:absolute;left:26px;top:20px;border-style:solid;border-width:12px 0 12px 19px;border-color:transparent transparent transparent #fff}
+.vfac:hover .play{transform:scale(1.08)}
+.vfac:focus-visible{outline:3px solid var(--sun);outline-offset:-3px}
+.vyt{display:inline-block;margin-top:8px;font-size:13px;font-weight:700;color:var(--dim);text-decoration:none}
+.vyt:hover{text-decoration:underline;color:var(--ink)}
 .tracks{margin-top:40px;color:var(--faint);font-size:12px;font-family:var(--mono);text-align:center}
 @media(max-width:700px){
   .hero{padding-top:40px}
@@ -72,6 +85,7 @@
   .bstat+.bstat{border-left:none;border-top:1px solid rgba(255,253,247,.14);padding-top:16px;margin-top:16px}
   .bstat .v{font-size:40px}
   .steps{grid-template-columns:1fr;gap:18px}
+  .vids{grid-template-columns:1fr;gap:26px}
   .sec{margin-top:40px}
   .fconf{display:none}
 }
@@ -99,10 +113,11 @@
     </div>
     <div class="bfoot"><p id="bandLine"></p><a href="/proof.html" data-i18n="bandLink">See the criteria</a></div>
   </div>
-  <!-- Demo video: the whole section stays hidden until data-video holds an embed URL,
-       e.g. https://www.youtube.com/embed/VIDEO_ID (youtube / youtube-nocookie / vimeo player only) -->
-  <section class="sec" id="vidSec" hidden><h2 data-i18n="vidT">Watch the demo</h2><p class="psub" data-i18n="vidSub"></p>
-    <div class="vslot" id="vslot" data-video=""></div>
+  <section class="sec" id="vidSec"><h2 data-i18n="vidT">See it in 2 minutes</h2><p class="psub" data-i18n="vidSub"></p>
+    <div class="vids">
+      <div class="vcard"><h3><span data-i18n="vPitch">Pitch</span><span class="dur">2:59</span></h3><div class="vslot" data-vid="pitch"></div><a class="vyt" data-vid-link="pitch" href="https://www.youtube.com/watch?v=LjRaEmfHdJw" target="_blank" rel="noopener" data-i18n="vYt">Watch on YouTube</a></div>
+      <div class="vcard"><h3><span data-i18n="vDemo">Demo — the live product</span><span class="dur">2:24</span></h3><div class="vslot" data-vid="demo"></div><a class="vyt" data-vid-link="demo" href="https://www.youtube.com/watch?v=rLumgTcpGRA" target="_blank" rel="noopener" data-i18n="vYt">Watch on YouTube</a></div>
+    </div>
   </section>
   <section class="sec"><h2 data-i18n="howT">How it works</h2>
     <div class="steps">
@@ -135,7 +150,7 @@ bandHead:"About {k} of every 100 new coins die on their own — so accuracy is e
 bandRest:"Our skill is ranking: the coins we score safest survive more often than a random pick. Every number is live, next to its baseline.",
 bsBase:"of {n} new coins graded since {since}",bsVs:"calling every coin red: {b}",bsLift:"survived {a} vs {b} random · {n} coins · old scoring era, ties averaged",bsWait:"ranking still being computed",bsLiftM:"survived {a} vs {b} random · model era since 12 Oct · early, small sample: {s} survivors of {n} coins",
 bandLink:"See the criteria",
-vidT:"Watch the demo",vidSub:"90 seconds: a live verdict, then how it is graded 6 hours later.",vidSoon:"Demo video coming soon",
+vidT:"See it in 2 minutes",vidSub:"The pitch for the big picture, then the live product in action.",vPitch:"Pitch",vDemo:"Demo — the live product",vYt:"Watch on YouTube",vPlay:"Play video",
 howT:"How it works",
 s1t:"Spot",s1d:"Every 5 minutes we pull the newest Solana pools (GeckoTerminal) and boosted tokens (DexScreener).",
 s2t:"Inspect",s2d:"Solami RPC reads the chain: top holders, early buys, coin age. Same chain anyone can read — no insider data.",
@@ -156,7 +171,7 @@ bandHead:"เหรียญใหม่ราว {k} ใน 100 ตัวตา
 bandRest:"ฝีมือของเราคือการจัดอันดับ: เหรียญที่เราให้คะแนนปลอดภัยสุดรอดบ่อยกว่าการสุ่มเลือก ทุกตัวเลขเป็นค่าสด แสดงคู่กับ baseline",
 bsBase:"จาก {n} เหรียญใหม่ที่ตัดสินแล้ว ตั้งแต่ {since}",bsVs:"ชี้แดงทุกเหรียญ: {b}",bsLift:"รอด {a} เทียบสุ่ม {b} · {n} เหรียญ · ยุคคะแนนเก่า เฉลี่ยคะแนนเท่ากัน",bsWait:"กำลังคำนวณการจัดอันดับ",bsLiftM:"รอด {a} เทียบสุ่ม {b} · ยุคโมเดล ตั้งแต่ 12 ต.ค. · ตัวอย่างยังน้อย: รอด {s} จาก {n} เหรียญ",
 bandLink:"ดูหลักเกณฑ์",
-vidT:"ดูวิดีโอสาธิต",vidSub:"90 วินาที: คำชี้สด แล้วดูว่า 6 ชั่วโมงต่อมาตัดสินผลยังไง",vidSoon:"วิดีโอสาธิตกำลังมา",
+vidT:"ดูภาพรวมใน 2 นาที",vidSub:"พิตช์เล่าภาพรวม แล้วดูเดโมการใช้งานจริง",vPitch:"พิตช์ (ภาพรวม)",vDemo:"เดโม — ใช้งานจริง",vYt:"ดูบน YouTube",vPlay:"เล่นวิดีโอ",
 howT:"ทำงานยังไง",
 s1t:"จับ",s1d:"ทุก 5 นาทีเราดึงพูล Solana ใหม่ล่าสุด (GeckoTerminal) และเหรียญที่ถูกบูสต์ (DexScreener)",
 s2t:"ตรวจ",s2d:"Solami RPC อ่านเชน: รายใหญ่ ยอดซื้อแรก อายุเหรียญ เชนเดียวกับที่ทุกคนอ่านได้ — ไม่มีข้อมูลวงใน",
@@ -174,7 +189,7 @@ function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"
 /* untrusted on-chain names: strip all format (Cf: bidi, zero-width, tags, BOM...), controls (Cc), line/para separators, invisible fillers and supplementary variation selectors; collapse whitespace; cut by code point; never return blank */
 function clean(s){return String(s==null?"":s).replace(/[\p{Cf}\p{Cc}\p{Zl}\p{Zp}\u034F\u115F\u1160\u17B4\u17B5\u3164\uFFA0\u{E0100}-\u{E01EF}]/gu,"").replace(/\s+/g," ").trim()}
 function nameOf(n,mint,k,max){var c=clean(n);if(!c)c=clean(String(mint||"").slice(0,k));var a=Array.from(c);return max&&a.length>max?a.slice(0,max).join(""):c}
-function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderBand();loadFresh()}
+function applyLang(){var es=document.querySelectorAll("[data-i18n]");for(var i=0;i<es.length;i++){es[i].textContent=t(es[i].getAttribute("data-i18n"))}var hs=document.querySelectorAll("[data-i18n-html]");for(var j=0;j<hs.length;j++){hs[j].innerHTML=t(hs[j].getAttribute("data-i18n-html"))}document.documentElement.lang=L;try{localStorage.setItem("flagkan_lang",L)}catch(e){}document.getElementById("bEN").className=L==="en"?"on":"";document.getElementById("bTH").className=L==="th"?"on":"";renderBand();renderVids();loadFresh()}
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};
 function countUp(el,target,fmt){if(REDUCED||target==null||isNaN(target)){el.textContent=fmt(target);return}var t0=Date.now(),D=1100;var iv=setInterval(function(){var p=Math.min(1,(Date.now()-t0)/D);var e=1-Math.pow(1-p,3);el.textContent=fmt(target*e);if(p>=1)clearInterval(iv)},40)}
@@ -220,7 +235,12 @@ function setLive(){document.getElementById("liveTxt").textContent=(LIVEST?FlagLi
 var TOTAL=null,FETCHING=false;
 function loadFresh(){if(ROUNDS.length){setLive();renderFresh();return}if(FETCHING)return;FETCHING=true;fetch("/api/rounds?limit=100").then(function(r){return r.json()}).then(function(d){FETCHING=false;ROUNDS=(d&&d.rounds)||[];TOTAL=(d&&typeof d.total==="number")?d.total:ROUNDS.length;setLive();renderFresh()}).catch(function(){FETCHING=false})}
 (function(){var sh=document.getElementById("bandShell");if(REDUCED||!("IntersectionObserver" in window)){return}sh.classList.add("rv");var done=false;function show(){if(done)return;done=true;sh.classList.add("in")}var io=new IntersectionObserver(function(es){for(var i=0;i<es.length;i++){if(es[i].isIntersecting){show();io.disconnect()}}},{threshold:.12});io.observe(sh);setTimeout(show,2500)})();
-(function(){var v=document.getElementById("vslot");if(!v)return;var u=(v.getAttribute("data-video")||"").trim();if(!u)return;if(!/^https:\/\/(www\.youtube\.com\/embed\/|www\.youtube-nocookie\.com\/embed\/|player\.vimeo\.com\/video\/)/.test(u))return;var f=document.createElement("iframe");f.src=u;f.title="FlagKan demo video";f.setAttribute("allow","accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");f.setAttribute("allowfullscreen","");v.innerHTML="";v.appendChild(f);var sec=document.getElementById("vidSec");if(sec)sec.hidden=false})();
+// videos: click-to-load facade; TH page shows TH cuts, EN shows EN; switching language resets any playing iframe
+var VIDS={en:{pitch:"LjRaEmfHdJw",demo:"rLumgTcpGRA"},th:{pitch:"Cu0vhta52jw",demo:"Q4guIVSrSFo"}};
+function renderVids(){var ids=VIDS[L]||VIDS.en,ss=document.querySelectorAll("[data-vid]");for(var i=0;i<ss.length;i++){(function(slot){var k=slot.getAttribute("data-vid"),id=ids[k];if(!id)return;var ttl=t(k==="pitch"?"vPitch":"vDemo");
+slot.innerHTML="";var b=document.createElement("button");b.type="button";b.className="vfac";b.setAttribute("aria-label",t("vPlay")+": FlagKan "+ttl);var im=document.createElement("img");im.src="https://i.ytimg.com/vi/"+id+"/hqdefault.jpg";im.alt="FlagKan "+ttl;im.loading="lazy";im.width=480;im.height=360;var pl=document.createElement("span");pl.className="play";pl.setAttribute("aria-hidden","true");b.appendChild(im);b.appendChild(pl);
+b.onclick=function(){var f=document.createElement("iframe");f.src="https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&rel=0";f.title="FlagKan "+ttl;f.setAttribute("allow","autoplay; encrypted-media; picture-in-picture; fullscreen");f.setAttribute("allowfullscreen","");slot.innerHTML="";slot.appendChild(f);try{f.focus()}catch(e){}};slot.appendChild(b)})(ss[i])}
+var ls=document.querySelectorAll("[data-vid-link]");for(var j=0;j<ls.length;j++){var id2=ids[ls[j].getAttribute("data-vid-link")];if(id2)ls[j].href="https://www.youtube.com/watch?v="+id2}}
 // LIVE-001: pushed ticks keep the band + fresh list current; REST only on load / fallback
 function loadProofNow(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d||{};renderBand()}).catch(function(){})}
 function reloadAll(){ROUNDS=[];loadFresh();loadProofNow()}
