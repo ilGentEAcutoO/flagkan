@@ -782,7 +782,7 @@ try {
 	const nextMonth = Date.UTC(2026, 10, 1, 0, 0, 1);
 	check("budget: new UTC month resets", !lc.budgetOver(lc.budgetAdd(atLine, T0, 99), nextMonth) && lc.budgetAdd({ month: "2026-10", units: 5e9 }, nextMonth, 20).units === 20);
 	check("budget: worker stash over only for THIS month's row", lc.stashOver({ month: "2026-10", over: 1 }, T0) && !lc.stashOver({ month: "2026-09", over: 1 }, T0) && !lc.stashOver({ month: "2026-10", over: 0 }, T0) && !lc.stashOver(null, T0));
-	check("caps: 300 sockets total, 6 per IP, refusal close 4429, ping/pong", lc.LIVE_MAX_SOCKETS === 300 && lc.LIVE_MAX_PER_IP === 6 && lc.LIVE_CLOSE_REFUSED === 4429 && lc.LIVE_PING === "ping" && lc.LIVE_PONG === "pong");
+	check("caps: 300 sockets total, 3 per IP, refusal close 4429, ping/pong", lc.LIVE_MAX_SOCKETS === 300 && lc.LIVE_MAX_PER_IP === 3 && lc.LIVE_CLOSE_REFUSED === 4429 && lc.LIVE_PING === "ping" && lc.LIVE_PONG === "pong");
 
 	// source guards: only /api/live reaches DO_LIVE, only for upgrades; broadcast has no HTTP path
 	const idx = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");

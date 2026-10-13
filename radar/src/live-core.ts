@@ -13,7 +13,7 @@ export const LIVE_MAX_IN_BYTES = 64;
 /** Concurrent socket cap on the single global LiveFeed; over it: accept-then-close 4429. */
 export const LIVE_MAX_SOCKETS = 300;
 /** Concurrent sockets per client IP (tagged by a short IP hash). */
-export const LIVE_MAX_PER_IP = 6;
+export const LIVE_MAX_PER_IP = 3;
 /** Legacy keepalive words. Clients send NOTHING now (server heartbeat instead);
  *  a stray "ping" is still answered "pong", but only after it is counted. */
 export const LIVE_PING = "ping";
