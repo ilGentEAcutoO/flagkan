@@ -5,7 +5,7 @@ Live: https://flag.sornkan.com/ · Proof: https://flag.sornkan.com/proof · API:
 This folder is the whole product: one Cloudflare Worker (cron + API) and a static UI.
 See the [root README](../README.md) for the product overview and honesty notes.
 
-FlagKan watches **new Solana tokens** (about 98% arrive through GeckoTerminal's new-pool feed,
+FlagKan watches **new Solana tokens** (most arrive through GeckoTerminal's new-pool feed,
 the rest through DexScreener boosts) and gives each one a risk light:
 
 - **RED — do not buy** · **YELLOW — caution** · **GREEN — lower risk, not safe**
@@ -27,7 +27,7 @@ its numbers are kept in `legacy_v1`.
 ## How it works
 
 ```
-GeckoTerminal new pools + DexScreener boosts ──► new Solana mints ──► cron (every minute)
+GeckoTerminal new pools + DexScreener boosts ──► new Solana mints ──► cron (discovery every 5 min)
 Solami RPC ──► on-chain signals (top holders, early buys, coin age, authorities)
 model (LightGBM, LR fallback) + rules ──► light; crash re-checks can re-arm red before grading
 TypeSafe Jev ──► wallet coordination + written reasons

@@ -19,6 +19,7 @@ import { RESOLVE_FIRST_SQL, RESOLVE_LAST_SQL, RESOLVE_PRIOR_SQL } from "./ml/col
 import { collectLooks, collectDev, collectCounters } from "./dev";
 import { LiveFeed } from "./live";
 import { isFullRound } from "./cron-tick";
+import { POP_SQL, POP_EXCLUDE_REASON_SQL, POP_MAX_PAIR_AGE_MIN, ON_DEMAND_SOURCE } from "./population";
 import type { LiveState } from "./live";
 import { buildTickEvent, heartbeatEvent, shouldBroadcast, originAllowed, proofSummaryOf, stashOver, monthKey, monthEndMs, isNoTableError, TouchSet, TICK_MAX_ROWS } from "./live-core";
 export { LiveFeed };
@@ -1199,7 +1200,7 @@ async function proofCore(env: Env): Promise<{ row: ProofRow | null; base: Record
 			`SELECT CASE WHEN v.policy_v >= 2 THEN 2 ELSE 1 END AS pv, v.tier AS tier, v.choice AS choice,
 			COUNT(*) AS n, SUM(o.dead_v2) AS dead
 			FROM verdicts v JOIN outcomes o ON o.mint = v.mint
-			WHERE v.source = 'live' AND o.dead_v2 IS NOT NULL GROUP BY pv, v.tier, v.choice`
+			WHERE ${POP_SQL} AND o.dead_v2 IS NOT NULL GROUP BY pv, v.tier, v.choice`
 		).all<{ pv: number; tier: string | null; choice: string; n: number; dead: number }>();
 		const sinceRow = await env.DB_MAIN.prepare(
 			"SELECT MIN(ts) AS t FROM verdicts WHERE source = 'live' AND policy_v >= 2"
@@ -1271,7 +1272,7 @@ async function proofCore(env: Env): Promise<{ row: ProofRow | null; base: Record
 		const cq = await env.DB_MAIN.prepare(
 			`SELECT v.p_lr_first AS pl, v.p_gbm_first AS pg, o.dead_v2 AS d
 			FROM verdicts v JOIN outcomes o ON o.mint = v.mint
-			WHERE v.source = 'live' AND v.policy_v = 2 AND o.dead_v2 IS NOT NULL
+			WHERE ${POP_SQL} AND v.policy_v = 2 AND o.dead_v2 IS NOT NULL
 			AND v.p_lr_first IS NOT NULL AND v.p_gbm_first IS NOT NULL
 			ORDER BY v.ts DESC LIMIT 20000`
 		).all<{ pl: number; pg: number; d: number }>();
@@ -1314,7 +1315,7 @@ let rankMemo: { at: number; val: Record<string, unknown> } | null = null;
 async function rankingBlock(env: Env): Promise<Record<string, unknown>> {
 	const now = Date.now();
 	if (rankMemo && now - rankMemo.at < RANK_TTL_MS) return rankMemo.val;
-	const base = "FROM verdicts v JOIN outcomes o ON o.mint = v.mint WHERE v.source = 'live' AND o.dead_v2 IS NOT NULL";
+	const base = `FROM verdicts v JOIN outcomes o ON o.mint = v.mint WHERE ${POP_SQL} AND o.dead_v2 IS NOT NULL`;
 	const q = (col: string, extra: string) => env.DB_MAIN.prepare(
 		`SELECT ROUND(${col}, 6) AS p, COUNT(*) AS n, SUM(1 - o.dead_v2) AS alive, MIN(v.ts) AS t0, MAX(v.ts) AS t1 ${base} AND ${col} IS NOT NULL ${extra} GROUP BY 1`
 	);
@@ -1342,7 +1343,7 @@ async function rankingBlock(env: Env): Promise<Record<string, unknown>> {
 	};
 	const val: Record<string, unknown> = {
 		label: "v2", min_n: RANK_MIN_N, min_survivors: RANK_MIN_SURVIVORS,
-		note: "survival = alive 6h after first sight (label v2); safest = lowest first-sight P(dead); ties split pro rata; Wilson 95% CI; live verdicts only",
+		note: "survival = alive 6h after first sight (label v2); safest = lowest first-sight P(dead); ties split pro rata; Wilson 95% CI; population: new coins seen by the cron (pair age <= 6h at first sight), on-demand checks excluded",
 		first_sight: pack(all, "p_red_first", "the first-sight P(dead) FlagKan stored for every live coin, all eras (before 12 Oct most of it was a coarse rules/Jev stamp)"),
 		policy_v2: pack(v2, "p_red_first", "same score, policy v2 only (model-driven, since 12 Oct 03:20 UTC)"),
 		lr: pack(lr, "p_lr_first", "logistic regression, model-only, coins scored by both models"),
@@ -1351,6 +1352,42 @@ async function rankingBlock(env: Env): Promise<Record<string, unknown>> {
 		computed_at: now,
 	};
 	rankMemo = { at: now, val };
+	return val;
+}
+
+// POP-001: who is counted in headline / ranking / challenger, and how many
+// graded rows were left out (by reason) so the page can disclose it.
+// Memoised per isolate like the ranking block.
+let popMemo: { at: number; val: Record<string, unknown> } | null = null;
+async function populationBlock(env: Env): Promise<Record<string, unknown>> {
+	const now = Date.now();
+	if (popMemo && now - popMemo.at < RANK_TTL_MS) return popMemo.val;
+	const res = await env.DB_MAIN.prepare(
+		`SELECT CASE WHEN v.policy_v >= 2 THEN 2 ELSE 1 END AS pv,
+		CASE WHEN v.source != 'live' THEN 'on_demand' ELSE ${POP_EXCLUDE_REASON_SQL} END AS why, COUNT(*) AS n
+		FROM verdicts v JOIN outcomes o ON o.mint = v.mint
+		WHERE v.source IN ('live', '${ON_DEMAND_SOURCE}') AND o.dead_v2 IS NOT NULL GROUP BY pv, why`
+	).all<{ pv: number; why: string | null; n: number }>();
+	const side = (pv: number | null) => {
+		const out = { counted_n: 0, excluded_n: 0, on_demand: 0, old_pair: 0, unknown_age: 0 };
+		for (const r of res.results ?? []) {
+			if (pv !== null && Number(r.pv) !== pv) continue;
+			const k = r.why as "on_demand" | "old_pair" | "unknown_age" | null;
+			if (k === null) { out.counted_n += Number(r.n); continue; }
+			out.excluded_n += Number(r.n);
+			if (k in out) out[k] += Number(r.n);
+		}
+		return out;
+	};
+	const val: Record<string, unknown> = {
+		max_pair_age_min: POP_MAX_PAIR_AGE_MIN,
+		rule_en: "Counted: coins the cron found itself, judged at first sight, whose trading pair was at most 6 hours old. Left out: coins checked on request (e.g. dogwifhat, Bonk), old pairs, and rows with no pair age.",
+		rule_th: "นับเฉพาะเหรียญที่ระบบเจอเองจาก feed ตัดสินตอนเห็นครั้งแรก และคู่เทรดอายุไม่เกิน 6 ชม. ไม่นับเหรียญที่ผู้ใช้สั่งเช็คเอง (เช่น dogwifhat, Bonk) เหรียญเก่า และแถวที่ไม่รู้อายุคู่เทรด",
+		applies_to: ["headline", "v2_history_regrade", "challenger", "ranking"],
+		policy_v2: side(2), all_eras: side(null),
+		computed_at: now,
+	};
+	popMemo = { at: now, val };
 	return val;
 }
 
@@ -1510,6 +1547,8 @@ export default {
 			let ece = 0;
 			let ranking: Record<string, unknown>;
 			try { ranking = await rankingBlock(env); } catch (e) { ranking = { error: String(e).slice(0, 120) }; }
+			let population: Record<string, unknown>;
+			try { population = await populationBlock(env); } catch (e) { population = { max_pair_age_min: POP_MAX_PAIR_AGE_MIN, error: String(e).slice(0, 120) }; }
 			const deciles = buckets.map((b, i) => {
 				const acc = b.n ? b.acc / b.n : null;
 				const avg = b.n ? b.conf / b.n : null;
@@ -1536,6 +1575,7 @@ export default {
 				conf_deciles: deciles.map((d) => ({ ...d, accuracy: r3(d.accuracy), avg_confidence: r3(d.avg_confidence) })),
 				conf_scope: "legacy: label v1, all live verdicts; most confidences were fixed 0.95-0.98 stamps from rules/Jev",
 				ranking,
+				population,
 				note: n < 50 ? "warming up: need 50+ resolved rounds" : "ready",
 				...base,
 			});
@@ -1670,7 +1710,7 @@ export default {
 				await decideV2(env, a, state, mint, "verdict_now");
 				if (!persist) return json({ mint, state, answers: a, stored: false, preview: true, note: "preview of the current market: not stored, not graded" });
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v, decider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v, decider, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -1691,7 +1731,8 @@ export default {
 						Number(a.verdict?.probabilities?.red ?? 0),
 						tierOf(a),
 						POLICY_V,
-						...shadowCols(a)
+						...shadowCols(a),
+						ON_DEMAND_SOURCE // picked by a user, not the feed: kept out of the stats population
 					)
 					.run();
 				return json({ mint, state, answers: a, stored: true, preview: false });
@@ -1731,7 +1772,7 @@ export default {
 					return json({ mint, signals: s, answers: a, stored: false, preview: true, verdict: stored3 ?? null });
 				}
 				await env.DB_MAIN.prepare(
-					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v, decider) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+					"INSERT OR REPLACE INTO verdicts (mint, ts, choice, confidence, p_red, p_yellow, p_green, coordinated, severity, f_whale, f_sell, f_struct, red_source, mem_dist, v_rule, p_red_first, tier, policy_v, p_lr_first, p_gbm_first, gbm_v, decider, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 				)
 					.bind(
 						mint,
@@ -1752,7 +1793,8 @@ export default {
 						Number(a.verdict?.probabilities?.red ?? 0),
 						tierOf(a),
 						POLICY_V,
-						...shadowCols(a)
+						...shadowCols(a),
+						ON_DEMAND_SOURCE
 					)
 					.run();
 				return json({ mint, signals: s, answers: a, stored: true, preview: false });

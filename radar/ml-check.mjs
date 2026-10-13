@@ -530,7 +530,7 @@ try {
 	const src = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
 	check("decideV2 routes through pickDecider(DECIDER, pGbm, pLr, GBM_T_SURE, rule)", /pickDecider\(DECIDER, pGbm, pLr, GBM_T_SURE, rule\)/.test(src) && /policyV2\(p, rule, jev, pick\.tSure\)/.test(src));
 	const inserts = src.match(/INSERT OR REPLACE INTO verdicts \([^)]*\)/g) ?? [];
-	check("every verdict INSERT stores decider", inserts.length >= 4 && inserts.every((q) => /gbm_v, decider\)/.test(q)), String(inserts.length));
+	check("every verdict INSERT stores decider", inserts.length >= 4 && inserts.every((q) => /gbm_v, decider(, source)?\)/.test(q)), String(inserts.length));
 	const updates = src.match(/UPDATE verdicts[^"`]*/g) ?? [];
 	check("upgrade UPDATE never sets decider", updates.length > 0 && updates.every((u) => !/decider/.test(u)));
 	check("schema.sql + migrate-v13 add verdicts.decider", /decider TEXT/.test(readFileSync(path.join(HERE, "schema.sql"), "utf8")) && /ALTER TABLE verdicts ADD COLUMN decider TEXT/.test(readFileSync(path.join(HERE, "migrate-v13.sql"), "utf8")));
@@ -906,6 +906,60 @@ try {
 	let fulls = 0;
 	for (let m = 0; m < 60; m++) if (ct.isFullRound(at("17:00:59.000") + m * 60000)) fulls++;
 	check("cron-tick: :59 early fires still give exactly 12 full rounds/hour", fulls === 12);
+}
+
+// POP-001 (13 Oct): stats population = cron-path, first-sight pair age <= 6h.
+// On-demand checks are tagged verdicts.source='on_demand'; old rows of either
+// kind are excluded by SQL (labels/verdicts never rewritten).
+{
+	try {
+		execSync(`"${process.execPath}" "${TSC}" src/population.ts --outDir "${path.join(CACHE, "pop")}" --module nodenext --target es2022 --moduleResolution nodenext --skipLibCheck --strict`, { cwd: HERE, stdio: "pipe" });
+	} catch (e) {
+		console.error("FAIL tsc compile population:", String(e.stdout ?? e.message).slice(0, 400));
+		process.exit(1);
+	}
+	const pop = await import(pathToFileURL(path.join(CACHE, "pop", "population.js")).href);
+	const { DatabaseSync } = await import("node:sqlite");
+	const { readFileSync } = await import("node:fs");
+	const db = new DatabaseSync(":memory:");
+	db.exec("CREATE TABLE rounds (mint TEXT PRIMARY KEY, first_seen INTEGER NOT NULL, source TEXT);"
+		+ "CREATE TABLE verdicts (mint TEXT PRIMARY KEY, ts INTEGER NOT NULL, source TEXT NOT NULL DEFAULT 'live');"
+		+ "CREATE TABLE snapshots (id INTEGER PRIMARY KEY AUTOINCREMENT, mint TEXT NOT NULL, ts INTEGER NOT NULL, pair_age_min REAL, look INTEGER);");
+	// [mint, first_seen, verdict ts, verdict source, first-sight pair age, later snapshot age, expected in, expected reason]
+	const rows = [
+		["newcron", 1000, 1000, "live", 30, 400, true, null],          // later age > 360 must not matter
+		["edge360", 1000, 1000, "live", 360, null, true, null],
+		["oldpair", 1000, 1000, "live", 800351, null, false, "old_pair"], // ROSED-like boosted old coin
+		["noage", 1000, 1000, "live", null, null, false, "unknown_age"],
+		["legacyOD", 1000, 3376, "live", 20, null, false, "on_demand"],   // stored on-demand before the tag
+		["bonkOD", 1000, 3584, "live", 1997497, null, false, "on_demand"],
+		["taggedOD", 1000, 1000, "on_demand", 10, null, false, null],    // new tag: out via v.source
+		["backfill", 1000, 1000, "backfill", 10, null, false, null],
+	];
+	for (const [m, fs, vt, src, a0, a1] of rows) {
+		db.prepare("INSERT INTO rounds VALUES (?, ?, 'dex')").run(m, fs);
+		db.prepare("INSERT INTO verdicts VALUES (?, ?, ?)").run(m, vt, src);
+		db.prepare("INSERT INTO snapshots (mint, ts, pair_age_min, look) VALUES (?, ?, ?, NULL)").run(m, fs, a0);
+		if (a1 !== null) db.prepare("INSERT INTO snapshots (mint, ts, pair_age_min, look) VALUES (?, ?, ?, NULL)").run(m, fs + 60e3, a1);
+	}
+	db.prepare("INSERT INTO snapshots (mint, ts, pair_age_min, look) VALUES ('noage', 500, 5, 15)").run(); // look rows never count as first sight
+	const got = new Set(db.prepare(`SELECT v.mint AS mint FROM verdicts v WHERE ${pop.POP_SQL}`).all().map((r) => r.mint));
+	check("population SQL: only new cron-path coins (age<=360, first sight, not on-demand/backfill)",
+		rows.every(([m, , , , , , want]) => got.has(m) === want), [...got].join(","));
+	check("population: inPopulation() == POP_SQL on every case",
+		rows.every(([m, fs, vt, src, a0, , want]) => pop.inPopulation({ source: src, verdictTs: vt, firstSeen: fs, firstPairAgeMin: a0 }) === want));
+	const why = Object.fromEntries(db.prepare(`SELECT v.mint AS mint, ${pop.POP_EXCLUDE_REASON_SQL} AS why FROM verdicts v WHERE v.source = 'live'`).all().map((r) => [r.mint, r.why]));
+	check("population: exclusion reasons on_demand / unknown_age / old_pair",
+		rows.filter(([, , , src]) => src === "live").every(([m, , , , , , , reason]) => why[m] === reason), JSON.stringify(why));
+	check("population: cap is 6h", pop.POP_MAX_PAIR_AGE_MIN === 360 && pop.ON_DEMAND_SOURCE === "on_demand");
+	const idx = readFileSync(path.join(HERE, "src", "index.ts"), "utf8");
+	const vn = idx.slice(idx.indexOf('url.pathname === "/api/verdict-now"'), idx.indexOf('url.pathname === "/api/signals-now"'));
+	const sn = idx.slice(idx.indexOf('url.pathname === "/api/signals-now"'), idx.indexOf('url.pathname === "/api/source-test"'));
+	check("verdict-now + signals-now store source = ON_DEMAND_SOURCE",
+		/INSERT OR REPLACE INTO verdicts \([^)]*\bsource\b/.test(vn) && /ON_DEMAND_SOURCE/.test(vn) && /INSERT OR REPLACE INTO verdicts \([^)]*\bsource\b/.test(sn) && /ON_DEMAND_SOURCE/.test(sn));
+	const pc = idx.slice(idx.indexOf("async function proofCore"), idx.indexOf("function json("));
+	check("headline, challenger and ranking queries use POP_SQL", (pc.match(/\$\{POP_SQL\}/g) ?? []).length >= 3
+		&& /GROUP BY pv, v\.tier, v\.choice/.test(pc) && /p_lr_first IS NOT NULL AND v\.p_gbm_first IS NOT NULL\s*ORDER BY/.test(pc));
 }
 
 if (failures > 0) { console.error(`${failures} check(s) failed, ${passes} passed`); process.exit(1); }

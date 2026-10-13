@@ -19,8 +19,8 @@ pick — about 1.7×, AUC 0.627. Live values: `ranking` on [`/api/proof`](https:
 ## How it works
 
 ```
-GeckoTerminal new pools (~98% of coins) ─┐
-DexScreener boosts ──────────────────────┴─► new Solana mints (cron, every minute)
+GeckoTerminal new pools (most coins) ────┐
+DexScreener boosts ──────────────────────┴─► new Solana mints (discovery every 5 min; cron every minute)
                                               │
 Solami RPC ──► on-chain signals: whale share, top-holder spread, early buys,
                coin age, mint/freeze authority
@@ -81,8 +81,9 @@ Otherwise it is **alive**. The exact parameters are published in `label_def` on
   and backfilled rows and is withdrawn.) The model-era ranking and the LightGBM-vs-LR head-to-head
   show only once there are 200+ graded coins and 10+ survivors.
 - **Small samples are labelled.** Green has been called on very few coins under policy v2, so no
-  green hit rate is claimed. "Red · high confidence" needs 0.996 from LightGBM, whose highest score
-  so far is ~0.994, so that tier currently cannot fire; the bar was left unchanged.
+  green hit rate is claimed. "Red · high confidence" needs 0.996 from LightGBM, a bar that is rarely
+  reached (one coin so far since LightGBM took over); the bar was left unchanged. Live count and
+  highest score: `headline.tiers` and `ranking.gbm_max_p` on [`/api/proof`](https://flag.sornkan.com/api/proof).
 - **Legacy numbers are not current claims.** The old ~80% accuracy (label v1) and the legacy
   calibration (ECE ~0.20, mostly fixed 0.95–0.98 stamps from rules / Jev) are kept for transparency only.
 
@@ -151,7 +152,7 @@ live on Solana data) tracks. Built solo by SORNKan in Thailand.
 แล้ว **ตรวจคำชี้ของตัวเองอีกครั้งราว 6 ชั่วโมงต่อมา** จากสิ่งที่เกิดขึ้นจริง ผลทุกเหรียญเปิดเผยที่
 [หน้า Proof](https://flag.sornkan.com/proof)
 
-- **ข้อมูล:** เหรียญใหม่จาก GeckoTerminal (ราว 98%) + DexScreener boosts → สัญญาณบนเชนผ่าน Solami RPC
+- **ข้อมูล:** เหรียญใหม่จาก GeckoTerminal (ส่วนใหญ่) + DexScreener boosts → สัญญาณบนเชนผ่าน Solami RPC
 - **การชี้:** โมเดล LightGBM (มี logistic regression เป็นตัวสำรอง) + กฎเด็ดขาด 2 ข้อ + AI Jev (TypeSafe) ให้เหตุผล
   และ re-check เมื่อราคาร่วงจริง ผลตัดสินอ่านจากแหล่งข้อมูลตลาดเดียวกับตอนเจอ ไม่ได้ตัดสินบนเชน
 - **ตัวเลขที่ซื่อตรง:** เหรียญใหม่ราว 98 ใน 100 ตายเองใน 6 ชม. ความแม่นจึงไม่ใช่ฝีมือ ฝีมือคือการจัดอันดับ:
