@@ -66,7 +66,7 @@ nextD:"After the hackathon: <b>alerts for watched coins</b> when their outcome r
 linkT:"Links",lBoard:"Live board",lProof:"Criteria",
 numT:"What the numbers say",
 numFb:"Most new coins die within hours, so calling everything red is already almost always right. That is why we judge ourselves on <b>ranking</b> — do the coins we score safest survive more often than a random pick? Live numbers are on the <a href=\"/proof.html\">Criteria page</a>.",
-numD:"About <b>{k} of every 100</b> new coins are dead within 6 hours ({n} coins graded since {since}). Calling every coin red would already be {b} accurate — we score {a}, so accuracy is not our skill. Our skill is <b>ranking</b>: the safest 10% by our score survived <b>{s10}</b> vs <b>{sr}</b> for a random pick ({x}, {rn} live coins, 95% CI {lo}–{hi}). Green lights are rare — {g} graded so far — so we make no green hit-rate claim. Details and caveats on the <a href=\"/proof.html\">Criteria page</a>."},
+numD:"About <b>{k} of every 100</b> new coins are dead within 6 hours ({n} new coins graded since {since}; coins checked on request are not counted). Calling every coin red would already be {b} accurate — we score {a}, so accuracy is not our skill. Our skill is <b>ranking</b>: on those same coins, the safest 10% by our model survived <b>{s10}</b> vs <b>{sr}</b> for a random pick ({x}, 95% CI {lo}–{hi}). It is an early, small sample — only {sv} coins survived so far. Green lights are rare — {g} graded so far — so we make no green hit-rate claim. Details and caveats on the <a href=\"/proof.html\">Criteria page</a>."},
 th:{navBoard:"กระดาน",navProof:"หลักเกณฑ์",navAbout:"เกี่ยวกับ",
 h1:"เกี่ยวกับ FlagKan",
 whyT:"ทำไมต้องมี",
@@ -78,7 +78,7 @@ nextD:"หลังแฮกกาธอน: <b>แจ้งเตือนเ�
 linkT:"ลิงก์",lBoard:"กระดานสด",lProof:"หลักเกณฑ์",
 numT:"ตัวเลขบอกอะไร",
 numFb:"เหรียญใหม่ส่วนใหญ่ตายภายในไม่กี่ชั่วโมง ชี้แดงทุกตัวก็ถูกเกือบทุกครั้งอยู่แล้ว เราจึงวัดตัวเองด้วย <b>การจัดอันดับ</b> — เหรียญที่เราให้คะแนนปลอดภัยสุดรอดบ่อยกว่าการสุ่มไหม ตัวเลขสดอยู่ที่ <a href=\"/proof.html\">หน้าหลักเกณฑ์</a>",
-numD:"เหรียญใหม่ราว <b>{k} ใน 100 ตัว</b> ตายภายใน 6 ชั่วโมง (ตัดสินแล้ว {n} เหรียญ ตั้งแต่ {since}) ชี้แดงทุกเหรียญก็แม่น {b} แล้ว เราได้ {a} ความแม่นจึงไม่ใช่ฝีมือ ฝีมือของเราคือ <b>การจัดอันดับ</b>: 10% ที่คะแนนเราว่าปลอดภัยสุดรอด <b>{s10}</b> เทียบสุ่มเลือก <b>{sr}</b> ({x}, {rn} เหรียญจริง, ช่วงเชื่อมั่น 95% {lo}–{hi}) ไฟเขียวมีน้อย — รู้ผลแล้วแค่ {g} ตัว — เราจึงไม่อ้างอัตราถูกของไฟเขียว รายละเอียดและข้อจำกัดอยู่ที่ <a href=\"/proof.html\">หน้าหลักเกณฑ์</a>"}};
+numD:"เหรียญใหม่ราว <b>{k} ใน 100 ตัว</b> ตายภายใน 6 ชั่วโมง (ตัดสินแล้ว {n} เหรียญใหม่ ตั้งแต่ {since} ไม่นับเหรียญที่สั่งเช็คเอง) ชี้แดงทุกเหรียญก็แม่น {b} แล้ว เราได้ {a} ความแม่นจึงไม่ใช่ฝีมือ ฝีมือของเราคือ <b>การจัดอันดับ</b>: บนเหรียญชุดเดียวกันนี้ 10% ที่โมเดลให้คะแนนปลอดภัยสุดรอด <b>{s10}</b> เทียบสุ่มเลือก <b>{sr}</b> ({x}, ช่วงเชื่อมั่น 95% {lo}–{hi}) ยังเป็นตัวอย่างน้อย — มีเหรียญรอดแค่ {sv} ตัว ไฟเขียวมีน้อย — รู้ผลแล้วแค่ {g} ตัว — เราจึงไม่อ้างอัตราถูกของไฟเขียว รายละเอียดและข้อจำกัดอยู่ที่ <a href=\"/proof.html\">หน้าหลักเกณฑ์</a>"}};
 var L="en";
 try{var _l=localStorage.getItem("flagkan_lang");if(_l==="th"||_l==="en")L=_l}catch(e){}
 function t(k){return (T[L]&&T[L][k])||T.en[k]||k}
@@ -93,10 +93,9 @@ function renderNum(){var d=PROOF,el=document.getElementById("numD");if(!d||!el)r
 if(rk&&Array.isArray(rk.top))for(i=0;i<rk.top.length;i++)if(Math.abs(Number(rk.top[i].frac)-0.1)<1e-9)t10=rk.top[i];
 if(Array.isArray(hd.tiers))for(i=0;i<hd.tiers.length;i++)if(hd.tiers[i]&&hd.tiers[i].tier==="green")g=hd.tiers[i].n;
 var v2=d.ranking&&d.ranking.policy_v2,v10=null;if(v2&&Array.isArray(v2.top))for(i=0;i<v2.top.length;i++)if(Math.abs(Number(v2.top[i].frac)-0.1)<1e-9)v10=v2.top[i];
-if(v2&&v2.ready&&v10){rk=v2;t10=v10}
-if(!isNum(hd.base_dead_rate)||!rk||!rk.ready||!t10)return;
+if(!(v2&&v2.ready&&v10)||!isNum(hd.base_dead_rate))return;rk=v2;t10=v10;
 var since="";try{since=new Date(Number(hd.since)).toLocaleDateString(L==="th"?"th-TH":"en-GB",{day:"numeric",month:"short",timeZone:"UTC"})}catch(e){}
-el.innerHTML=fillH(t("numD"),{k:Math.round(Number(hd.base_dead_rate)*100),n:Number(hd.n).toLocaleString("en-US"),since:since,b:p1(hd.baseline_all_red_accuracy),a:p1(hd.accuracy),s10:p1(t10.survival),sr:p1(rk.survival),x:"×"+Number(t10.lift).toFixed(1),lo:p1(t10.ci_lo),hi:p1(t10.ci_hi),rn:Number(rk.n).toLocaleString("en-US"),g:isNum(g)?g:"—"})}
+el.innerHTML=fillH(t("numD"),{k:Math.round(Number(hd.base_dead_rate)*100),n:Number(hd.n).toLocaleString("en-US"),since:since,b:p1(hd.baseline_all_red_accuracy),a:p1(hd.accuracy),s10:p1(t10.survival),sr:p1(rk.survival),x:"×"+Number(t10.lift).toFixed(1),lo:p1(t10.ci_lo),hi:p1(t10.ci_hi),rn:Number(rk.n).toLocaleString("en-US"),sv:Number(rk.survivors).toLocaleString("en-US"),g:isNum(g)?g:"—"})}
 fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderNum()}).catch(function(){});
 document.getElementById("bEN").onclick=function(){L="en";applyLang()};
 document.getElementById("bTH").onclick=function(){L="th";applyLang()};

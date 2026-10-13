@@ -97,6 +97,9 @@ td.txt{font-family:var(--font);font-size:13px;white-space:normal}
 .tpanel{padding-top:22px}
 .tpanel:focus-visible{outline-offset:6px}
 .tpanel>.sec{margin-top:0}
+.tpanel>.sec+.sec{margin-top:36px}
+.pop{margin-top:6px}
+.era.s{color:var(--dim);background:var(--cream);margin-left:6px}
 .more{margin-top:14px;font-size:14px;color:var(--dim)}
 .more a{font-weight:800}
 /* definition + transparency */
@@ -149,10 +152,11 @@ td.txt{font-family:var(--font);font-size:13px;white-space:normal}
   <div class="tpanel" role="tabpanel" id="summary" aria-labelledby="t-summary" tabindex="0">
     <div class="card story" id="story"><div class="step"><div class="sk mut">loading…</div></div></div>
     <p class="meta" id="storyMeta" style="margin-top:8px"></p>
+    <p class="meta pop" id="popNote"></p>
     <p class="more"><a href="#ranking" data-go="ranking" data-i18n="goRanking">See the ranking in detail →</a></p>
   </div>
   <div class="tpanel" role="tabpanel" id="ranking" aria-labelledby="t-ranking" tabindex="0" hidden>
-    <section class="sec" id="rkSec" hidden><h2 data-i18n="rkT">Skill = ranking: who survives?</h2><p class="sl" data-i18n="rkL"></p><div class="card rk" id="rk"></div></section>
+    <section class="sec" id="rkSec" hidden><h2 data-i18n="rkT">Skill = ranking: who survives?</h2><p class="sl" data-i18n="rkL"></p><div class="card rk" id="rk"></div><p class="meta pop" id="rkPop"></p></section>
   </div>
   <div class="tpanel" role="tabpanel" id="models" aria-labelledby="t-models" tabindex="0" hidden>
     <section class="sec" id="chalSec" hidden><h2 data-i18n="chT">Models, live: LightGBM vs LR</h2><div class="tcard chal" id="chal"></div></section>
@@ -170,15 +174,17 @@ td.txt{font-family:var(--font);font-size:13px;white-space:normal}
       <p class="more" data-i18n-html="lightLink"></p></section>
   </div>
   <div class="tpanel" role="tabpanel" id="coins" aria-labelledby="t-coins" tabindex="0" hidden>
-    <section class="sec"><h2 data-i18n="tabT">Every resolved coin</h2>
+    <section class="sec"><h2 data-i18n="tabT">Latest graded coins</h2>
       <div class="tcard"><div class="tscroll"><table>
         <thead><tr><th data-i18n="cCoin">coin</th><th data-i18n="cLight">light</th><th class="num" data-i18n="cMove">6h move</th><th class="num" data-i18n="cOut">outcome</th></tr></thead>
         <tbody id="rows"><tr><td colspan="4" class="mut">loading…</td></tr></tbody>
       </table></div></div>
+      <p class="more"><a href="/board.html" data-i18n="allBoard">See every coin on the board →</a></p>
     </section>
   </div>
   <div class="tpanel" role="tabpanel" id="legacy" aria-labelledby="t-legacy" tabindex="0" hidden>
     <section class="sec" id="trSec" hidden><h2 data-i18n="trT">Transparency: older numbers</h2><p class="sl" data-i18n="trL"></p><div class="trans" id="trans"></div></section>
+    <section class="sec" id="rkOldSec" hidden><h2 data-i18n="rkOldT">Ranking in the old scoring era</h2><div class="card rk" id="rkOld"></div></section>
   </div>
   <footer class="site"><span>FlagKan · SORNKan · Solami + Jev</span><span><a href="/api/proof">api/proof</a> · <a href="/api/rounds?limit=50">api/rounds</a></span></footer>
 </div>
@@ -190,15 +196,15 @@ var T={
 en:{navBoard:"Board",navProof:"Criteria",navAbout:"About",
 h1:"Criteria",
 sub:"How we score ourselves. Every light is graded 6 hours after first sight against what actually happened; every number here is computed live and sits next to the baseline it has to beat.",
-tbSummary:"Summary",tbRanking:"Ranking",tbModels:"LightGBM vs LR",tbTiers:"Light tiers",tbGrading:"How we grade",tbCoins:"Graded coins",tbLegacy:"Legacy data",
+tbSummary:"Summary",tbRanking:"Ranking",tbModels:"LightGBM vs LR",tbTiers:"Light tiers",tbGrading:"How we grade",tbCoins:"Latest graded",tbLegacy:"Legacy data",
 goRanking:"See the ranking in detail →",
 lightLink:"How the light itself is decided (model, hard rules, Jev) and the 6 signals are explained on each coin on the <a href=\"/board.html\">board</a> — open a coin, then <b>Our rules</b>.",
 s1k:"1 · Almost every new coin dies",s1d:"of new coins were <b>dead within 6 hours</b>.",
 s2k:"2 · So accuracy is easy",s2d:"is our accuracy — but <b>calling every coin red scores {b}</b>. Accuracy is not our skill metric.",
 s3k:"3 · Our skill: finding survivors",s3d:"The <b>safest 10%</b> by our score survived <b>{a}</b> vs <b>{b}</b> for a random pick.",
 s3n:"Old scoring era (coarse scores, ties averaged) · {n} coins · 95% CI {lo}–{hi}",
-s3m:"Model era (since {since}) · {n} coins, {s} survived · 95% CI {lo}–{hi}",
-s3o:"Older coarse-score era: ×{x} on {n} coins.",
+s3m:"Model era (since {since}) · early, small sample: {s} survivors of {n} coins · 95% CI {lo}–{hi}",
+s3o:"Older coarse-score era: ×{x} on {n} coins (see Legacy data).",
 rkEra:"Old scoring era · coarse scores · ties averaged",
 rkEraM:"Model era · since {since}",
 rkSmall:"Only {s} coins survived in the model era so far, so the interval is wide — the direction is clear (its lower bound is well above random), the exact multiple is not.",
@@ -220,7 +226,7 @@ cTier:"light",cN:"coins",cDead:"died within 6h",
 tier_red_sure:"Red · high confidence",tier_red:"Red",tier_yellow:"Yellow",tier_green:"Green",
 tGreen:"<b>Green: {g} coins so far</b> — all survived, but {g} coins is far too few to claim a green hit rate.",
 tGreenN:"<b>Green: {g} coins so far</b> — too few to claim a green hit rate.",
-tYel:"Yellow: none yet — with ~98% of coins dying, the model rarely leaves the red zone.",
+tYel:"Yellow: none yet — with {d} of coins dying, the model rarely leaves the red zone.",
 tSure:"<b>Red · high confidence:</b> all {rs} came from the LR era. Since LightGBM took over ({t}) this tier can't fire: its bar is {bar} and the highest LightGBM score so far is {mx}. We left the bar unchanged instead of tuning it on live data.",
 tRed:"Red is correct {p} of the time, but that is close to the {b} of coins that die anyway.",
 defT:"How a coin is graded",
@@ -236,7 +242,9 @@ tr2k:"Old definition (label v1, retired)",
 tr2:"{n} coins · accuracy {a}. That label counted coins that merely stopped trading as alive, so this number is not comparable and is not a current claim.",
 tr3k:"Confidence calibration (legacy)",
 tr3:"ECE <b>{e}</b> · Brier {b} over {n} legacy verdicts. Most of those confidences were fixed 0.95–0.98 stamps from rules / Jev, not model probabilities — so this grades the old stamps, not LightGBM.",
-tabT:"Every resolved coin",cCoin:"coin",cLight:"light",cMove:"6h move",cOut:"outcome",
+tabT:"Latest graded coins",allBoard:"See every coin on the board →",rkOldT:"Ranking in the old scoring era",
+popX:"Policy v2: {c} coins counted, {x} left out ({od} checked on request, {op} old pairs, {ua} unknown pair age).",
+rkEarly:"Early, small sample: {s} survivors · 95% CI {lo}–{hi}",cCoin:"coin",cLight:"light",cMove:"6h move",cOut:"outcome",
 dead:"dead",alive:"alive",loading:"loading…",
 me:"FlagKan",bAllRed:"all red",
 chT:"Models, live: LightGBM vs LR",
@@ -252,15 +260,15 @@ chAuc:"AUC (ranking, 0.5 = none)",chTop:"survived, safest 10%",chAcc:"accuracy",
 th:{navBoard:"กระดาน",navProof:"หลักเกณฑ์",navAbout:"เกี่ยวกับ",
 h1:"หลักเกณฑ์",
 sub:"เราวัดผลตัวเองยังไง ทุกไฟถูกตัดสินจากสิ่งที่เกิดขึ้นจริง 6 ชั่วโมงหลังเจอเหรียญ ทุกตัวเลขในหน้านี้คำนวณสดและแสดงคู่กับ baseline ที่ต้องชนะให้ได้",
-tbSummary:"สรุป",tbRanking:"อันดับหาตัวรอด",tbModels:"LightGBM เทียบ LR",tbTiers:"ระดับไฟ",tbGrading:"วิธีตัดสินผล",tbCoins:"เหรียญที่ตัดสินแล้ว",tbLegacy:"ข้อมูลยุคเก่า",
+tbSummary:"สรุป",tbRanking:"อันดับหาตัวรอด",tbModels:"LightGBM เทียบ LR",tbTiers:"ระดับไฟ",tbGrading:"วิธีตัดสินผล",tbCoins:"ตัดสินล่าสุด",tbLegacy:"ข้อมูลยุคเก่า",
 goRanking:"ดูการจัดอันดับแบบละเอียด →",
 lightLink:"ไฟตัดสินยังไง (โมเดล กฎเด็ดขาด Jev) และสัญญาณ 6 ข้อ อธิบายไว้ในทุกเหรียญบน <a href=\"/board.html\">กระดาน</a> — กดเหรียญ แล้วเปิด <b>เกณฑ์ของเรา</b>",
 s1k:"1 · เหรียญใหม่แทบทั้งหมดตาย",s1d:"ของเหรียญใหม่ <b>ตายภายใน 6 ชั่วโมง</b>",
 s2k:"2 · ความแม่นจึงได้มาง่าย",s2d:"คือความแม่นของเรา — แต่ <b>ชี้แดงทุกเหรียญก็ได้ {b} แล้ว</b> ความแม่นจึงไม่ใช่ตัววัดฝีมือ",
 s3k:"3 · ฝีมือจริง: หาตัวที่รอด",s3d:"<b>10% ที่คะแนนเราว่าปลอดภัยสุด</b> รอด <b>{a}</b> เทียบกับสุ่มเลือก <b>{b}</b>",
 s3n:"ยุคคะแนนเก่า (คะแนนหยาบ เฉลี่ยกลุ่มคะแนนเท่ากัน) · {n} เหรียญ · ช่วงเชื่อมั่น 95% {lo}–{hi}",
-s3m:"ยุคโมเดล (ตั้งแต่ {since}) · {n} เหรียญ รอด {s} · ช่วงเชื่อมั่น 95% {lo}–{hi}",
-s3o:"ยุคคะแนนหยาบก่อนหน้า: ×{x} จาก {n} เหรียญ",
+s3m:"ยุคโมเดล (ตั้งแต่ {since}) · ตัวอย่างยังน้อย: รอด {s} จาก {n} เหรียญ · ช่วงเชื่อมั่น 95% {lo}–{hi}",
+s3o:"ยุคคะแนนหยาบก่อนหน้า: ×{x} จาก {n} เหรียญ (ดูข้อมูลยุคเก่า)",
 rkEra:"ยุคคะแนนเก่า · คะแนนหยาบ · เฉลี่ยกลุ่มคะแนนเท่ากัน",
 rkEraM:"ยุคโมเดล · ตั้งแต่ {since}",
 rkSmall:"ยุคโมเดลมีเหรียญรอดแค่ {s} ตัว ช่วงความเชื่อมั่นจึงกว้าง — ทิศทางชัด (ขอบล่างสูงกว่าสุ่มมาก) แต่ตัวคูณที่แน่นอนยังไม่ชัด",
@@ -282,7 +290,7 @@ cTier:"ไฟ",cN:"เหรียญ",cDead:"ตายใน 6 ชม.",
 tier_red_sure:"แดง · มั่นใจสูง",tier_red:"แดง",tier_yellow:"เหลือง",tier_green:"เขียว",
 tGreen:"<b>เขียว: มีแค่ {g} เหรียญ</b> — รอดทุกตัว แต่ {g} เหรียญน้อยเกินกว่าจะอ้างอัตราถูกของไฟเขียวได้",
 tGreenN:"<b>เขียว: มีแค่ {g} เหรียญ</b> — น้อยเกินกว่าจะอ้างอัตราถูกของไฟเขียวได้",
-tYel:"เหลือง: ยังไม่มี — เมื่อเหรียญตาย ~98% โมเดลแทบไม่ออกจากโซนแดง",
+tYel:"เหลือง: ยังไม่มี — เมื่อเหรียญตาย {d} โมเดลแทบไม่ออกจากโซนแดง",
 tSure:"<b>แดง · มั่นใจสูง:</b> ทั้ง {rs} เหรียญมาจากยุค LR ตั้งแต่ LightGBM เข้ามาตัดสิน ({t}) ชั้นนี้ติดไม่ได้เลย: เกณฑ์คือ {bar} แต่คะแนน LightGBM สูงสุดที่เคยให้คือ {mx} เราไม่ขยับเกณฑ์ตามข้อมูลสด",
 tRed:"แดงถูก {p} ของครั้ง แต่ใกล้กับ {b} ที่เหรียญตายเองอยู่แล้ว",
 defT:"ตัดสินผลเหรียญยังไง",
@@ -298,7 +306,9 @@ tr2k:"นิยามเดิม (label v1 เลิกใช้แล้ว)",
 tr2:"{n} เหรียญ · ความแม่น {a} นิยามนั้นนับเหรียญที่แค่หยุดเทรดว่า \"รอด\" ตัวเลขนี้จึงเทียบไม่ได้และไม่ใช่คำอ้างปัจจุบัน",
 tr3k:"ความตรงของความมั่นใจ (ชุดเก่า)",
 tr3:"ECE <b>{e}</b> · Brier {b} จาก {n} คำชี้ชุดเก่า ความมั่นใจส่วนใหญ่เป็นค่าตายตัว 0.95–0.98 จากกฎ / Jev ไม่ใช่ความน่าจะเป็นจากโมเดล — จึงวัดค่าเก่าพวกนั้น ไม่ใช่ LightGBM",
-tabT:"ทุกเหรียญที่รู้ผลแล้ว",cCoin:"เหรียญ",cLight:"ไฟ",cMove:"6 ชม.",cOut:"ผล",
+tabT:"เหรียญที่ตัดสินล่าสุด",allBoard:"ดูทุกเหรียญบนกระดาน →",rkOldT:"การจัดอันดับในยุคคะแนนเก่า",
+popX:"นโยบาย v2: นับ {c} เหรียญ ไม่นับ {x} เหรียญ (สั่งเช็คเอง {od} · คู่เทรดเก่า {op} · ไม่รู้อายุคู่เทรด {ua})",
+rkEarly:"ตัวอย่างยังน้อย: รอด {s} เหรียญ · ช่วงเชื่อมั่น 95% {lo}–{hi}",cCoin:"เหรียญ",cLight:"ไฟ",cMove:"6 ชม.",cOut:"ผล",
 dead:"พัง",alive:"รอด",loading:"กำลังโหลด…",
 me:"FlagKan",bAllRed:"ชี้แดงหมด",
 chT:"โมเดลแบบสด: LightGBM เทียบ LR",
@@ -353,21 +363,22 @@ for(i=0;i<dec.length;i++){var v=dec[i].survival;c+='<div class="col'+(i===0?" to
 c+='<div class="base" style="bottom:'+(base/mx*100).toFixed(1)+'%"></div></div>';
 c+='<div class="xax"><span>← '+esc(t("rkSafe"))+'</span><span class="lg"><i></i>'+esc(fill(t("rkRand"),{b:pct1(base)}))+"</span><span>"+esc(t("rkRisk"))+" →</span></div>";
 var t10=topOf(b,0.1),t1=topOf(b,0.01),h='<div class="rkgrid"><div>'+c+"</div><div>";
-if(t10){h+='<div class="era'+(cls?" "+cls:"")+'">'+esc(label)+'</div><div class="rkbig">'+esc(liftTxt(t10.lift))+"<small>"+esc(t("rkBig"))+"</small></div>";
+if(t10){h+='<div class="era'+(cls?" "+cls:"")+'">'+esc(label)+"</div>"+(cls==="m"?'<div class="era s">'+esc(fill(t("rkEarly"),{s:fmtInt(b.survivors),lo:pct1(t10.ci_lo),hi:pct1(t10.ci_hi)}))+"</div>":"")+'<div class="rkbig">'+esc(liftTxt(t10.lift))+"<small>"+esc(t("rkBig"))+"</small></div>";
 h+='<p class="rkline">'+fillH(t("rkLine"),{k:fmtInt(t10.n),a:pct1(t10.survival),b:pct1(b.survival)})+"</p>";
 h+='<p class="rkci">'+esc(fill(t("rkCi"),{lo:pct1(t10.ci_lo),hi:pct1(t10.ci_hi),b:pct1(b.survival),blo:pct1(b.survival_ci_lo),bhi:pct1(b.survival_ci_hi),auc:num3(b.auc),n:fmtInt(b.n),s:fmtInt(b.survivors)}))+"</p>"}
 h+="</div></div>";
 if(t10&&isNum(t10.tie_share)&&Number(t10.tie_share)>=0.5){h+='<p class="note">'+fillH(t("rkTie"),{t:pct(t10.tie_share),a1:t1?pct1(t1.survival):"—"})+"</p>"}
 return h}
 function renderRanking(r){var sec=document.getElementById("rkSec");var b=r&&r.first_sight,v2=r&&r.policy_v2;
-if(!b||!isNum(b.n)||!Number(b.n)){sec.hidden=true;return}
-var h="";
-if(v2&&v2.ready&&topOf(v2,0.1)){h+=rankBlock(v2,fill(t("rkEraM"),{since:fmtWhen(v2.since)}),"m");
+var os=document.getElementById("rkOldSec"),hasOld=!!(b&&isNum(b.n)&&Number(b.n));
+var useM=!!(v2&&v2.ready&&topOf(v2,0.1));
+if(useM){var h=rankBlock(v2,fill(t("rkEraM"),{since:fmtWhen(v2.since)}),"m");
 var m10=topOf(v2,0.1);if(Number(v2.survivors)<50&&Number(m10.ci_lo)>Number(v2.survival))h+='<p class="note">'+fillH(t("rkSmall"),{s:fmtInt(v2.survivors)})+"</p>";
-h+='<div class="rksep"></div>'+rankBlock(b,t("rkEra"),"")}
-else{h+=rankBlock(b,t("rkEra"),"");
-if(v2&&isNum(v2.n))h+='<p class="pend">'+fillH(t("rkV2"),{since:fmtWhen(v2.since),n:fmtInt(v2.n),s:fmtInt(v2.survivors),mn:fmtInt(r.min_n),ms:fmtInt(r.min_survivors)})+"</p>"}
 document.getElementById("rk").innerHTML=h;sec.hidden=false}
+else if(hasOld){var h2=rankBlock(b,t("rkEra"),"");if(v2&&isNum(v2.n))h2+='<p class="pend">'+fillH(t("rkV2"),{since:fmtWhen(v2.since),n:fmtInt(v2.n),s:fmtInt(v2.survivors),mn:fmtInt(r.min_n),ms:fmtInt(r.min_survivors)})+"</p>";
+document.getElementById("rk").innerHTML=h2;sec.hidden=false}
+else{sec.hidden=true}
+if(useM&&hasOld){document.getElementById("rkOld").innerHTML=rankBlock(b,t("rkEra"),"");os.hidden=false}else{os.hidden=true}}
 function renderTiers(d){var hd=d.headline||{},ts=document.getElementById("tierSec"),tiers=Array.isArray(hd.tiers)?hd.tiers:[];
 if(!tiers.length||!isNum(hd.n)||!Number(hd.n)){ts.hidden=true;return}
 document.getElementById("tierL").textContent=fill(t("tierL"),{since:fmtWhen(hd.since)});
@@ -376,7 +387,7 @@ th+='<tr><td><span class="badge '+bc+'">'+esc(lab)+'</span></td><td class="num">
 document.getElementById("tierRows").innerHTML=th;
 var notes=[],g=by.green?Number(by.green.n)||0:0,gd=by.green&&isNum(by.green.dead_rate)?Number(by.green.dead_rate):null;
 if(g>0&&g<30)notes.push(fillH(gd===0?t("tGreen"):t("tGreenN"),{g:g}));
-if(by.yellow&&!Number(by.yellow.n))notes.push(esc(t("tYel")));
+if(by.yellow&&!Number(by.yellow.n))notes.push(esc(fill(t("tYel"),{d:pct(hd.base_dead_rate)})));
 if(isNum(hd.red_precision))notes.push(esc(fill(t("tRed"),{p:pct1(hd.red_precision),b:pct1(hd.base_dead_rate)})));
 var dc=d.decider||{},rk=d.ranking||{};
 if(dc.model==="lightgbm-27"&&by.red_sure&&Number(by.red_sure.n)>0&&isNum(rk.gbm_max_p)&&isNum(dc.t_sure)&&Number(rk.gbm_max_p)<Number(dc.t_sure)){notes.push(fillH(t("tSure"),{rs:fmtInt(by.red_sure.n),t:fmtWhen(dc.since),bar:Number(dc.t_sure).toFixed(4),mx:Number(rk.gbm_max_p).toFixed(4)}))}
@@ -392,7 +403,11 @@ function renderProof(d){if(!d)return;
 renderStory(d);
 try{renderRanking(d.ranking)}catch(e){document.getElementById("rkSec").hidden=true}
 try{renderChallenger(d.challenger,d.decider,d.ranking)}catch(e){document.getElementById("chalSec").hidden=true}
-renderTiers(d);renderDef(d);renderTrans(d)}
+renderTiers(d);renderDef(d);renderTrans(d);renderPop(d)}
+// population disclosure (POP-001): which coins the stats count, from /api/proof
+function renderPop(d){var p=d.population,txt="";if(p&&typeof p==="object"){txt=(L==="th"?p.rule_th:p.rule_en)||"";var v=p.policy_v2;
+if(v&&isNum(v.counted_n))txt+=(txt?" ":"")+fill(t("popX"),{c:fmtInt(v.counted_n),x:fmtInt(v.excluded_n),od:fmtInt(v.on_demand),op:fmtInt(v.old_pair),ua:fmtInt(v.unknown_age)})}
+var a=document.getElementById("popNote"),b=document.getElementById("rkPop");a.textContent=txt;b.textContent=txt;a.hidden=!txt;b.hidden=!txt}
 function renderChallenger(c,dc,rk){var sec=document.getElementById("chalSec"),el=document.getElementById("chal");
 if(!c||typeof c!=="object"){sec.hidden=true;el.innerHTML="";return}
 var gbmDec=!(dc&&typeof dc==="object"&&dc.model==="logistic-regression");
@@ -424,14 +439,14 @@ var nm=esc(nameOf(x.name,x.mint,8,18));
 h+="<tr><td>"+'<span class="coinname">'+nm+"</span></td><td>"+badge(x.choice)+'</td><td class="num">'+mv+'</td><td class="num">'+(deadOf(x)?'<span class="oc dead"><i></i>'+esc(t("dead"))+"</span>":'<span class="oc alive"><i></i>'+esc(t("alive"))+"</span>")+"</td></tr>"}
 document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="mut">'+esc(t("loading"))+"</td></tr>";
 }
-function fetchRows(){fetch("/api/rounds?limit=100&resolved=1").then(function(r){return r.json()}).then(function(d){PROWS=(d&&Array.isArray(d.rounds))?d.rounds:[];renderRowsP()}).catch(function(){})}
+function fetchRows(){fetch("/api/rounds?limit=10&resolved=1").then(function(r){return r.json()}).then(function(d){PROWS=(d&&Array.isArray(d.rounds))?d.rounds:[];renderRowsP()}).catch(function(){})}
 function loadRows(){if(PROWS){renderRowsP();return}fetchRows()}
 function fetchProof(){fetch("/api/proof").then(function(r){return r.json()}).then(function(d){PROOF=d;renderProof(d)}).catch(function(){})}
 var LIVEST="";
 function renderLive(){var el=document.getElementById("liveSt");if(!el||!LIVEST)return;el.className="livest "+LIVEST;document.getElementById("liveStT").textContent=FlagLive.statusText(LIVEST,L);el.hidden=false}
 // LIVE-001: pushed ticks: resolved rows join the table (newest settled first), proof summary refreshes the score
 function onTick(e){var rs=(Array.isArray(e.rounds)?e.rounds:[]).filter(function(x){return x&&x.resolved_at!=null});
-if(rs.length&&PROWS){FlagLive.upsertRows(PROWS,rs);PROWS.sort(function(a,b){return (Number(b.resolved_at)||0)-(Number(a.resolved_at)||0)});if(PROWS.length>100)PROWS.length=100;renderRowsP()}
+if(rs.length&&PROWS){FlagLive.upsertRows(PROWS,rs);PROWS.sort(function(a,b){return (Number(b.resolved_at)||0)-(Number(a.resolved_at)||0)});if(PROWS.length>10)PROWS.length=10;renderRowsP()}
 if(e.proof&&typeof e.proof==="object"&&PROOF){PROOF=FlagLive.mergeProof(PROOF,e.proof);renderProof(PROOF)}}
 // tabs: WAI-ARIA tablist with roving tabindex; the URL #hash picks the tab (deep links for capture)
 var TABS=["summary","ranking","models","tiers","grading","coins","legacy"];
