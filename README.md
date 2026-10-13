@@ -91,7 +91,7 @@ Otherwise it is **alive**. The exact parameters are published in `label_def` on
   calibration (ECE ~0.20, mostly fixed 0.95–0.98 stamps from rules / Jev) are kept for transparency only.
 
 Live metrics are not hardcoded here on purpose — read them from
-[`/api/proof`](https://flag.sornkan.com/api/proof) or the [proof page](https://flag.sornkan.com/proof).
+[`/api/proof`](https://flag.sornkan.com/api/proof) or the [Criteria page](https://flag.sornkan.com/proof).
 
 ## API
 
@@ -153,7 +153,7 @@ live on Solana data) tracks. Built solo by SORNKan in Thailand.
 
 **FlagKan** ติดไฟ **แดง / เหลือง / เขียว** ให้เหรียญ Solana ที่เพิ่งเกิด ทันทีที่เจอ พร้อมสัญญาณที่อยู่เบื้องหลังเป็นข้อ ๆ
 แล้ว **ตรวจคำชี้ของตัวเองอีกครั้งราว 6 ชั่วโมงต่อมา** จากสิ่งที่เกิดขึ้นจริง ผลทุกเหรียญเปิดเผยที่
-[หน้า Proof](https://flag.sornkan.com/proof)
+[หน้าหลักเกณฑ์ (Criteria)](https://flag.sornkan.com/proof)
 
 - **ข้อมูล:** เหรียญใหม่จาก GeckoTerminal (ส่วนใหญ่) + DexScreener boosts → สัญญาณบนเชนผ่าน Solami RPC
 - **การชี้:** โมเดล LightGBM (มี logistic regression เป็นตัวสำรอง) + กฎเด็ดขาด 2 ข้อ + AI Jev (TypeSafe) ให้คะแนน wallet coordination และปัจจัยเสี่ยง
@@ -166,3 +166,10 @@ live on Solana data) tracks. Built solo by SORNKan in Thailand.
   (เหรียญที่แค่หยุดเทรดถูกนับว่ารอด) แก้แล้วเมื่อ 12 ต.ค. 2026 ตัวเลขเก่ายังเก็บไว้ใน `legacy_v1`
 - สร้างเพื่อ Colosseum Crypto World's Fair 2026 (track AI × Solana Thailand + Solami)
 - งานรีเสิร์ชแฮกกาธอนเดิมย้ายไปที่ [research/README.md](research/README.md)
+
+## License
+
+Code: [MIT](LICENSE) © 2026 Suansinphut Jairukchan and the FlagKan team.
+Market and on-chain data shown by the app come from GeckoTerminal, DexScreener and Solami RPC and stay subject to their own terms.
+Fonts bundled with the video sources are Google Fonts under the SIL Open Font License.
+FlagKan is not financial advice: green means lower risk, never safe.
