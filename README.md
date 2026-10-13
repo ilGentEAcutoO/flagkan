@@ -8,11 +8,13 @@ YELLOW (caution) / GREEN (lower risk — not safe)** light with written reasons,
 own verdict ~6 hours later** against what actually happened. Every graded coin is public,
 and every headline number is shown next to the "do-nothing" baseline it has to beat.
 
-**The honest headline.** About 98 of every 100 new coins are dead within 6 hours, so "call
-everything red" is already ~98% accurate — accuracy is not our skill metric. Our skill is
-**ranking**: the coins FlagKan scores safest survive more often than a random pick. On 11,351
-live coins (5–12 Oct 2026) the safest 10% survived 12.2% (95% CI 10.4–14.2%) vs 7.0% for a random
-pick — about 1.7×, AUC 0.627. Live values: `ranking` on [`/api/proof`](https://flag.sornkan.com/api/proof).
+**The honest headline.** Most new coins (about 97%; live: [`/api/proof`](https://flag.sornkan.com/api/proof))
+are dead within 6 hours, so "call everything red" is already about that accurate — accuracy is not
+our skill metric. Our skill is **ranking**: the coins FlagKan scores safest survive more often than
+a random pick. On 11,375 new coins the cron found itself (since 5 Oct 2026; pair ≤ 6 h old at first
+sight, on-demand checks excluded) the safest 10% survived 8.8% (95% CI 7.2–10.5%) vs 5.6% for a
+random pick — about 1.6×, AUC 0.609, as of 13 Oct. Live values: `ranking` and `population` on
+[`/api/proof`](https://flag.sornkan.com/api/proof).
 
 > FlagKan flags risk patterns. It is not financial advice.
 
@@ -155,8 +157,8 @@ live on Solana data) tracks. Built solo by SORNKan in Thailand.
 - **ข้อมูล:** เหรียญใหม่จาก GeckoTerminal (ส่วนใหญ่) + DexScreener boosts → สัญญาณบนเชนผ่าน Solami RPC
 - **การชี้:** โมเดล LightGBM (มี logistic regression เป็นตัวสำรอง) + กฎเด็ดขาด 2 ข้อ + AI Jev (TypeSafe) ให้เหตุผล
   และ re-check เมื่อราคาร่วงจริง ผลตัดสินอ่านจากแหล่งข้อมูลตลาดเดียวกับตอนเจอ ไม่ได้ตัดสินบนเชน
-- **ตัวเลขที่ซื่อตรง:** เหรียญใหม่ราว 98 ใน 100 ตายเองใน 6 ชม. ความแม่นจึงไม่ใช่ฝีมือ ฝีมือคือการจัดอันดับ:
-  10% ที่คะแนนปลอดภัยสุดรอด 12.2% เทียบสุ่ม 7.0% (~1.7×, 11,351 เหรียญ, 5–12 ต.ค.) ไฟเขียวยังมีน้อยเกินจะอ้างอัตราถูก
+- **ตัวเลขที่ซื่อตรง:** เหรียญใหม่ส่วนใหญ่ (ราว 97% ดูค่าสดที่ /api/proof) ตายเองใน 6 ชม. ความแม่นจึงไม่ใช่ฝีมือ ฝีมือคือการจัดอันดับ:
+  10% ที่คะแนนปลอดภัยสุดรอด 8.8% เทียบสุ่ม 5.6% (~1.6×, 11,375 เหรียญใหม่ที่ระบบเจอเอง ตั้งแต่ 5 ต.ค. ไม่นับเหรียญที่สั่งเช็คเอง ณ 13 ต.ค.) ไฟเขียวยังมีน้อยเกินจะอ้างอัตราถูก
 - **นิยาม "ตาย" (label v2):** ภายใน 6 ชม. ราคาลง 90% ขึ้นไป หรือ liquidity ต่ำกว่า $1,000
   (วัดจากแหล่งเดียวกับตอนเห็นครั้งแรก) หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย
 - **ความซื่อตรง:** ทุกตัวเลขแสดงคู่กับ baseline แบบ "ไม่ทำอะไรเลย" เสมอ นิยามเดิมมีจุดบกพร่อง
