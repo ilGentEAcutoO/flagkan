@@ -1,0 +1,130 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:0em;--hl-lh:1.18;--body-lh:1.45;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--paper);}
+.s2-bg{position:absolute;inset:0;background:radial-gradient(1300px 900px at 40% 45%, #2A2219 0%, #16130E 65%);}
+.s2-cam{position:absolute;inset:0;}
+.s2-chartwrap{position:absolute;left:110px;top:120px;width:1060px;height:720px;}
+.s2-axis{position:absolute;left:0;top:0;width:1060px;height:720px;}
+.s2-svg{position:absolute;left:0;top:0;width:1060px;height:720px;overflow:visible;}
+.s2-tag{position:absolute;left:0;top:0;display:block;padding:8px 18px;border-radius:99px;font-weight:800;font-size:30px;white-space:nowrap;}
+.s2-tag-pump{background:var(--grnhot);color:#0E2A1F;}
+.s2-tag-dump{background:var(--redhot);color:#fff;}
+.s2-here{position:absolute;left:0;top:0;display:flex;align-items:center;gap:12px;font-weight:700;font-size:28px;color:#C9B99C;white-space:nowrap;}
+.s2-here i{display:block;width:22px;height:22px;border-radius:50%;background:var(--paper);border:4px solid var(--redhot);}
+.s2-right{position:absolute;left:1220px;top:200px;width:600px;}
+.s2-h1{font-weight:800;font-size:84px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s2-sub{margin-top:28px;font-weight:600;font-size:40px;line-height:var(--body-lh);color:#C9B99C;}
+.s2-sub b{color:var(--redhot);font-weight:800;}
+.s2-cards{position:absolute;left:0;top:0;width:1920px;height:930px;}
+.s2-card{position:absolute;top:250px;width:440px;height:330px;background:#FFFDF7;color:var(--ink);border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 #000;padding:30px 34px;}
+.s2-card-1{left:250px;} .s2-card-2{left:740px;} .s2-card-3{left:1230px;}
+.s2-card-lbl{font-family:'JBMono',monospace;font-weight:700;font-size:24px;letter-spacing:.08em;color:#8F806A;text-transform:uppercase;}
+.s2-card-v{margin-top:16px;font-weight:800;font-size:96px;line-height:1;letter-spacing:-0.03em;}
+.s2-card-v small{font-size:44px;color:#8F806A;font-weight:700;}
+.s2-card-badge{position:absolute;left:34px;bottom:30px;display:block;padding:10px 22px;border-radius:99px;font-weight:800;font-size:32px;white-space:nowrap;}
+.s2-b-g{background:var(--grnbg);color:var(--grn);border:2px solid var(--grn);}
+.s2-generic{position:absolute;left:0;right:0;top:170px;text-align:center;font-weight:700;font-size:28px;letter-spacing:.12em;text-transform:uppercase;color:#9C8E77;}
+.s2-q{position:absolute;left:160px;right:160px;top:640px;text-align:center;font-weight:800;font-size:88px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);color:var(--paper);}
+.s2-q b{color:var(--yel);}
+.s2-qmark{position:absolute;display:block;font-weight:800;font-size:150px;line-height:1;color:var(--yel);}
+.s2-dim{position:absolute;inset:0;background:#16130E;opacity:0;}
+</style>
+<div id="root" data-composition-id="s2-gap" data-width="1920" data-height="1080">
+  <div class="s2-bg"></div>
+  <div class="s2-cam">
+    <div class="s2-chartwrap">
+      <svg class="s2-svg" viewBox="0 0 1060 720">
+        <g stroke="#3A3127" stroke-width="2">
+          <line x1="0" y1="120" x2="1060" y2="120"/><line x1="0" y1="300" x2="1060" y2="300"/>
+          <line x1="0" y1="480" x2="1060" y2="480"/><line x1="0" y1="660" x2="1060" y2="660"/>
+        </g>
+        <path id="s2-area" d="M0 600 L80 585 L150 560 L210 540 L270 470 L320 430 L370 360 L420 300 L470 210 L520 160 L560 120 L600 140 L640 110 L670 125 L700 620 L760 650 L1060 650 L1060 660 L0 660 Z" fill="url(#s2-grad)" opacity="0"/>
+        <defs><linearGradient id="s2-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#19B37E" stop-opacity=".35"/><stop offset="1" stop-color="#19B37E" stop-opacity="0"/></linearGradient></defs>
+        <path id="s2-up" d="M0 600 L80 585 L150 560 L210 540 L270 470 L320 430 L370 360 L420 300 L470 210 L520 160 L560 120 L600 140 L640 110 L670 125" fill="none" stroke="#19B37E" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+        <path id="s2-down" d="M670 125 L700 620 L760 650 L830 655 L900 652 L1000 656" fill="none" stroke="#E0452C" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="s2-tag s2-tag-pump" style="left:520px;top:30px;">+840%</span>
+      <span class="s2-tag s2-tag-dump" style="left:720px;top:520px;">−99%</span>
+      <div class="s2-here" style="left:950px;top:600px;"><i></i><span>คุณ กดซื้อ</span></div>
+    </div>
+    <div class="s2-right">
+      <div class="s2-h1">กราฟบอกได้แค่อดีต</div>
+      <div class="s2-sub">กว่าจะเห็นมันร่วง <b>เงินคุณก็หายไปแล้ว</b></div>
+    </div>
+  </div>
+  <div class="s2-dim"></div>
+  <div class="s2-cards">
+    <div class="s2-generic">เครื่องมือเช็กความเสี่ยงทั่วไป</div>
+    <div class="s2-card s2-card-1"><div class="s2-card-lbl">คะแนนความเสี่ยง</div><div class="s2-card-v">87<small>/100</small></div><span class="s2-card-badge s2-b-g">ปลอดภัย</span></div>
+    <div class="s2-card s2-card-2"><div class="s2-card-lbl">เกรดเหรียญ</div><div class="s2-card-v">A+</div><span class="s2-card-badge s2-b-g">เสี่ยงต่ำ</span></div>
+    <div class="s2-card s2-card-3"><div class="s2-card-lbl">ข้อตรวจ</div><div class="s2-card-v">6/6</div><span class="s2-card-badge s2-b-g">✓ ผ่าน</span></div>
+    <span class="s2-qmark" style="left:460px;top:120px;">?</span>
+    <span class="s2-qmark" style="left:950px;top:90px;">?</span>
+    <span class="s2-qmark" style="left:1440px;top:120px;">?</span>
+    <div class="s2-q">…แต่มัน<b>ถูกบ่อยแค่ไหน?</b></div>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=5.331, D=11.182;
+const up = document.getElementById("s2-up"), dn = document.getElementById("s2-down");
+const lu = up.getTotalLength(), ld = dn.getTotalLength();
+up.style.strokeDasharray = lu; dn.style.strokeDasharray = ld;
+const tl = gsap.timeline({ paused: true });
+// camera drift
+tl.fromTo(".s2-cam", {scale:1.06, x:40}, {scale:1, x:0, duration:B2 - 0.4, ease:"sine.out"}, 0);
+// b1: pump
+tl.fromTo(up, {strokeDashoffset:lu}, {strokeDashoffset:0, duration:2.0, ease:"power1.in"}, B1 - 0.4);
+tl.fromTo("#s2-area", {opacity:0}, {opacity:1, duration:1.2}, B1 + 0.4);
+tl.fromTo(".s2-tag-pump", {opacity:0, scale:0.4}, {opacity:1, scale:1, duration:0.4, ease:"back.out(3)"}, B1 + 1.4);
+tl.fromTo(".s2-h1", {opacity:0, y:50}, {opacity:1, y:0, duration:0.7, ease:"expo.out"}, B1);
+// crash
+tl.fromTo(dn, {strokeDashoffset:ld}, {strokeDashoffset:0, duration:0.7, ease:"power3.in"}, B1 + 1.7);
+tl.to("#s2-area", {opacity:0, duration:0.3}, B1 + 1.8);
+tl.fromTo(".s2-chartwrap", {y:0}, {y:14, duration:0.08, yoyo:true, repeat:5, ease:"none", immediateRender:false}, B1 + 2.3);
+tl.fromTo(".s2-tag-dump", {opacity:0, scale:0.4}, {opacity:1, scale:1, duration:0.4, ease:"back.out(3)"}, B1 + 2.35);
+tl.fromTo(".s2-sub", {opacity:0, y:30}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B1 + 2.2);
+tl.fromTo(".s2-here", {opacity:0, x:-20}, {opacity:1, x:0, duration:0.5, ease:"power3.out"}, B1 + 2.9);
+// b2: generic score cards
+tl.to(".s2-cam", {opacity:0.22, scale:0.94, duration:0.6, ease:"power2.inOut"}, B2 - 0.35);
+tl.to([".s2-right", ".s2-tag", ".s2-here"], {opacity:0, duration:0.4}, B2 - 0.35);
+tl.fromTo(".s2-dim", {opacity:0}, {opacity:0.55, duration:0.5}, B2 - 0.3);
+tl.fromTo(".s2-generic", {opacity:0, y:-20}, {opacity:1, y:0, duration:0.5, ease:"power3.out"}, B2);
+[".s2-card-1", ".s2-card-2", ".s2-card-3"].forEach((s, k) => {
+  tl.fromTo(s, {opacity:0, y:240, rotation:(k - 1) * 10}, {opacity:1, y:0, rotation:(k - 1) * -2.5, duration:0.6, ease:"back.out(1.6)"}, B2 + 0.1 + k * 0.28);
+});
+// question
+tl.to([".s2-card-1", ".s2-card-2", ".s2-card-3"], {y:-40, opacity:0.55, duration:0.5, ease:"power2.out", stagger:0.05}, B2 + 2.3);
+tl.fromTo(".s2-qmark", {opacity:0, scale:0.2, rotation:-20}, {opacity:1, scale:1, rotation:0, duration:0.45, ease:"back.out(3)", stagger:0.12}, B2 + 2.4);
+tl.fromTo(".s2-q", {opacity:0, y:40}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B2 + 2.5);
+tl.to(".s2-qmark", {y:-12, duration:0.7, yoyo:true, repeat:3, ease:"sine.inOut", stagger:0.15}, B2 + 3.0);
+tl.to(".s2-cards", {opacity:0, duration:0.3}, D - 0.35);
+window.__timelines["s2-gap"] = tl;
+})();
+</script>
+</template>
+</body></html>

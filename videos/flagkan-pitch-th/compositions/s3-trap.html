@@ -1,0 +1,168 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:0em;--hl-lh:1.18;--body-lh:1.45;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--paper);}
+.s3-bg{position:absolute;inset:0;background:radial-gradient(1300px 900px at 50% 40%, #2E241A 0%, #16130E 65%);}
+.s3-warm{position:absolute;inset:0;background:radial-gradient(1100px 800px at 70% 55%, #3A2A1A 0%, rgba(22,19,14,0) 70%);opacity:0;}
+.s3-shake{position:absolute;inset:0;}
+.s3-kicker{position:absolute;left:140px;top:110px;display:flex;align-items:center;gap:16px;font-weight:800;font-size:30px;letter-spacing:.14em;text-transform:uppercase;color:var(--yel);}
+.s3-kicker i{display:block;width:44px;height:6px;background:var(--yel);border-radius:4px;}
+.s3-part1{position:absolute;inset:0;}
+.s3-bot{position:absolute;left:140px;top:200px;width:560px;height:430px;background:#FFFDF7;color:var(--ink);border:3px solid var(--ink);border-radius:24px;box-shadow:8px 8px 0 #000;}
+.s3-face{position:absolute;left:40px;top:40px;width:200px;height:150px;border-radius:22px;background:#26211B;}
+.s3-eye{position:absolute;top:66px;width:52px;height:10px;border-radius:6px;background:var(--yel);}
+.s3-eye-l{left:34px;} .s3-eye-r{left:114px;}
+.s3-zz{position:absolute;left:206px;top:22px;font-weight:800;font-size:40px;color:#8F806A;}
+.s3-botname{position:absolute;left:270px;top:52px;width:260px;font-weight:800;font-size:46px;line-height:var(--hl-lh);}
+.s3-botsays{position:absolute;left:270px;top:128px;width:270px;font-weight:600;font-size:28px;line-height:var(--body-lh);color:#6E6252;}
+.s3-btn{position:absolute;left:40px;top:250px;width:480px;height:130px;border-radius:20px;background:var(--red);border:3px solid var(--ink);box-shadow:0 10px 0 #7A1F12;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:64px;color:#fff;letter-spacing:.04em;}
+.s3-belt{position:absolute;left:100px;top:700px;width:1040px;height:110px;border-top:4px solid #3A3127;border-bottom:4px solid #3A3127;overflow:hidden;}
+.s3-coin{position:absolute;left:0;top:18px;width:68px;height:68px;border-radius:50%;background:#4A3F31;border:4px solid #6E6252;display:flex;align-items:center;justify-content:center;font-family:'JBMono',monospace;font-weight:800;font-size:18px;color:#FCEFD9;}
+.s3-mark{position:absolute;left:420px;top:650px;width:110px;height:24px;border-radius:6px;background:var(--redhot);}
+.s3-meter{position:absolute;left:1200px;top:180px;width:600px;height:500px;}
+.s3-gauge{position:absolute;left:30px;top:0;width:540px;height:300px;overflow:visible;}
+.s3-pct{position:absolute;left:0;top:190px;width:600px;text-align:center;font-weight:800;font-size:170px;line-height:1;letter-spacing:-0.04em;font-variant-numeric:tabular-nums;color:var(--paper);}
+.s3-pct small{font-size:80px;color:#C9B99C;}
+.s3-acc{position:absolute;left:0;top:380px;width:600px;text-align:center;font-weight:700;font-size:44px;color:#C9B99C;}
+.s3-stamp{position:absolute;left:210px;top:330px;width:1500px;height:240px;display:flex;align-items:center;justify-content:center;white-space:nowrap;border:14px solid var(--redhot);border-radius:28px;color:var(--redhot);font-weight:800;font-size:124px;line-height:1.2;letter-spacing:.02em;text-transform:uppercase;background:rgba(22,19,14,.82);}
+.s3-part3{position:absolute;inset:0;}
+.s3-lines{position:absolute;left:140px;top:260px;width:820px;}
+.s3-line{display:flex;gap:26px;align-items:flex-start;margin-bottom:56px;}
+.s3-line-n{flex:none;display:flex;align-items:center;justify-content:center;width:84px;height:84px;border-radius:50%;border:4px solid var(--paper);font-weight:800;font-size:44px;}
+.s3-line-t{font-weight:800;font-size:72px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s3-line-2 .s3-line-n{border-color:var(--grnhot);color:var(--grnhot);}
+.s3-line-2 .s3-line-t{color:#DDF5E9;}
+.s3-grid{position:absolute;left:1150px;top:170px;width:660px;height:660px;}
+.s3-c{position:absolute;width:48px;height:48px;border-radius:50%;background:var(--red);border:3px solid #E0452C;}
+.s3-c.g{background:var(--grnhot);border-color:#DDF5E9;}
+.s3-ring{position:absolute;width:104px;height:104px;border-radius:50%;border:6px solid var(--grnhot);}
+</style>
+<div id="root" data-composition-id="s3-trap" data-width="1920" data-height="1080">
+  <div class="s3-bg"></div>
+  <div class="s3-warm"></div>
+  <div class="s3-shake">
+    <div class="s3-kicker"><i></i><span>กับดักความแม่น</span></div>
+    <div class="s3-part1">
+      <div class="s3-bot">
+        <div class="s3-face"><span class="s3-eye s3-eye-l"></span><span class="s3-eye s3-eye-r"></span></div>
+        <span class="s3-zz">z</span>
+        <div class="s3-botname">บอตขี้เกียจ</div>
+        <div class="s3-botsays">ตอบ “แดง” ทุกตัว ไม่ดูอะไรเลย</div>
+        <div class="s3-btn">แดง</div>
+      </div>
+      <div class="s3-mark"></div>
+      <div class="s3-belt" id="s3-belt"></div>
+      <div class="s3-meter">
+        <svg class="s3-gauge" viewBox="0 0 540 300">
+          <path d="M30 280 A240 240 0 0 1 510 280" fill="none" stroke="#3A3127" stroke-width="34" stroke-linecap="round"/>
+          <path id="s3-arc" d="M30 280 A240 240 0 0 1 510 280" fill="none" stroke="#E0452C" stroke-width="34" stroke-linecap="round"/>
+        </svg>
+        <div class="s3-pct"><span id="s3-pct-v">0</span><small>%</small></div>
+        <div class="s3-acc">แม่น</div>
+      </div>
+    </div>
+    <div class="s3-part3">
+      <div class="s3-lines">
+        <div class="s3-line s3-line-1"><span class="s3-line-n">1</span><span class="s3-line-t">ชนะค่าพื้นฐาน แบบไม่ทำอะไรเลย</span></div>
+        <div class="s3-line s3-line-2"><span class="s3-line-n">2</span><span class="s3-line-t">หาไม่กี่ตัว ที่รอดได้จริง</span></div>
+      </div>
+      <div class="s3-grid" id="s3-grid"></div>
+    </div>
+    <div class="s3-stamp" data-layout-ignore>ไม่ได้พิสูจน์อะไร</div>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=9.562, B3=12.14, D=18.259;
+const ALL = parseFloat("97.5") || 98;
+const DEAD = parseInt("97", 10) || 98;
+let seed = 777;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const tickers = ["CAT","PEPE2","MOON","WIF9","DOGE3","BONKX","SAFE","GEM","APE","LUNA4","FROG","PUMP","RICH","100X","KING","MEME"];
+const belt = document.getElementById("s3-belt");
+const coins = tickers.map(t => { const c = document.createElement("div"); c.className = "s3-coin"; c.textContent = t.slice(0, 4); belt.appendChild(c); return c; });
+const grid = document.getElementById("s3-grid");
+const cells = [];
+for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
+  const el = document.createElement("div"); el.className = "s3-c";
+  el.style.left = (c * 66 + 9) + "px"; el.style.top = (r * 66 + 9) + "px";
+  grid.appendChild(el); cells.push(el);
+}
+const order = cells.map((_, i) => i).sort(() => rnd() - 0.5);
+const surv = order.slice(0, Math.max(1, 100 - DEAD));
+const rings = surv.map(i => { cells[i].classList.add("g"); const r = document.createElement("div"); r.className = "s3-ring"; r.style.left = (parseFloat(cells[i].style.left) - 31) + "px"; r.style.top = (parseFloat(cells[i].style.top) - 31) + "px"; grid.appendChild(r); return r; });
+const arc = document.getElementById("s3-arc");
+const al = arc.getTotalLength(); arc.style.strokeDasharray = al;
+
+const tl = gsap.timeline({ paused: true });
+// b1
+tl.fromTo(".s3-kicker", {opacity:0, x:-40}, {opacity:1, x:0, duration:0.5, ease:"expo.out"}, B1 - 0.3);
+tl.fromTo(".s3-bot", {opacity:0, y:80, rotation:-4}, {opacity:1, y:0, rotation:0, duration:0.8, ease:"back.out(1.6)"}, B1 + 1.2);
+tl.fromTo(".s3-zz", {opacity:0, y:10}, {opacity:1, y:-14, duration:0.9, repeat:4, yoyo:true, ease:"sine.inOut"}, B1 + 1.8);
+tl.fromTo(".s3-belt", {opacity:0}, {opacity:1, duration:0.4}, B1 + 1.6);
+tl.fromTo(".s3-meter", {opacity:0, x:60}, {opacity:1, x:0, duration:0.7, ease:"expo.out"}, B1 + 2.2);
+const runStart = B1 + 2.0, runEnd = B2 - 0.4, span = runEnd - runStart;
+const travel = 3.2, gap = (span - travel) / (coins.length - 1);
+coins.forEach((c, k) => {
+  const t0 = runStart + k * gap;
+  tl.fromTo(c, {x:1080}, {x:-90, duration:travel, ease:"none"}, t0);
+  const hit = t0 + travel * ((1080 - 440) / 1170);
+  tl.to(c, {backgroundColor:"#B7321F", borderColor:"#E0452C", duration:0.08}, hit);
+  tl.fromTo(".s3-btn", {y:0}, {y:8, duration:0.07, yoyo:true, repeat:1, ease:"power1.inOut", immediateRender:false}, hit - 0.07);
+  tl.fromTo(".s3-mark", {scaleX:1}, {scaleX:1.25, duration:0.08, yoyo:true, repeat:1, immediateRender:false}, hit - 0.04);
+});
+const cnt = {v:0};
+tl.fromTo(cnt, {v:0}, {v:ALL, duration:span, ease:"power2.out", onUpdate:() => { document.getElementById("s3-pct-v").textContent = (Math.round(cnt.v * 10) / 10).toString().replace(/\.0$/, ""); }}, runStart);
+tl.fromTo(arc, {strokeDashoffset:al}, {strokeDashoffset:al * (1 - ALL / 100), duration:span, ease:"power2.out"}, runStart);
+// b2: stamp
+tl.fromTo(".s3-stamp", {opacity:0, scale:2.6, rotation:-4}, {opacity:1, scale:1, rotation:-9, duration:0.28, ease:"power4.in"}, B2 - 0.1);
+tl.fromTo(".s3-shake", {x:0, y:0}, {x:14, y:-10, duration:0.05, yoyo:true, repeat:5, ease:"none", immediateRender:false}, B2 + 0.18);
+tl.to(".s3-part1", {opacity:0.18, duration:0.3}, B2 + 0.18);
+tl.fromTo(".s3-warm", {opacity:0}, {opacity:1, duration:1.5}, B2);
+// b3
+tl.to(".s3-stamp", {opacity:0, scale:0.9, duration:0.35, ease:"power2.in"}, B3 - 0.4);
+tl.to(".s3-part1", {opacity:0, duration:0.35}, B3 - 0.4);
+tl.to(".s3-kicker", {opacity:0, duration:0.3}, B3 - 0.4);
+tl.fromTo(".s3-line-1", {opacity:0, y:40}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B3);
+const L2 = B3 + Math.max(1.9, (17.489 - B3) * 0.5);
+tl.fromTo(".s3-line-2", {opacity:0, y:40}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, L2);
+cells.forEach((c, k) => {
+  tl.fromTo(c, {opacity:0, scale:0}, {opacity:1, scale:1, duration:0.25, ease:"back.out(2)"}, B3 + 0.1 + (k % 10) * 0.03 + Math.floor(k / 10) * 0.03);
+});
+order.slice(surv.length).forEach((i, k) => {
+  tl.to(cells[i], {opacity:0.28, scale:0.8, duration:0.3}, L2 - 0.2 + (k % 20) * 0.01);
+});
+surv.forEach((i, k) => {
+  tl.to(cells[i], {scale:1.2, duration:0.4, ease:"back.out(3)"}, L2 + 0.2);
+  tl.fromTo(rings[k], {opacity:0, scale:2.2}, {opacity:1, scale:1, duration:0.5, ease:"expo.out"}, L2 + 0.25 + k * 0.1);
+  tl.to(rings[k], {scale:1.12, duration:0.6, yoyo:true, repeat:3, ease:"sine.inOut"}, L2 + 0.9);
+});
+tl.to(".s3-part3", {opacity:0, duration:0.3}, D - 0.35);
+window.__timelines["s3-trap"] = tl;
+})();
+</script>
+</template>
+</body></html>

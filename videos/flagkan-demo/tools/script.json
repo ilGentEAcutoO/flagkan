@@ -1,0 +1,223 @@
+{
+ "voices": {
+  "en": "en-US-AndrewNeural",
+  "th": "th-TH-NiwatNeural"
+ },
+ "rates": {
+  "en": "+4%",
+  "th": "+5%"
+ },
+ "gap": 0.28,
+ "scenes": [
+  {
+   "id": "open",
+   "lead": 0.6,
+   "tail": 0.4,
+   "chunks": [
+    {
+     "en": "This is FlagKan, running live.",
+     "th": "นี่คือ FlagKan ที่กำลังทำงานจริงอยู่ตอนนี้",
+     "thSay": "นี่คือ แฟล็กกัน ที่กำลังทำงานจริงอยู่ตอนนี้"
+    },
+    {
+     "en": "It puts a red, yellow or green light on every brand-new Solana coin —",
+     "th": "ติดไฟแดง เหลือง หรือเขียว ให้เหรียญ Solana ที่เพิ่งเกิดทุกเหรียญ",
+     "thSay": "ติดไฟแดง เหลือง หรือเขียว ให้เหรียญ โซลานา ที่เพิ่งเกิดทุกเหรียญ"
+    },
+    {
+     "en": "then grades its own call in public, six hours later.",
+     "th": "แล้วอีกหกชั่วโมงต่อมา ก็ตรวจคำชี้ของตัวเองต่อหน้าสาธารณะ"
+    }
+   ]
+  },
+  {
+   "id": "board",
+   "lead": 0.3,
+   "tail": 0.5,
+   "chunks": [
+    {
+     "en": "This is the live board.",
+     "th": "นี่คือกระดานสด"
+    },
+    {
+     "en": "New coins land here about a minute after they launch.",
+     "th": "เหรียญใหม่โผล่ที่นี่ ราวหนึ่งนาทีหลังเปิดตัว"
+    },
+    {
+     "en": "No refresh button: the server pushes every new coin over a WebSocket, live.",
+     "th": "ไม่ต้องกดรีเฟรช เซิร์ฟเวอร์ส่งเหรียญใหม่มาให้ทันทีผ่าน WebSocket",
+     "thSay": "ไม่ต้องกดรีเฟรช เซิร์ฟเวอร์ส่งเหรียญใหม่มาให้ทันทีผ่าน เว็บซ็อกเก็ต"
+    },
+    {
+     "en": "Each row shows the light, the confidence, price, liquidity,",
+     "th": "แต่ละแถวบอกไฟ ความมั่นใจ ราคา สภาพคล่อง"
+    },
+    {
+     "en": "and how much of the coin the biggest wallet holds.",
+     "th": "และสัดส่วนที่กระเป๋าใหญ่สุดถืออยู่"
+    },
+    {
+     "en": "Filter by light, or search any name or mint.",
+     "th": "กรองตามสีไฟ หรือค้นด้วยชื่อหรือ mint ก็ได้",
+     "thSay": "กรองตามสีไฟ หรือค้นด้วยชื่อหรือ มิ้นท์ ก็ได้"
+    }
+   ]
+  },
+  {
+   "id": "coin",
+   "lead": 0.3,
+   "tail": 3.0,
+   "chunks": [
+    {
+     "en": "Open any coin for the full verdict.",
+     "th": "กดเหรียญไหนก็ได้ เพื่อดูคำชี้เต็ม ๆ"
+    },
+    {
+     "en": "The bar shows the model's odds for red, yellow and green.",
+     "th": "แถบนี้คือโอกาสของไฟแดง เหลือง และเขียว จากโมเดล"
+    },
+    {
+     "en": "Under Why are the on-chain signals: whale share, the next ten holders, first-minute buys and coin age,",
+     "th": "ส่วน ทำไม คือสัญญาณบนเชน: รายใหญ่ถือเท่าไร สิบอันดับถัดไป ยอดซื้อนาทีแรก และอายุเหรียญ"
+    },
+    {
+     "en": "read through Solami RPC. Price and liquidity come from the market feed.",
+     "th": "อ่านผ่าน Solami RPC ส่วนราคาและสภาพคล่องมาจากฟีดตลาด",
+     "thSay": "อ่านผ่าน โซลามิ อาร์พีซี ส่วนราคาและสภาพคล่องมาจากฟีดตลาด"
+    },
+    {
+     "en": "Check six is Jev, TypeSafe's AI judge, looking for wallets that move together.",
+     "th": "ข้อหกคือ Jev ผู้ตัดสิน AI จาก TypeSafe ที่จับกระเป๋าซึ่งเคลื่อนไหวพร้อมกัน",
+     "thSay": "ข้อหกคือ เจฟ ผู้ตัดสินเอไอ จาก ไทป์เซฟ ที่จับกระเป๋าซึ่งเคลื่อนไหวพร้อมกัน"
+    },
+    {
+     "en": "These are reference levels. The light itself comes from a LightGBM model",
+     "th": "พวกนี้เป็นระดับอ้างอิง ตัวไฟจริงมาจากโมเดล LightGBM",
+     "thSay": "พวกนี้เป็นระดับอ้างอิง ตัวไฟจริงมาจากโมเดล ไลท์จีบีเอ็ม"
+    },
+    {
+     "en": "trained on our own graded history, plus hard rules.",
+     "th": "ที่ฝึกจากผลตัดสินจริงของเราเอง บวกกฎเด็ดขาด"
+    },
+    {
+     "en": "And one tap switches everything to Thai.",
+     "th": "และกดทีเดียว ทุกอย่างสลับเป็นภาษาอังกฤษได้"
+    }
+   ]
+  },
+  {
+   "id": "check",
+   "lead": 0.3,
+   "tail": 0.6,
+   "chunks": [
+    {
+     "en": "Got a coin from a group chat? Paste the mint address.",
+     "th": "ได้เหรียญมาจากกลุ่มแชต? วาง mint address ลงไป",
+     "thSay": "ได้เหรียญมาจากกลุ่มแชต? วาง มิ้นท์แอดเดรส ลงไป"
+    },
+    {
+     "en": "Hit Check.",
+     "th": "กดตรวจ"
+    },
+    {
+     "en": "FlagKan reads the chain, runs the model and the AI judge, and answers in seconds.",
+     "th": "FlagKan อ่านข้อมูลบนเชน รันโมเดลและ AI แล้วตอบภายในไม่กี่วินาที",
+     "thSay": "แฟล็กกัน อ่านข้อมูลบนเชน รันโมเดลและเอไอ แล้วตอบภายในไม่กี่วินาที"
+    }
+   ]
+  },
+  {
+   "id": "grade",
+   "lead": 0.3,
+   "tail": 0.5,
+   "chunks": [
+    {
+     "en": "Then every light gets graded.",
+     "th": "จากนั้น ไฟทุกดวงจะถูกตรวจผล"
+    },
+    {
+     "en": "About six hours after first sight, we check the same market feed again.",
+     "th": "ราวหกชั่วโมงหลังเห็นครั้งแรก เราเช็กจากฟีดตลาดแหล่งเดิมอีกครั้ง"
+    },
+    {
+     "en": "A coin is dead if its price fell ninety percent,",
+     "th": "เหรียญนับว่าพัง ถ้าราคาร่วงเก้าสิบเปอร์เซ็นต์"
+    },
+    {
+     "en": "liquidity dropped under a thousand dollars, or nobody traded in the last hour.",
+     "th": "สภาพคล่องต่ำกว่าหนึ่งพันดอลลาร์ หรือไม่มีใครเทรดเลยในชั่วโมงสุดท้าย"
+    }
+   ]
+  },
+  {
+   "id": "proof",
+   "lead": 0.3,
+   "tail": 0.6,
+   "chunks": [
+    {
+     "en": "This is where we stay honest.",
+     "th": "ตรงนี้คือจุดที่เราซื่อตรง"
+    },
+    {
+     "en": "About {BASE} percent of new coins are dead within six hours.",
+     "th": "เหรียญใหม่ราว {BASE} เปอร์เซ็นต์ ตายภายในหกชั่วโมง"
+    },
+    {
+     "en": "So calling everything red is already {BASE} percent right.",
+     "th": "แค่ทายแดงทุกตัว ก็ถูกไปแล้ว {BASE} เปอร์เซ็นต์"
+    },
+    {
+     "en": "Accuracy isn't our skill — and we show that baseline next to every number.",
+     "th": "ความแม่นจึงไม่ใช่ฝีมือของเรา และเราโชว์ค่าพื้นฐานนี้ข้างทุกตัวเลข"
+    },
+    {
+     "en": "Our skill is finding the few survivors.",
+     "th": "ฝีมือจริงคือการหาตัวที่จะรอด"
+    },
+    {
+     "en": "Since the new model took over, the safest ten percent survived about {LIFTR} times more often than a random pick. It's an early, small sample: only {SURV} survivors so far.",
+     "th": "ตั้งแต่โมเดลใหม่เริ่มทำงาน สิบเปอร์เซ็นต์ที่ปลอดภัยสุด รอดมากกว่าสุ่มเลือกราว {LIFTR} เท่า แต่ยังเป็นตัวอย่างช่วงแรกที่เล็กมาก มีตัวรอดแค่ {SURV} ตัว"
+    },
+    {
+     "en": "And LightGBM is compared with the old model, on the same coins, live.",
+     "th": "และ LightGBM ก็ถูกเทียบกับโมเดลเดิม บนเหรียญชุดเดียวกันแบบสด ๆ",
+     "thSay": "และ ไลท์จีบีเอ็ม ก็ถูกเทียบกับโมเดลเดิม บนเหรียญชุดเดียวกันแบบสด ๆ"
+    }
+   ]
+  },
+  {
+   "id": "api",
+   "lead": 0.3,
+   "tail": 0.5,
+   "chunks": [
+    {
+     "en": "Every number comes from a free public API.",
+     "th": "ทุกตัวเลขมาจาก API สาธารณะที่ใช้ฟรี",
+     "thSay": "ทุกตัวเลขมาจาก เอพีไอ สาธารณะที่ใช้ฟรี"
+    },
+    {
+     "en": "Don't trust us — audit us.",
+     "th": "ไม่ต้องเชื่อเรา ตรวจเราเองได้เลย"
+    }
+   ]
+  },
+  {
+   "id": "outro",
+   "lead": 0.5,
+   "tail": 2.2,
+   "chunks": [
+    {
+     "en": "FlagKan. Check before you buy.",
+     "th": "FlagKan เช็กก่อนซื้อ",
+     "thSay": "แฟล็กกัน เช็กก่อนซื้อ"
+    },
+    {
+     "en": "Live now at flag dot sornkan dot com.",
+     "th": "ใช้ได้แล้ววันนี้ที่ flag.sornkan.com",
+     "thSay": "ใช้ได้แล้ววันนี้ที่ แฟล็ก ดอท ศรกัน ดอท คอม",
+     "enShow": "Live now at flag.sornkan.com"
+    }
+   ]
+  }
+ ]
+}

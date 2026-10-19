@@ -1,0 +1,11 @@
+import { start } from './rec.mjs';
+const r = await start('test', 'C:/Users/suanw/projects/hack/agent-temp/demo-cap');
+await r.page.goto('https://flag.sornkan.com/board.html', { waitUntil: 'networkidle' });
+await r.wait(1500);
+await r.begin();
+await r.move(300, 300, 800);
+await r.click('#rows tr:nth-child(3)', 900, 'open');
+await r.wait(1500);
+await r.smoothScroll(300, 1500, '#modal .card, #modal > div');
+await r.wait(1000);
+console.log(JSON.stringify(await r.end()));

@@ -1,0 +1,156 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:0em;--hl-lh:1.18;--body-lh:1.45;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--ink);}
+.s7-bg{position:absolute;inset:0;background:#FCEFD9;}
+.s7-dots{position:absolute;inset:-40px;background-image:radial-gradient(#E3D3B5 2px, transparent 2.5px);background-size:36px 36px;}
+.s7-cam{position:absolute;inset:0;}
+.s7-col{position:absolute;top:150px;width:540px;height:730px;background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);padding:36px 40px;}
+.s7-col-1{left:110px;} .s7-col-2{left:690px;} .s7-col-3{left:1270px;}
+.s7-num{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:var(--ink);color:var(--paper);font-weight:800;font-size:28px;}
+.s7-title{margin-top:18px;font-weight:800;font-size:60px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s7-art{position:relative;margin-top:24px;width:460px;height:290px;border-radius:16px;background:#FFF8EA;border:2px solid #E9DFCC;overflow:hidden;}
+.s7-body{margin-top:26px;font-weight:600;font-size:32px;line-height:var(--body-lh);color:#4A4036;}
+.s7-body b{color:var(--red);font-weight:800;}
+/* art 1 */
+.s7-launch{position:absolute;bottom:-70px;width:64px;height:64px;border-radius:50%;border:4px solid var(--ink);}
+.s7-trail{position:absolute;width:6px;height:90px;border-radius:4px;background:#E9DFCC;}
+.s7-hurt{position:absolute;right:22px;top:18px;padding:8px 16px;border-radius:99px;background:var(--redbg);color:var(--red);border:2px solid var(--red);font-weight:800;font-size:24px;white-space:nowrap;}
+/* art 2 */
+.s7-chip{position:absolute;left:20px;padding:6px 14px;border-radius:10px;background:#26211B;color:#FCEFD9;font-family:'JBMono',monospace;font-weight:700;font-size:21px;white-space:nowrap;}
+.s7-arrow{position:absolute;left:214px;top:56px;font-weight:800;font-size:56px;color:var(--ink);}
+.s7-bubble{position:absolute;left:186px;top:126px;width:256px;padding:14px 16px;border-radius:18px 18px 18px 4px;background:var(--yelbg);border:3px solid var(--ink);font-weight:700;font-size:21px;line-height:1.35;color:var(--ink);}
+.s7-jev{position:absolute;left:186px;top:22px;padding:6px 14px;border-radius:99px;background:var(--ink);color:var(--paper);font-weight:800;font-size:20px;white-space:nowrap;}
+/* art 3 */
+.s7-toggle{position:absolute;left:115px;top:36px;width:230px;height:76px;border-radius:99px;border:3px solid var(--ink);background:#fff;}
+.s7-knob{position:absolute;left:6px;top:6px;width:108px;height:58px;border-radius:99px;background:var(--ink);}
+.s7-tl{position:absolute;top:0;width:115px;height:70px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:28px;}
+.s7-tl-th{left:0;color:var(--paper);} .s7-tl-en{left:115px;color:var(--ink);}
+.s7-sample{position:absolute;left:30px;right:30px;top:146px;height:110px;}
+.s7-say{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;justify-content:center;gap:16px;font-weight:800;font-size:44px;}
+.s7-say i{display:block;width:36px;height:36px;border-radius:50%;background:var(--red);border:3px solid var(--ink);}
+.s7-flag{position:absolute;left:18px;top:18px;display:flex;flex-direction:column;width:60px;height:40px;border:2px solid var(--ink);border-radius:4px;overflow:hidden;}
+.s7-flag span{display:block;flex:1;}
+</style>
+<div id="root" data-composition-id="s7-why" data-width="1920" data-height="1080">
+  <div class="s7-bg"></div>
+  <div class="s7-dots"></div>
+  <div class="s7-cam">
+    <div class="s7-col s7-col-1">
+      <span class="s7-num">1</span>
+      <div class="s7-title">ทำไมต้องโซลานา</div>
+      <div class="s7-art" id="s7-art1">
+        <span class="s7-hurt">มือใหม่เจ็บหนักสุด</span>
+      </div>
+      <div class="s7-body">เหรียญใหม่เกิด<b>เร็วและถูกที่สุด</b>ที่นี่ เหรียญหลอกก็เช่นกัน</div>
+    </div>
+    <div class="s7-col s7-col-2">
+      <span class="s7-num">2</span>
+      <div class="s7-title">ทำไมต้องเอไอ</div>
+      <div class="s7-art">
+        <span class="s7-chip s7-chip-1" style="top:24px;">top1 96%</span>
+        <span class="s7-chip s7-chip-2" style="top:74px;">early_buys 41</span>
+        <span class="s7-chip s7-chip-3" style="top:124px;">liq $2.1k</span>
+        <span class="s7-chip s7-chip-4" style="top:174px;">age 3m</span>
+        <span class="s7-arrow">→</span>
+        <span class="s7-jev">Jev · TypeSafe</span>
+        <div class="s7-bubble">กระเป๋าเชื่อมกัน 86% · เสี่ยงวาฬ 95%</div>
+      </div>
+      <div class="s7-body">เกณฑ์ตายตัวจับ<b>กระเป๋าที่เคลื่อนไหวพร้อมกัน</b>ไม่ได้ เจฟจับได้ และโชว์คะแนน</div>
+    </div>
+    <div class="s7-col s7-col-3">
+      <span class="s7-num">3</span>
+      <div class="s7-title">สร้างในไทย</div>
+      <div class="s7-art">
+        <div class="s7-flag"><span style="background:#A51931"></span><span style="background:#F4F5F8"></span><span style="background:#2D2A4A;flex:2"></span><span style="background:#F4F5F8"></span><span style="background:#A51931"></span></div>
+        <div class="s7-toggle"><div class="s7-knob"></div><span class="s7-tl s7-tl-th">TH</span><span class="s7-tl s7-tl-en">EN</span></div>
+        <div class="s7-sample">
+          <div class="s7-say s7-say-th"><i></i><span>ห้ามซื้อ</span></div>
+          <div class="s7-say s7-say-en"><i></i><span>Don't buy</span></div>
+        </div>
+      </div>
+      <div class="s7-body"><b>ภาษาไทยมาก่อน</b> พร้อมอังกฤษ ได้คำตอบตรง ๆ เป็นภาษาของตัวเอง</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=5.809, B3=12.052, D=18.844;
+const art1 = document.getElementById("s7-art1");
+const cols = ["#B7321F","#E8A100","#0B7A55","#B7321F","#B7321F","#E8A100","#B7321F"];
+const rockets = cols.map((c, k) => {
+  const tr = document.createElement("span"); tr.className = "s7-trail"; tr.style.left = (40 + k * 58 + 29) + "px"; tr.style.top = "300px"; art1.appendChild(tr);
+  const e = document.createElement("span"); e.className = "s7-launch"; e.style.left = (40 + k * 58) + "px"; e.style.background = c; art1.appendChild(e);
+  return [e, tr];
+});
+const tl = gsap.timeline({ paused: true });
+tl.fromTo(".s7-cam", {scale:1.04, y:20}, {scale:1, y:0, duration:D, ease:"sine.inOut"}, 0);
+tl.fromTo(".s7-dots", {x:0, y:0}, {x:-36, y:-36, duration:D, ease:"none"}, 0);
+// columns enter
+[".s7-col-1", ".s7-col-2", ".s7-col-3"].forEach((s, k) => {
+  const at = [B1 - 0.3, B2 - 0.3, B3 - 0.3][k];
+  tl.fromTo(s, {opacity:0, y:120, rotation:k === 1 ? 0 : (k ? 3 : -3)}, {opacity:1, y:0, rotation:0, duration:0.75, ease:"back.out(1.5)"}, at);
+  tl.fromTo(s + " .s7-body", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5, ease:"power3.out"}, at + 0.6);
+});
+// focus: dim others
+tl.to(".s7-col-1", {opacity:0.45, scale:0.96, duration:0.4}, B2 - 0.3);
+tl.to(".s7-col-2", {opacity:0.45, scale:0.96, duration:0.4}, B3 - 0.3);
+tl.to([".s7-col-1", ".s7-col-2"], {opacity:1, scale:1, duration:0.5, ease:"power2.out"}, D - 2.2);
+// art 1: launches
+rockets.forEach(([e, tr], k) => {
+  const t0 = B1 + 0.4 + k * 0.32;
+  tl.fromTo(e, {y:0}, {y:-230, duration:1.1, ease:"power3.out"}, t0);
+  tl.fromTo(tr, {opacity:0, y:0}, {opacity:1, y:-160, duration:1.1, ease:"power3.out"}, t0);
+  tl.to(e, {y:-20, rotation:120, duration:0.9, ease:"power2.in"}, t0 + 2.2);
+  tl.to(tr, {opacity:0, duration:0.4}, t0 + 1.4);
+});
+tl.fromTo(".s7-hurt", {opacity:0, scale:0.5}, {opacity:1, scale:1, duration:0.4, ease:"back.out(3)"}, B1 + 3.0);
+// art 2: signals -> Jev
+[".s7-chip-1", ".s7-chip-2", ".s7-chip-3", ".s7-chip-4"].forEach((s, k) => {
+  tl.fromTo(s, {opacity:0, x:-30}, {opacity:1, x:0, duration:0.35, ease:"power3.out"}, B2 + 0.4 + k * 0.18);
+});
+tl.fromTo(".s7-arrow", {opacity:0, x:-20}, {opacity:1, x:0, duration:0.4, ease:"power3.out"}, B2 + 1.5);
+tl.fromTo(".s7-jev", {opacity:0, y:-10}, {opacity:1, y:0, duration:0.4, ease:"power3.out"}, B2 + 1.9);
+tl.fromTo(".s7-bubble", {opacity:0, scale:0.6}, {opacity:1, scale:1, duration:0.5, ease:"back.out(2)", transformOrigin:"0% 100%"}, B2 + 2.3);
+tl.to([".s7-chip-1", ".s7-chip-2", ".s7-chip-3", ".s7-chip-4"], {opacity:0.35, duration:0.4}, B2 + 2.6);
+// art 3: TH/EN toggle flips
+tl.fromTo(".s7-say-en", {opacity:0}, {opacity:0, duration:0.01}, 0);
+const flips = [B3 + 1.2, B3 + 2.6, B3 + 4.0, B3 + 5.4].filter(t => t < D - 1.6);
+flips.forEach((t, k) => {
+  const toEn = k % 2 === 0;
+  tl.to(".s7-knob", {x:toEn ? 110 : 0, duration:0.35, ease:"back.out(1.8)"}, t);
+  tl.to(".s7-tl-th", {color:toEn ? "#26211B" : "#FFFDF7", duration:0.2}, t + 0.05);
+  tl.to(".s7-tl-en", {color:toEn ? "#FFFDF7" : "#26211B", duration:0.2}, t + 0.05);
+  tl.to(toEn ? ".s7-say-th" : ".s7-say-en", {opacity:0, y:-20, duration:0.25}, t);
+  tl.fromTo(toEn ? ".s7-say-en" : ".s7-say-th", {opacity:0, y:20}, {opacity:1, y:0, duration:0.35, ease:"power3.out", immediateRender:false}, t + 0.15);
+});
+tl.fromTo(".s7-say-th", {opacity:0, y:20}, {opacity:1, y:0, duration:0.4, ease:"power3.out"}, B3 + 0.4);
+tl.to(".s7-cam", {opacity:0, duration:0.3}, D - 0.35);
+window.__timelines["s7-why"] = tl;
+})();
+</script>
+</template>
+</body></html>

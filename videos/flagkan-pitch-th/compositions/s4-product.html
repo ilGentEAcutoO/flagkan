@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:0em;--hl-lh:1.18;--body-lh:1.45;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--ink);}
+.s4-bg{position:absolute;inset:0;background:var(--paper);background-image:radial-gradient(rgba(38,33,27,.09) 1.5px,transparent 1.5px);background-size:34px 34px;}
+.s4-wipe{position:absolute;inset:0;background:var(--night);}
+.s4-left{position:absolute;left:100px;top:150px;width:600px;}
+.s4-logo{display:flex;align-items:center;gap:14px;}
+.s4-logo .fk-dot{width:34px;height:34px;}
+.s4-word{font-weight:800;font-size:96px;letter-spacing:-0.03em;line-height:1;margin-left:10px;}
+.s4-word b{color:var(--red);font-weight:800;}
+.s4-meet{font-weight:700;font-size:30px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px;}
+.s4-tag{margin-top:26px;font-weight:600;font-size:40px;line-height:var(--body-lh);color:var(--ink);}
+.s4-lights{position:absolute;left:100px;top:520px;width:600px;}
+.s4-light{display:flex;align-items:center;gap:22px;margin-bottom:22px;}
+.s4-pill{width:200px;height:68px;border-radius:99px;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:30px;letter-spacing:.06em;color:#fff;}
+.s4-pill.y{background:var(--yel);color:var(--ink);} .s4-pill.r{background:var(--red);} .s4-pill.g{background:var(--grn);}
+.s4-mean{font-weight:700;font-size:36px;line-height:1.15;max-width:380px;}
+.s4-reasons{position:absolute;left:100px;top:835px;display:flex;gap:14px;align-items:center;font-weight:700;font-size:30px;color:var(--dim);}
+.s4-chip{padding:6px 16px;border-radius:99px;border:2px solid var(--ink);background:#fff;font-weight:800;font-size:26px;color:var(--ink);}
+.s4-chip.on{background:var(--ink);color:var(--paper);}
+.s4-stage{position:absolute;left:740px;top:110px;width:1110px;height:740px;perspective:2200px;}
+.s4-browser{position:absolute;inset:0;border:3px solid var(--ink);border-radius:20px;box-shadow:10px 10px 0 var(--ink);background:#fff;overflow:hidden;}
+.s4-bar{height:46px;border-bottom:3px solid var(--ink);display:flex;align-items:center;gap:10px;padding:0 18px;background:var(--cream);}
+.s4-bar i{display:block;width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);}
+.s4-url{margin-left:18px;font-family:'JBMono',monospace;font-size:20px;font-weight:600;color:var(--dim);}
+.s4-shot{position:absolute;left:-180px;top:-20px;width:1600px;height:auto;}
+.s4-modal{position:absolute;left:-612px;top:-20px;width:2330px;height:auto;max-width:none;}
+.s4-live{position:absolute;right:26px;top:66px;display:flex;align-items:center;gap:12px;padding:10px 20px;border-radius:99px;background:var(--ink);color:var(--paper);font-weight:800;font-size:26px;letter-spacing:.1em;}
+.s4-live i{display:block;width:16px;height:16px;border-radius:50%;background:var(--grnhot);}
+.s4-toasts{position:absolute;right:-40px;top:300px;width:470px;}
+.s4-toast{display:flex;align-items:center;gap:16px;margin-bottom:16px;padding:16px 20px;background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:6px 6px 0 var(--ink);}
+.s4-toast b{font-weight:800;font-size:28px;}
+.s4-toast span{font-family:'JBMono',monospace;font-size:20px;color:var(--dim);}
+.s4-toast em{margin-left:auto;font-style:normal;padding:4px 14px;border-radius:99px;font-weight:800;font-size:20px;color:#fff;background:var(--red);}
+.s4-toast em.y{background:var(--yel);color:var(--ink);}
+.s4-push{position:absolute;left:100px;top:600px;width:600px;font-weight:800;font-size:58px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s4-push small{display:block;margin-top:18px;font-weight:600;font-size:32px;color:var(--dim);line-height:var(--body-lh);}
+.s4-flash{position:absolute;left:0;right:0;top:300px;height:80px;background:rgba(25,179,126,.25);}
+</style>
+<div id="root" data-composition-id="s4-product" data-width="1920" data-height="1080">
+  <div class="s4-bg"></div>
+  <div class="s4-stage">
+    <div class="s4-browser" id="s4-browser">
+      <div class="s4-bar"><i class="fk-r"></i><i class="fk-y"></i><i class="fk-g"></i><span class="s4-url">flag.sornkan.com/board</span></div>
+      <img class="s4-shot" src="assets/img/th-board.png" alt="" />
+      <div class="s4-flash"></div>
+      <img class="s4-modal" src="assets/img/th-modal.png" alt="" />
+      <div class="s4-live"><i></i>สด</div>
+    </div>
+    <div class="s4-toasts">
+      <div class="s4-toast s4-t1"><b>WOLFCAT</b><span>ใหม่ · วาฬ 96%</span><em>แดง</em></div>
+      <div class="s4-toast s4-t2"><b>SOLBUD</b><span>ใหม่ · สภาพคล่อง $8K</span><em class="y">เหลือง</em></div>
+      <div class="s4-toast s4-t3"><b>MOONKIT</b><span>ใหม่ · ซื้อช่วงแรก 900</span><em>แดง</em></div>
+    </div>
+  </div>
+  <div class="s4-left">
+    <div class="s4-meet">ขอแนะนำ</div>
+    <div class="s4-logo"><span class="fk-dot fk-r s4-d1"></span><span class="fk-dot fk-y s4-d2"></span><span class="fk-dot fk-g s4-d3"></span><span class="s4-word"><b>Flag</b>Kan</span></div>
+    <div class="s4-tag">ไฟแดง เหลือง เขียว แบบสด ๆ ให้เหรียญใหม่ทุกตัวบนโซลานา</div>
+  </div>
+  <div class="s4-lights">
+    <div class="s4-light s4-l1"><div class="s4-pill r">แดง</div><div class="s4-mean">อย่าซื้อ</div></div>
+    <div class="s4-light s4-l2"><div class="s4-pill y">เหลือง</div><div class="s4-mean">ระวัง</div></div>
+    <div class="s4-light s4-l3"><div class="s4-pill g">เขียว</div><div class="s4-mean">เสี่ยงน้อยกว่า ไม่ใช่ปลอดภัย</div></div>
+  </div>
+  <div class="s4-reasons">บอกที่มา เป็น <span class="s4-chip s4-c-th">ไทย</span><span class="s4-chip s4-c-en on">EN</span></div>
+  <div class="s4-push">ส่งขึ้นจอทันที ไม่ต้องรีเฟรช<small>ส่งแบบเรียลไทม์ผ่าน WebSocket จาก Cloudflare Durable Object</small></div>
+  <div class="s4-wipe"></div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=7.348, B3=17.206, D=22.031;
+const tl = gsap.timeline({ paused: true });
+// night wipes away: "the lights come on"
+tl.fromTo(".s4-wipe", {yPercent:0}, {yPercent:-100, duration:0.8, ease:"expo.inOut"}, 0.0);
+tl.fromTo(".s4-meet", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5, ease:"power3.out"}, B1 - 0.1);
+[".s4-d1", ".s4-d2", ".s4-d3"].forEach((s, k) => tl.fromTo(s, {scale:0}, {scale:1, duration:0.45, ease:"back.out(3)"}, B1 + 0.05 + k * 0.12));
+tl.fromTo(".s4-word", {opacity:0, x:-30}, {opacity:1, x:0, duration:0.6, ease:"expo.out"}, B1 + 0.45);
+tl.fromTo(".s4-tag", {opacity:0, y:24}, {opacity:1, y:0, duration:0.6, ease:"power3.out"}, B1 + 1.4);
+tl.fromTo("#s4-browser", {opacity:0, y:120, rotationY:-18, rotationX:8, scale:0.9}, {opacity:1, y:0, rotationY:-6, rotationX:2, scale:1, duration:1.4, ease:"expo.out"}, B1 + 0.6);
+tl.fromTo(".s4-shot", {y:0}, {y:-60, duration:B2 - B1, ease:"none"}, B1 + 0.6);
+// b2: lights + reasons
+tl.to(".s4-tag", {opacity:0.0, duration:0.3}, B2 - 0.2);
+[".s4-l1", ".s4-l2", ".s4-l3"].forEach((s, k) => tl.fromTo(s, {opacity:0, x:-40}, {opacity:1, x:0, duration:0.5, ease:"back.out(2)"}, B2 + k * 0.85));
+tl.to("#s4-browser", {rotationY:0, rotationX:0, duration:1.0, ease:"power2.inOut"}, B2 + 1.5);
+tl.fromTo(".s4-modal", {opacity:0, scale:0.92}, {opacity:1, scale:1, duration:0.6, ease:"back.out(1.6)"}, B2 + 2.6);
+tl.fromTo(".s4-modal", {y:0}, {y:-60, duration:4.0, ease:"power1.inOut", immediateRender:false}, B2 + 3.3);
+tl.fromTo(".s4-reasons", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5}, B2 + 3.0);
+tl.to(".s4-c-en", {backgroundColor:"#FFFFFF", color:"#26211B", duration:0.2}, B2 + 4.6);
+tl.to(".s4-c-th", {backgroundColor:"#26211B", color:"#FFFDF7", duration:0.2}, B2 + 4.6);
+// b3: live push
+tl.to([".s4-lights", ".s4-reasons"], {opacity:0, duration:0.35}, B3 - 0.3);
+tl.to(".s4-modal", {opacity:0, duration:0.4}, B3 - 0.3);
+tl.fromTo(".s4-push", {opacity:0, y:30}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B3);
+tl.fromTo(".s4-live", {opacity:0, scale:0.6}, {opacity:1, scale:1, duration:0.4, ease:"back.out(3)"}, B3 + 0.1);
+tl.fromTo(".s4-live i", {scale:1, opacity:1}, {scale:1.6, opacity:0.4, duration:0.5, yoyo:true, repeat:5, ease:"sine.inOut"}, B3 + 0.3);
+[".s4-t1", ".s4-t2", ".s4-t3"].forEach((s, k) => {
+  tl.fromTo(s, {opacity:0, x:200}, {opacity:1, x:0, duration:0.5, ease:"expo.out"}, B3 + 0.6 + k * 0.9);
+});
+tl.fromTo(".s4-flash", {opacity:0}, {opacity:1, duration:0.2, yoyo:true, repeat:5}, B3 + 0.6);
+window.__timelines["s4-product"] = tl;
+})();
+</script>
+</template>
+</body></html>

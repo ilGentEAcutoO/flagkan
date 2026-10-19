@@ -1,0 +1,455 @@
+{
+ "coin": {
+  "mint": "8DXes3UPbV1CJak4zYzvMRtk9mhQLm42bBV3tbr3pump",
+  "name": "$AURA",
+  "choice": "red"
+ },
+ "tokens": {
+  "BASE": "97.4",
+  "ACC": "98.3",
+  "LIFT": "7.2",
+  "LIFT_TH": "เจ็ดจุดสอง",
+  "LIFTR": "7",
+  "SURV": "14"
+ },
+ "term": [
+  {
+   "cmd": "curl -s flag.sornkan.com/api/proof | jq -c '.headline | {n, base_dead_rate, accuracy, baseline_all_red_accuracy}'",
+   "out": [
+    "{\"n\":534,\"base_dead_rate\":0.974,\"accuracy\":0.983,\"baseline_all_red_accuracy\":0.974}"
+   ]
+  },
+  {
+   "cmd": "curl -s flag.sornkan.com/api/proof | jq '.ranking.first_sight.top[] | select(.frac == 0.1)'",
+   "out": [
+    "{",
+    "  \"frac\": 0.1,",
+    "  \"n\": 1139,",
+    "  \"survival\": 0.088,",
+    "  \"lift\": 1.56,",
+    "  \"ci_lo\": 0.072,",
+    "  \"ci_hi\": 0.105,",
+    "  \"tie_share\": 1",
+    "}"
+   ]
+  }
+ ],
+ "fetchedAt": "2026-10-13T01:43:19.058Z",
+ "asofEn": "13 Oct 2026, 01:43 UTC",
+ "asofTh": "13 ต.ค. 2569 08:43 น.",
+ "apiLines": [
+  "{\"n\":534,\"base_dead_rate\":0.974,\"accuracy\":0.983,\"baseline_all_red_accuracy\":0.974}",
+  "{",
+  "  \"frac\": 0.1,",
+  "  \"n\": 1139,",
+  "  \"survival\": 0.088,",
+  "  \"lift\": 1.56,",
+  "  \"ci_lo\": 0.072,",
+  "  \"ci_hi\": 0.105,",
+  "  \"tie_share\": 1",
+  "}"
+ ],
+ "apiHighlight": [],
+ "headline": {
+  "policy": 2,
+  "since": 1791775253797,
+  "n": 534,
+  "ready": true,
+  "base_dead_rate": 0.974,
+  "accuracy": 0.983,
+  "baseline_all_red_accuracy": 0.974,
+  "baseline_all_yellow_accuracy": 0.026,
+  "red_precision": 0.985,
+  "red_recall": 0.998,
+  "reds": 527,
+  "alive_rate_non_red": 0.857,
+  "lift_non_red": 32.694,
+  "tiers": [
+   {
+    "tier": "red_sure",
+    "n": 35,
+    "dead_rate": 1
+   },
+   {
+    "tier": "red",
+    "n": 492,
+    "dead_rate": 0.984
+   },
+   {
+    "tier": "yellow",
+    "n": 3,
+    "dead_rate": 0.333
+   },
+   {
+    "tier": "green",
+    "n": 4,
+    "dead_rate": 0
+   }
+  ]
+ },
+ "ranking": {
+  "label": "v2",
+  "min_n": 200,
+  "min_survivors": 10,
+  "note": "survival = alive 6h after first sight (label v2); safest = lowest first-sight P(dead); ties split pro rata; Wilson 95% CI; population: new coins seen by the cron (pair age <= 6h at first sight), on-demand checks excluded",
+  "first_sight": {
+   "score": "p_red_first",
+   "desc": "the first-sight P(dead) FlagKan stored for every live coin, all eras (before 12 Oct most of it was a coarse rules/Jev stamp)",
+   "since": 1791440119944,
+   "until": 1791833399436,
+   "n": 11394,
+   "survivors": 641,
+   "survival": 0.056,
+   "survival_ci_lo": 0.052,
+   "survival_ci_hi": 0.061,
+   "auc": 0.609,
+   "distinct_scores": 800,
+   "top": [
+    {
+     "frac": 0.01,
+     "n": 114,
+     "survival": 0.088,
+     "lift": 1.56,
+     "ci_lo": 0.048,
+     "ci_hi": 0.154,
+     "tie_share": 1
+    },
+    {
+     "frac": 0.02,
+     "n": 228,
+     "survival": 0.088,
+     "lift": 1.56,
+     "ci_lo": 0.057,
+     "ci_hi": 0.131,
+     "tie_share": 1
+    },
+    {
+     "frac": 0.1,
+     "n": 1139,
+     "survival": 0.088,
+     "lift": 1.56,
+     "ci_lo": 0.072,
+     "ci_hi": 0.105,
+     "tie_share": 1
+    }
+   ],
+   "deciles": [
+    {
+     "d": 1,
+     "survival": 0.088
+    },
+    {
+     "d": 2,
+     "survival": 0.088
+    },
+    {
+     "d": 3,
+     "survival": 0.076
+    },
+    {
+     "d": 4,
+     "survival": 0.053
+    },
+    {
+     "d": 5,
+     "survival": 0.053
+    },
+    {
+     "d": 6,
+     "survival": 0.053
+    },
+    {
+     "d": 7,
+     "survival": 0.05
+    },
+    {
+     "d": 8,
+     "survival": 0.043
+    },
+    {
+     "d": 9,
+     "survival": 0.049
+    },
+    {
+     "d": 10,
+     "survival": 0.011
+    }
+   ],
+   "ready": true
+  },
+  "policy_v2": {
+   "score": "p_red_first",
+   "desc": "same score, policy v2 only (model-driven, since 12 Oct 03:20 UTC)",
+   "since": 1791775253797,
+   "until": 1791833399436,
+   "n": 533,
+   "survivors": 14,
+   "survival": 0.026,
+   "survival_ci_lo": 0.016,
+   "survival_ci_hi": 0.044,
+   "auc": 0.91,
+   "distinct_scores": 528,
+   "top": [
+    {
+     "frac": 0.01,
+     "n": 5,
+     "survival": 0.6,
+     "lift": 22.84,
+     "ci_lo": 0.231,
+     "ci_hi": 0.882,
+     "tie_share": 0
+    },
+    {
+     "frac": 0.02,
+     "n": 11,
+     "survival": 0.545,
+     "lift": 20.77,
+     "ci_lo": 0.28,
+     "ci_hi": 0.787,
+     "tie_share": 0
+    },
+    {
+     "frac": 0.1,
+     "n": 53,
+     "survival": 0.189,
+     "lift": 7.18,
+     "ci_lo": 0.106,
+     "ci_hi": 0.314,
+     "tie_share": 0
+    }
+   ],
+   "deciles": [
+    {
+     "d": 1,
+     "survival": 0.189
+    },
+    {
+     "d": 2,
+     "survival": 0.019
+    },
+    {
+     "d": 3,
+     "survival": 0.019
+    },
+    {
+     "d": 4,
+     "survival": 0.019
+    },
+    {
+     "d": 5,
+     "survival": 0.019
+    },
+    {
+     "d": 6,
+     "survival": 0
+    },
+    {
+     "d": 7,
+     "survival": 0
+    },
+    {
+     "d": 8,
+     "survival": 0
+    },
+    {
+     "d": 9,
+     "survival": 0
+    },
+    {
+     "d": 10,
+     "survival": 0
+    }
+   ],
+   "ready": true
+  },
+  "lr": {
+   "score": "p_lr_first",
+   "desc": "logistic regression, model-only, coins scored by both models",
+   "since": 1791806408429,
+   "until": 1791833399436,
+   "n": 324,
+   "survivors": 12,
+   "survival": 0.037,
+   "survival_ci_lo": 0.021,
+   "survival_ci_hi": 0.064,
+   "auc": 0.876,
+   "distinct_scores": 323,
+   "top": [
+    {
+     "frac": 0.01,
+     "n": 3,
+     "survival": 1,
+     "lift": 27,
+     "ci_lo": 0.439,
+     "ci_hi": 1,
+     "tie_share": 0
+    },
+    {
+     "frac": 0.02,
+     "n": 6,
+     "survival": 0.667,
+     "lift": 18,
+     "ci_lo": 0.3,
+     "ci_hi": 0.903,
+     "tie_share": 0
+    },
+    {
+     "frac": 0.1,
+     "n": 32,
+     "survival": 0.25,
+     "lift": 6.75,
+     "ci_lo": 0.133,
+     "ci_hi": 0.421,
+     "tie_share": 0
+    }
+   ],
+   "deciles": [
+    {
+     "d": 1,
+     "survival": 0.25
+    },
+    {
+     "d": 2,
+     "survival": 0.03
+    },
+    {
+     "d": 3,
+     "survival": 0.031
+    },
+    {
+     "d": 4,
+     "survival": 0.03
+    },
+    {
+     "d": 5,
+     "survival": 0
+    },
+    {
+     "d": 6,
+     "survival": 0
+    },
+    {
+     "d": 7,
+     "survival": 0.03
+    },
+    {
+     "d": 8,
+     "survival": 0
+    },
+    {
+     "d": 9,
+     "survival": 0
+    },
+    {
+     "d": 10,
+     "survival": 0
+    }
+   ],
+   "ready": true
+  },
+  "gbm": {
+   "score": "p_gbm_first",
+   "desc": "LightGBM-27, model-only, same coins as lr",
+   "since": 1791806408429,
+   "until": 1791833399436,
+   "n": 324,
+   "survivors": 12,
+   "survival": 0.037,
+   "survival_ci_lo": 0.021,
+   "survival_ci_hi": 0.064,
+   "auc": 0.925,
+   "distinct_scores": 323,
+   "top": [
+    {
+     "frac": 0.01,
+     "n": 3,
+     "survival": 0.667,
+     "lift": 18,
+     "ci_lo": 0.208,
+     "ci_hi": 0.939,
+     "tie_share": 0
+    },
+    {
+     "frac": 0.02,
+     "n": 6,
+     "survival": 0.667,
+     "lift": 18,
+     "ci_lo": 0.3,
+     "ci_hi": 0.903,
+     "tie_share": 0
+    },
+    {
+     "frac": 0.1,
+     "n": 32,
+     "survival": 0.281,
+     "lift": 7.59,
+     "ci_lo": 0.156,
+     "ci_hi": 0.454,
+     "tie_share": 0
+    }
+   ],
+   "deciles": [
+    {
+     "d": 1,
+     "survival": 0.281
+    },
+    {
+     "d": 2,
+     "survival": 0.03
+    },
+    {
+     "d": 3,
+     "survival": 0.031
+    },
+    {
+     "d": 4,
+     "survival": 0
+    },
+    {
+     "d": 5,
+     "survival": 0.031
+    },
+    {
+     "d": 6,
+     "survival": 0
+    },
+    {
+     "d": 7,
+     "survival": 0
+    },
+    {
+     "d": 8,
+     "survival": 0
+    },
+    {
+     "d": 9,
+     "survival": 0
+    },
+    {
+     "d": 10,
+     "survival": 0
+    }
+   ],
+   "ready": true
+  },
+  "gbm_scored": 795,
+  "gbm_max_p": 0.9961,
+  "computed_at": 1791855646658
+ },
+ "challenger": {
+  "model": "lightgbm-27",
+  "gbm_v": "gbm27-2026-10-12",
+  "n": 325,
+  "ready": true,
+  "auc_lr": 0.873,
+  "auc_gbm": 0.923,
+  "acc_lr": 0.969,
+  "acc_gbm": 0.966,
+  "baseline_all_red_accuracy": 0.963,
+  "brier_lr": 0.029,
+  "brier_gbm": 0.027,
+  "survivor_top5_lr": 0.375,
+  "survivor_top5_gbm": 0.375,
+  "t_sure_gbm": 0.996
+ }
+}

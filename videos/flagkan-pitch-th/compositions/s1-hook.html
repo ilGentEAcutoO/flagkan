@@ -1,0 +1,152 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:0em;--hl-lh:1.18;--body-lh:1.45;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--paper);}
+.s1-bg{position:absolute;inset:0;background:radial-gradient(1200px 800px at 68% 50%, #2A2219 0%, #16130E 62%);}
+.s1-grain{position:absolute;inset:0;opacity:.06;background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.5) 0 1px,transparent 1px 3px);}
+.s1-left{position:absolute;left:130px;top:0;bottom:0;width:820px;}
+.s1-kicker{position:absolute;left:0;top:250px;display:flex;align-items:center;gap:16px;font-weight:700;font-size:26px;letter-spacing:.14em;text-transform:uppercase;color:#C9B99C;}
+.s1-kicker .fk-dot{width:18px;height:18px;border-color:#16130E;}
+.s1-h1{position:absolute;left:0;top:320px;width:820px;font-weight:800;font-size:104px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s1-big{position:absolute;left:0;top:300px;width:820px;}
+.s1-num{display:flex;align-items:baseline;gap:18px;}
+.s1-num-v{font-weight:800;font-size:300px;line-height:.9;color:var(--redhot);letter-spacing:-0.04em;font-variant-numeric:tabular-nums;}
+.s1-num-of{font-weight:700;font-size:96px;color:#C9B99C;}
+.s1-num-lbl{margin-top:18px;font-weight:700;font-size:54px;line-height:var(--hl-lh);}
+.s1-src{margin-top:22px;font-weight:500;font-size:22px;color:#9C8E77;letter-spacing:.02em;}
+.s1-words{position:absolute;left:0;top:220px;width:860px;}
+.s1-w{position:relative;display:block;width:fit-content;font-weight:800;font-size:112px;line-height:calc(var(--hl-lh) + 0.14);color:var(--paper);}
+.s1-w .s1-strike{position:absolute;left:-8px;right:-8px;top:54%;height:14px;background:var(--redhot);transform-origin:left center;display:block;}
+.s1-last{display:block;margin-top:40px;font-weight:700;font-size:58px;line-height:var(--hl-lh);color:#FCEFD9;}
+.s1-last b{color:var(--redhot);font-weight:800;}
+.s1-gridwrap{position:absolute;left:1090px;top:170px;width:700px;height:740px;}
+.s1-clock{position:absolute;left:0;top:0;width:700px;height:40px;display:flex;align-items:center;gap:18px;font-weight:700;font-size:24px;color:#C9B99C;letter-spacing:.06em;}
+.s1-track{position:relative;flex:1;height:8px;border-radius:8px;background:#3A3127;overflow:hidden;}
+.s1-track i{position:absolute;left:0;top:0;bottom:0;width:100%;background:linear-gradient(90deg,#E8A100,#E0452C);transform-origin:left center;display:block;}
+.s1-grid{position:absolute;left:20px;top:80px;width:660px;height:660px;}
+.s1-c{position:absolute;width:48px;height:48px;border-radius:50%;background:#4A3F31;border:3px solid #6E6252;}
+.s1-c.g{background:var(--grnhot);border-color:#DDF5E9;}
+.s1-c.d{background:var(--red);border-color:#E0452C;}
+.s1-glow{position:absolute;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(25,179,126,.55),rgba(25,179,126,0) 70%);}
+</style>
+<div id="root" data-composition-id="s1-hook" data-width="1920" data-height="1080">
+  <div class="s1-bg"></div>
+  <div class="s1-grain"></div>
+  <div class="s1-gridwrap">
+    <div class="s1-clock"><span class="s1-clock-a">0h</span><div class="s1-track"><i class="s1-track-i"></i></div><span class="s1-clock-b">6h</span></div>
+    <div class="s1-grid" id="s1-grid"></div>
+  </div>
+  <div class="s1-left">
+    <div class="s1-kicker"><span class="fk-dot fk-r"></span><span class="fk-dot fk-y"></span><span class="fk-dot fk-g"></span><span>เหรียญใหม่บนโซลานา</span></div>
+    <div class="s1-h1">เหรียญใหม่หลายพันตัว ทุกวัน</div>
+    <div class="s1-big">
+      <div class="s1-num"><span class="s1-num-v" id="s1-num-v">0</span><span class="s1-num-of">/ 100</span></div>
+      <div class="s1-num-lbl">ตายภายใน 6 ชั่วโมง</div>
+      <div class="s1-src">97.5% จาก 514 เหรียญใหม่ที่ FlagKan ตรวจผลตั้งแต่ 12 ต.ค. · ข้อมูลสด</div>
+    </div>
+    <div class="s1-words">
+      <span class="s1-w s1-w1">โดนเทขาย<i class="s1-strike"></i></span>
+      <span class="s1-w s1-w2">สภาพคล่องหาย<i class="s1-strike"></i></span>
+      <span class="s1-w s1-w3">ถูกทิ้ง<i class="s1-strike"></i></span>
+      <span class="s1-last">และ<b>ทุกตัว</b> มีคนกดซื้อไปแล้ว</span>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=4.278, B3=8.396, D=13.558;
+const DEAD = parseInt("97",10) || 98;
+// seeded PRNG
+let seed = 20261013;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const grid = document.getElementById("s1-grid");
+const cells = [];
+for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
+  const el = document.createElement("div");
+  el.className = "s1-c";
+  el.style.left = (c * 66 + 9) + "px"; el.style.top = (r * 66 + 9) + "px";
+  grid.appendChild(el); cells.push(el);
+}
+// pick survivors (2 of 100) deterministically, rest die in seeded order
+const order = cells.map((_, i) => i).sort(() => rnd() - 0.5);
+const survivors = [order[37], order[71]].slice(0, Math.max(0, 100 - DEAD));
+const dying = order.filter(i => !survivors.includes(i));
+const glows = survivors.map(i => {
+  const g = document.createElement("div"); g.className = "s1-glow";
+  g.style.left = (parseFloat(cells[i].style.left) - 36) + "px"; g.style.top = (parseFloat(cells[i].style.top) - 36) + "px";
+  grid.insertBefore(g, grid.firstChild); return g;
+});
+
+const tl = gsap.timeline({ paused: true });
+// --- b1: thousands launch ---
+tl.fromTo(".s1-kicker", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5, ease:"power3.out"}, B1 - 0.35);
+tl.fromTo(".s1-h1", {opacity:0, y:60}, {opacity:1, y:0, duration:0.7, ease:"expo.out"}, B1 - 0.2);
+const popOrder = cells.map((_, i) => i).sort((a, b) => {
+  const da = Math.hypot(a % 10 - 4.5, Math.floor(a / 10) - 4.5), db = Math.hypot(b % 10 - 4.5, Math.floor(b / 10) - 4.5);
+  return da - db;
+});
+popOrder.forEach((i, k) => {
+  tl.fromTo(cells[i], {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.35, ease:"back.out(2.4)"}, B1 + 0.05 + k * 0.022);
+});
+tl.fromTo(".s1-clock", {opacity:0}, {opacity:1, duration:0.4}, B1 + 1.2);
+tl.fromTo(".s1-track-i", {scaleX:0}, {scaleX:0.02, duration:0.3}, B1 + 1.2);
+// --- b2: six hours later ---
+tl.to(".s1-h1", {opacity:0, y:-50, duration:0.45, ease:"power2.in"}, B2 - 0.3);
+tl.to(".s1-kicker", {opacity:0.0, duration:0.3}, B2 - 0.3);
+tl.fromTo(".s1-big", {opacity:0, y:40}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B2 - 0.05);
+tl.fromTo(".s1-track-i", {scaleX:0.02}, {scaleX:1, duration:2.6, ease:"power1.inOut", immediateRender:false}, B2);
+const cnt = {v:0};
+tl.fromTo(cnt, {v:0}, {v:DEAD, duration:2.6, ease:"power2.out", onUpdate:() => { document.getElementById("s1-num-v").textContent = Math.round(cnt.v); }}, B2);
+dying.forEach((i, k) => {
+  tl.to(cells[i], {backgroundColor:"#B7321F", borderColor:"#E0452C", scale:0.86, duration:0.18, ease:"power2.out"}, B2 + 0.1 + k * (2.4 / dying.length));
+});
+survivors.forEach((i, k) => {
+  tl.to(cells[i], {backgroundColor:"#19B37E", borderColor:"#DDF5E9", scale:1.12, duration:0.3, ease:"back.out(3)"}, B2 + 2.5 + k * 0.12);
+  tl.fromTo(glows[k], {opacity:0, scale:0.4}, {opacity:1, scale:1, duration:0.6, ease:"power2.out"}, B2 + 2.5 + k * 0.12);
+});
+// --- b3: rugged / drained / abandoned ---
+tl.to(".s1-big", {opacity:0, y:-60, duration:0.45, ease:"power2.in"}, B3 - 0.35);
+const wts = [0.0, 0.62, 1.3];
+[".s1-w1", ".s1-w2", ".s1-w3"].forEach((sel, k) => {
+  tl.fromTo(sel, {opacity:0, x:-40}, {opacity:1, x:0, duration:0.32, ease:"power3.out"}, B3 + wts[k]);
+  tl.fromTo(sel + " .s1-strike", {scaleX:0}, {scaleX:1, duration:0.28, ease:"power2.inOut"}, B3 + wts[k] + 0.3);
+  tl.to(sel, {opacity:0.45, duration:0.3}, B3 + wts[k] + 0.55);
+});
+tl.fromTo(".s1-last", {opacity:0, y:30}, {opacity:1, y:0, duration:0.55, ease:"expo.out"}, B3 + 2.1);
+dying.forEach((i, k) => {
+  const t0 = B3 + 0.1 + (k % 33) * 0.045 + Math.floor(k / 33) * 0.55;
+  tl.to(cells[i], {y: 520 + rnd() * 200, rotation: (rnd() - 0.5) * 160, opacity:0, duration:1.1, ease:"power2.in"}, t0);
+});
+survivors.forEach((i, k) => {
+  tl.to([cells[i], glows[k]], {scale:"+=0.18", duration:0.8, yoyo:true, repeat:3, ease:"sine.inOut"}, B3 + 1.9);
+});
+// out
+tl.to(".s1-left", {opacity:0, duration:0.35}, D - 0.4);
+window.__timelines["s1-hook"] = tl;
+})();
+</script>
+</template>
+</body></html>

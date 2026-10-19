@@ -1,0 +1,80 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:-0.025em;--hl-lh:1.0;--body-lh:1.3;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--paper);}
+.s9-bg{position:absolute;inset:0;background:radial-gradient(1100px 700px at 50% 42%, #2C241A 0%, #16130E 65%);}
+.s9-ring{position:absolute;left:960px;top:400px;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:2px solid rgba(255,253,247,.18);}
+.s9-center{position:absolute;left:0;right:0;top:230px;display:flex;flex-direction:column;align-items:center;}
+.s9-lock{display:flex;align-items:center;gap:22px;}
+.s9-dot{width:74px;height:74px;border-radius:50%;border:5px solid var(--paper);}
+.s9-dot.r{background:var(--redhot);} .s9-dot.y{background:var(--yel);} .s9-dot.g{background:var(--grnhot);}
+.s9-word{margin-left:24px;font-weight:800;font-size:190px;line-height:1;letter-spacing:-0.035em;}
+.s9-word b{color:var(--redhot);font-weight:800;}
+.s9-tag{margin-top:36px;max-width:1400px;text-align:center;font-weight:700;font-size:54px;line-height:var(--hl-lh);color:#FCEFD9;}
+.s9-cta{margin-top:56px;display:flex;align-items:center;gap:44px;}
+.s9-url{padding:22px 44px;border-radius:22px;background:var(--red);border:4px solid var(--paper);box-shadow:8px 8px 0 var(--paper);font-weight:800;font-size:64px;color:#fff;letter-spacing:-0.01em;}
+.s9-qr{width:170px;height:170px;border-radius:14px;overflow:hidden;border:4px solid var(--paper);background:#fff;}
+.s9-qr img{width:100%;height:100%;display:block;}
+.s9-check{margin-bottom:14px;font-weight:800;font-size:30px;letter-spacing:.16em;text-transform:uppercase;color:#C9B99C;}
+.s9-foot{position:absolute;left:0;right:0;top:900px;display:flex;justify-content:center;gap:18px;}
+.s9-badge{padding:8px 20px;border-radius:99px;border:2px solid #6E6252;font-weight:700;font-size:24px;color:#C9B99C;}
+</style>
+<div id="root" data-composition-id="s9-cta" data-width="1920" data-height="1080">
+  <div class="s9-bg"></div>
+  <div class="s9-ring s9-ring1"></div><div class="s9-ring s9-ring2"></div><div class="s9-ring s9-ring3"></div>
+  <div class="s9-center">
+    <div class="s9-lock"><span class="s9-dot r"></span><span class="s9-dot y"></span><span class="s9-dot g"></span><span class="s9-word"><b>Flag</b>Kan</span></div>
+    <div class="s9-tag">Honest lights for new coins, and the receipts to prove it.</div>
+    <div class="s9-cta">
+      <div><div class="s9-check">Check before you buy</div><div class="s9-url">flag.sornkan.com</div></div>
+      <div class="s9-qr"><img src="assets/img/qr.svg" alt="" /></div>
+    </div>
+  </div>
+  <div class="s9-foot">
+    <span class="s9-badge">Colosseum Crypto World's Fair 2026</span>
+    <span class="s9-badge">AI × Solana · Thailand</span>
+    <span class="s9-badge">Solami RPC · Jev by TypeSafe</span>
+    <span class="s9-badge">Built in Thailand by SORNKan</span>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=4.324, D=11.246;
+const tl = gsap.timeline({ paused: true });
+[".s9-dot.r", ".s9-dot.y", ".s9-dot.g"].forEach((s, k) => tl.fromTo(s, {scale:0, y:-80}, {scale:1, y:0, duration:0.55, ease:"back.out(3)"}, 0.15 + k * 0.13));
+tl.fromTo(".s9-word", {opacity:0, clipPath:"inset(-30% 100% -30% 0)"}, {opacity:1, clipPath:"inset(-30% 0% -30% 0)", duration:0.7, ease:"expo.out"}, 0.6);
+[".s9-ring1", ".s9-ring2", ".s9-ring3"].forEach((s, k) => tl.fromTo(s, {scale:1, opacity:1}, {scale:260, opacity:0, duration:3.2, ease:"power2.out"}, 0.6 + k * 0.5));
+tl.fromTo(".s9-tag", {opacity:0, y:30}, {opacity:1, y:0, duration:0.7, ease:"expo.out"}, B1 + 0.6);
+tl.fromTo(".s9-check", {opacity:0}, {opacity:1, duration:0.4}, B2 - 0.1);
+tl.fromTo(".s9-url", {opacity:0, scale:0.7}, {opacity:1, scale:1, duration:0.6, ease:"back.out(2.4)"}, B2);
+tl.fromTo(".s9-qr", {opacity:0, rotation:-12, scale:0.7}, {opacity:1, rotation:0, scale:1, duration:0.6, ease:"back.out(2)"}, B2 + 0.4);
+tl.fromTo(".s9-badge", {opacity:0, y:20}, {opacity:1, y:0, duration:0.4, stagger:0.12}, B2 + 0.9);
+tl.fromTo(".s9-dot", {scale:1}, {scale:1.08, duration:0.6, yoyo:true, repeat:3, stagger:0.15, ease:"sine.inOut", immediateRender:false}, B2 + 1.6);
+window.__timelines["s9-cta"] = tl;
+})();
+</script>
+</template>
+</body></html>
