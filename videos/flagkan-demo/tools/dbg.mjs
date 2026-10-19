@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+import { EXE } from './rec.mjs';
+const b = await chromium.launch({ headless: false, executablePath: EXE });
+const p = await (await b.newContext({ viewport: { width: 1440, height: 810 } })).newPage();
+await p.goto('https://flag.sornkan.com/board.html', { waitUntil: 'networkidle' });
+await p.waitForTimeout(1500);
+await p.fill('#q', '8rtCBqHfRmZK1KkULkMUY1355CLNxRaCvuU3FFoHEADS'); await p.waitForTimeout(800);
+console.log(await p.locator('#rows tr').count());
+await p.locator('#rows tr:nth-child(1) td:nth-child(2)').click();
+await p.waitForTimeout(1500);
+console.log(await p.evaluate(()=>{const m=document.getElementById('modal');return [m.outerHTML.slice(0,300), !!document.getElementById('dProbs'), JSON.stringify(document.getElementById('dProbs')?.getBoundingClientRect())]}));
+await b.close();

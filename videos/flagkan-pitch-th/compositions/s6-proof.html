@@ -1,0 +1,179 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:0em;--hl-lh:1.18;--body-lh:1.45;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--ink);}
+.s6-bg{position:absolute;inset:0;background:var(--paper);background-image:radial-gradient(rgba(38,33,27,.08) 1.5px,transparent 1.5px);background-size:34px 34px;}
+.s6-kick{position:absolute;left:110px;top:90px;font-weight:800;font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);}
+.s6-h1{position:absolute;left:110px;top:140px;width:900px;font-weight:800;font-size:110px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s6-clock{position:absolute;left:1180px;top:110px;width:560px;height:560px;}
+.s6-clock svg{width:560px;height:560px;display:block;}
+.s6-clock-t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.s6-clock-t b{font-weight:800;font-size:150px;line-height:1;font-variant-numeric:tabular-nums;}
+.s6-clock-t span{font-weight:700;font-size:32px;color:var(--dim);}
+.s6-rows{position:absolute;left:110px;top:420px;width:980px;}
+.s6-row{display:flex;align-items:center;gap:22px;height:84px;margin-bottom:16px;padding:0 26px;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);}
+.s6-row b{font-weight:800;font-size:34px;width:240px;}
+.s6-badge{padding:6px 18px;border-radius:99px;font-weight:800;font-size:24px;color:#fff;}
+.s6-badge.r{background:var(--red);} .s6-badge.g{background:var(--grn);}
+.s6-arrow{font-size:34px;color:var(--faint);font-weight:800;}
+.s6-out{font-weight:800;font-size:28px;}
+.s6-mark{margin-left:auto;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:34px;color:#fff;border:3px solid var(--ink);}
+.s6-mark.ok{background:var(--grn);} .s6-mark.no{background:var(--red);}
+.s6-alike{position:absolute;left:1180px;top:720px;width:620px;font-weight:800;font-size:56px;line-height:var(--hl-lh);}
+.s6-alike i{font-style:normal;color:var(--red);}
+/* chart */
+.s6-chart{position:absolute;left:110px;top:150px;width:1700px;height:760px;}
+.s6-ck{font-weight:800;font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--grn);}
+.s6-ct{margin-top:10px;width:1050px;font-weight:800;font-size:64px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s6-bars{position:absolute;left:0;top:300px;width:1080px;height:430px;}
+.s6-bar{position:absolute;bottom:0;width:300px;border:3px solid var(--ink);border-radius:16px 16px 0 0;box-shadow:6px 0 0 var(--ink);transform-origin:bottom center;}
+.s6-bar.rand{left:80px;background:#D6C8AE;}
+.s6-bar.fk{left:560px;background:var(--grn);}
+.s6-val{position:absolute;width:300px;text-align:center;font-weight:800;font-size:64px;font-variant-numeric:tabular-nums;}
+.s6-lbl{position:absolute;top:448px;line-height:1.25;width:380px;text-align:center;font-weight:700;font-size:30px;color:var(--dim);}
+.s6-axis{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--ink);}
+.s6-ci{position:absolute;left:900px;width:6px;background:var(--ink);}
+.s6-ci::before,.s6-ci::after{content:"";position:absolute;left:-22px;width:50px;height:6px;background:var(--ink);}
+.s6-ci::before{top:0;} .s6-ci::after{bottom:0;}
+.s6-cil{position:absolute;left:940px;width:300px;font-family:'JBMono',monospace;font-weight:700;font-size:22px;color:var(--ink);}
+.s6-lift{position:absolute;left:1160px;top:250px;width:560px;}
+.s6-lift-v{font-weight:800;font-size:260px;line-height:.9;color:var(--grn);letter-spacing:-0.04em;}
+.s6-lift-l{margin-top:8px;font-weight:800;font-size:44px;line-height:var(--hl-lh);}
+.s6-lift-n{margin-top:22px;font-weight:600;font-size:28px;line-height:var(--body-lh);color:var(--dim);}
+.s6-lift-o{margin-top:14px;font-weight:600;font-size:24px;color:var(--faint);line-height:var(--body-lh);}
+/* proof page */
+.s6-page{position:absolute;left:660px;top:120px;width:1160px;height:760px;border:3px solid var(--ink);border-radius:20px;box-shadow:10px 10px 0 var(--ink);background:#fff;overflow:hidden;}
+.s6-pbar{height:46px;border-bottom:3px solid var(--ink);display:flex;align-items:center;gap:10px;padding:0 18px;background:var(--cream);}
+.s6-pbar i{display:block;width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);}
+.s6-purl{margin-left:18px;font-family:'JBMono',monospace;font-size:20px;font-weight:600;color:var(--dim);}
+.s6-pimg{position:absolute;left:-190px;top:-40px;width:1663px;height:auto;max-width:none;}
+.s6-chips{position:absolute;left:110px;top:200px;width:500px;}
+.s6-chip{display:block;margin-bottom:26px;padding:20px 26px;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 var(--ink);font-weight:800;font-size:36px;line-height:var(--body-lh);}
+.s6-chip span{display:block;font-family:'JBMono',monospace;font-weight:600;font-size:22px;color:var(--dim);margin-top:4px;}
+.s6-asof{position:absolute;left:110px;top:800px;width:520px;font-family:'JBMono',monospace;font-weight:600;font-size:21px;color:var(--dim);line-height:1.5;}
+</style>
+<div id="root" data-composition-id="s6-proof" data-width="1920" data-height="1080">
+  <div class="s6-bg"></div>
+  <div class="s6-p1">
+    <div class="s6-kick">ตรวจผลต่อหน้าสาธารณะ</div>
+    <div class="s6-h1">ตรวจข้อสอบตัวเอง</div>
+    <div class="s6-clock">
+      <svg viewBox="0 0 560 560"><circle cx="280" cy="280" r="250" fill="#fff" stroke="#26211B" stroke-width="6"/><circle class="s6-arc" cx="280" cy="280" r="220" fill="none" stroke="#B7321F" stroke-width="26" stroke-dasharray="1382.3" stroke-dashoffset="1382.3" transform="rotate(-90 280 280)" stroke-linecap="round"/></svg>
+      <div class="s6-clock-t"><b id="s6-hr">0h</b><span>หลังเห็นครั้งแรก</span></div>
+    </div>
+    <div class="s6-rows">
+      <div class="s6-row s6-r1"><b>เหรียญ A</b><span class="s6-badge r">แดง</span><span class="s6-arrow">→</span><span class="s6-out s6-o">ตาย</span><span class="s6-mark ok s6-m">✓</span></div>
+      <div class="s6-row s6-r2"><b>เหรียญ B</b><span class="s6-badge r">แดง</span><span class="s6-arrow">→</span><span class="s6-out s6-o">ตาย</span><span class="s6-mark ok s6-m">✓</span></div>
+      <div class="s6-row s6-r3"><b>เหรียญ C</b><span class="s6-badge g">เขียว</span><span class="s6-arrow">→</span><span class="s6-out s6-o">รอด</span><span class="s6-mark ok s6-m">✓</span></div>
+      <div class="s6-row s6-r4"><b>เหรียญ D</b><span class="s6-badge r">แดง</span><span class="s6-arrow">→</span><span class="s6-out s6-o">รอด</span><span class="s6-mark no s6-m">✕</span></div>
+    </div>
+    <div class="s6-alike">ทั้งที่ถูก <i>และที่พลาด</i> เปิดหมด</div>
+  </div>
+  <div class="s6-chart">
+    <div class="s6-ck">ฝีมือจริง: หาตัวที่รอด</div>
+    <div class="s6-ct">อัตรารอดของ 10% ที่โมเดลให้คะแนนปลอดภัยสุด</div>
+    <div class="s6-bars">
+      <div class="s6-bar rand" style="height:30px"></div>
+      <div class="s6-val s6-v1" style="left:80px;bottom:50px">2.5%</div>
+      <div class="s6-lbl" style="left:40px">สุ่มเลือก</div>
+      <div class="s6-bar fk" style="height:211px"></div>
+      <div class="s6-val s6-v2" style="left:560px;bottom:231px"><span id="s6-top">0</span>%</div>
+      <div class="s6-lbl" style="left:520px">10% ปลอดภัยสุดของ FlagKan</div>
+      <div class="s6-ci" style="bottom:115px;height:248px"></div>
+      <div class="s6-cil" style="bottom:240px">95% CI 9.6–30.3%</div>
+      <div class="s6-axis"></div>
+    </div>
+    <div class="s6-lift">
+      <div class="s6-lift-v">×7.0</div>
+      <div class="s6-lift-l">ดีกว่าการสุ่ม</div>
+      <div class="s6-lift-n">514 เหรียญใหม่ที่ตรวจผลตั้งแต่ 12 ต.ค. (ยุคโมเดล) · รอดแค่ 13 ตัว · ตัวอย่างยังน้อย</div>
+      <div class="s6-lift-o">ยุคคะแนนเก่า (คะแนนหยาบ): ×1.6 จาก 11,375 เหรียญ</div>
+    </div>
+  </div>
+  <div class="s6-p3">
+    <div class="s6-page">
+      <div class="s6-pbar"><i class="fk-r"></i><i class="fk-y"></i><i class="fk-g"></i><span class="s6-purl">flag.sornkan.com/proof</span></div>
+      <img class="s6-pimg" src="assets/img/th-proof.png" alt="" />
+    </div>
+    <div class="s6-chips">
+      <div class="s6-chip s6-c1">ทุกตัวเลขวางคู่ค่าพื้นฐาน</div>
+      <div class="s6-chip s6-c2">หน้าหลักเกณฑ์สาธารณะ ครบทุกเหรียญ</div>
+      <div class="s6-chip s6-c3">เอพีไอฟรี<span>GET /api/proof</span></div>
+    </div>
+    <div class="s6-asof">ตัวเลขสดจาก flag.sornkan.com · หลักเกณฑ์ · 13 ต.ค. 2026 07:23 น. · ความแม่น 98.4% เทียบ 97.5% ถ้าเรียกแดงทุกตัว</div>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=4.62, B3=11.697, B4=21.034, B5=31.568, D=38.253;
+const TOP = parseFloat("17.6");
+const tl = gsap.timeline({ paused: true });
+// b1: it grades itself
+tl.fromTo(".s6-kick", {opacity:0, y:16}, {opacity:1, y:0, duration:0.4}, 0.1);
+tl.fromTo(".s6-h1", {opacity:0, y:60}, {opacity:1, y:0, duration:0.7, ease:"expo.out"}, B1);
+tl.fromTo(".s6-clock", {opacity:0, scale:0.6, rotation:-30}, {opacity:1, scale:1, rotation:0, duration:0.9, ease:"back.out(1.8)"}, B1 + 0.5);
+const hr = {v:0};
+tl.fromTo(".s6-arc", {strokeDashoffset:1382.3}, {strokeDashoffset:0, duration:3.6, ease:"power1.inOut"}, B1 + 1.2);
+tl.fromTo(hr, {v:0}, {v:6, duration:3.6, ease:"power1.inOut", onUpdate:() => { document.getElementById("s6-hr").textContent = Math.round(hr.v) + "h"; }}, B1 + 1.2);
+// b2: graded rows
+tl.to(".s6-h1", {scale:0.62, y:0, transformOrigin:"left top", duration:0.6, ease:"power2.inOut"}, B2 - 0.3);
+tl.to(".s6-clock", {scale:0.55, x:120, y:-120, duration:0.6, ease:"power2.inOut"}, B2 - 0.3);
+[1,2,3,4].forEach(k => {
+  const r = ".s6-r" + k;
+  tl.fromTo(r, {opacity:0, x:-60}, {opacity:1, x:0, duration:0.45, ease:"expo.out"}, B2 + (k - 1) * 0.35);
+  tl.fromTo(r + " .s6-o", {opacity:0}, {opacity:1, duration:0.3}, B2 + 2.0 + (k - 1) * 0.5);
+  tl.fromTo(r + " .s6-m", {scale:0}, {scale:1, duration:0.4, ease:"back.out(3)"}, B2 + 2.1 + (k - 1) * 0.5);
+});
+tl.fromTo(".s6-alike", {opacity:0, y:30}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B2 + 4.4);
+tl.to(".s6-p1", {opacity:0, y:-40, duration:0.45, ease:"power2.in"}, B3 - 0.35);
+// b3: chart
+tl.fromTo(".s6-ck", {opacity:0}, {opacity:1, duration:0.4}, B3);
+tl.fromTo(".s6-ct", {opacity:0, y:40}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B3 + 0.1);
+tl.fromTo(".s6-axis", {scaleX:0}, {scaleX:1, duration:0.6, ease:"power2.out"}, B3 + 0.4);
+tl.fromTo(".s6-bar.fk", {scaleY:0}, {scaleY:1, duration:1.6, ease:"expo.out"}, B3 + 2.0);
+tl.fromTo(".s6-v2", {opacity:0}, {opacity:1, duration:0.3}, B3 + 2.0);
+tl.fromTo(".s6-lbl", {opacity:0}, {opacity:1, duration:0.4, stagger:0.3}, B3 + 1.0);
+const tv = {v:0};
+tl.fromTo(tv, {v:0}, {v:TOP, duration:1.6, ease:"expo.out", onUpdate:() => { document.getElementById("s6-top").textContent = tv.v.toFixed(1); }}, B3 + 2.0);
+tl.fromTo(".s6-bar.rand", {scaleY:0}, {scaleY:1, duration:0.8, ease:"expo.out"}, B3 + 5.2);
+tl.fromTo(".s6-v1", {opacity:0, y:20}, {opacity:1, y:0, duration:0.4}, B3 + 5.3);
+tl.fromTo([".s6-ci", ".s6-cil"], {opacity:0}, {opacity:1, duration:0.5}, B4 + 3.2);
+// b4: lift
+tl.fromTo(".s6-lift-v", {opacity:0, scale:0.5}, {opacity:1, scale:1, duration:0.7, ease:"back.out(2.2)"}, B4);
+tl.fromTo(".s6-lift-l", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5}, B4 + 0.5);
+tl.fromTo(".s6-lift-n", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5}, B4 + 2.0);
+tl.fromTo(".s6-lift-o", {opacity:0}, {opacity:1, duration:0.5}, B4 + 4.0);
+tl.to(".s6-chart", {opacity:0, y:-40, duration:0.45, ease:"power2.in"}, B5 - 0.35);
+// b5: proof page
+tl.fromTo(".s6-page", {opacity:0, y:120, rotationY:-12}, {opacity:1, y:0, rotationY:0, duration:1.0, ease:"expo.out"}, B5);
+tl.fromTo(".s6-pimg", {scale:1}, {scale:1.08, duration:D - B5, ease:"none"}, B5);
+[".s6-c1", ".s6-c2", ".s6-c3"].forEach((s, k) => tl.fromTo(s, {opacity:0, x:-50}, {opacity:1, x:0, duration:0.5, ease:"back.out(2)"}, B5 + 0.4 + k * 1.1));
+tl.fromTo(".s6-asof", {opacity:0}, {opacity:1, duration:0.5}, B5 + 1.0);
+window.__timelines["s6-proof"] = tl;
+})();
+</script>
+</template>
+</body></html>

@@ -27,3 +27,9 @@ videos/**/assets/sfx/
 # local ML lab artifacts
 ml-lab/.venv/
 ml-lab/data/
+
+# video build outputs, upload staging, capture/voice intermediates
+videos/**/build/
+videos/_upload/
+videos/**/tools/cap/
+videos/**/tools/vo/

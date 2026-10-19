@@ -1,325 +1,412 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=1920, height=1080" />
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        width: 1920px;
-        height: 1080px;
-        overflow: hidden;
-        background: #000;
-      }
-      #root {
-        position: relative;
-        width: 1920px;
-        height: 1080px;
-        overflow: hidden;
-        background: #FFFDF7;
-      }
-      .scene {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <div
-      id="root"
-      data-composition-id="main"
-      data-start="0"
-      data-duration="146"
-      data-width="1920"
-      data-height="1080"
-    >
-      <div
-        id="el-01-landing"
-        class="scene"
-        data-composition-id="01-landing"
-        data-composition-src="compositions/frames/01-landing.html"
-        data-start="0"
-        data-duration="18"
-        data-track-index="1"
-      ></div>
-      <audio
-        id="el-01-landing-voice"
-        src="assets/voice/01.wav"
-        data-start="0"
-        data-duration="18"
-        data-track-index="10"
-        data-volume="1"
-      ></audio>
-
-      <div
-        id="el-02-board"
-        class="scene"
-        data-composition-id="02-board"
-        data-composition-src="compositions/frames/02-board.html"
-        data-start="18"
-        data-duration="27"
-        data-track-index="1"
-      ></div>
-      <audio
-        id="el-02-board-voice"
-        src="assets/voice/02.wav"
-        data-start="18"
-        data-duration="27"
-        data-track-index="10"
-        data-volume="1"
-      ></audio>
-
-      <div
-        id="el-03-coin"
-        class="scene"
-        data-composition-id="03-coin"
-        data-composition-src="compositions/frames/03-coin.html"
-        data-start="45"
-        data-duration="26"
-        data-track-index="1"
-      ></div>
-      <audio
-        id="el-03-coin-voice"
-        src="assets/voice/03.wav"
-        data-start="45"
-        data-duration="26"
-        data-track-index="10"
-        data-volume="1"
-      ></audio>
-
-      <div
-        id="el-04-check"
-        class="scene"
-        data-composition-id="04-check"
-        data-composition-src="compositions/frames/04-check.html"
-        data-start="71"
-        data-duration="25"
-        data-track-index="1"
-      ></div>
-      <audio
-        id="el-04-check-voice"
-        src="assets/voice/04.wav"
-        data-start="71"
-        data-duration="25"
-        data-track-index="10"
-        data-volume="1"
-      ></audio>
-
-      <div
-        id="el-05-proof"
-        class="scene"
-        data-composition-id="05-proof"
-        data-composition-src="compositions/frames/05-proof.html"
-        data-start="96"
-        data-duration="25"
-        data-track-index="1"
-      ></div>
-      <audio
-        id="el-05-proof-voice"
-        src="assets/voice/05.wav"
-        data-start="96"
-        data-duration="25"
-        data-track-index="10"
-        data-volume="1"
-      ></audio>
-
-      <div
-        id="el-06-lang"
-        class="scene"
-        data-composition-id="06-lang"
-        data-composition-src="compositions/frames/06-lang.html"
-        data-start="121"
-        data-duration="13"
-        data-track-index="1"
-      ></div>
-      <audio
-        id="el-06-lang-voice"
-        src="assets/voice/06.wav"
-        data-start="121"
-        data-duration="13"
-        data-track-index="10"
-        data-volume="1"
-      ></audio>
-
-      <div
-        id="el-07-outro"
-        class="scene"
-        data-composition-id="07-outro"
-        data-composition-src="compositions/frames/07-outro.html"
-        data-start="134"
-        data-duration="12"
-        data-track-index="1"
-      ></div>
-      <audio
-        id="el-07-outro-voice"
-        src="assets/voice/07.wav"
-        data-start="134"
-        data-duration="12"
-        data-track-index="10"
-        data-volume="1"
-      ></audio>
-
-      <!-- captions -->
-      <div
-        id="el-captions"
-        class="scene"
-        data-composition-id="captions"
-        data-composition-src="compositions/captions.html"
-        data-start="0"
-        data-duration="146"
-        data-track-index="2"
-      ></div>
-
-      <!-- SFX -->
-      <audio
-        id="el-sfx-0"
-        src="assets/sfx/whoosh-cinematic.mp3"
-        data-start="0"
-        data-duration="5.54"
-        data-track-index="20"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-1"
-        src="assets/sfx/whoosh-short.mp3"
-        data-start="18"
-        data-duration="0.57"
-        data-track-index="21"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-2"
-        src="assets/sfx/click-soft.mp3"
-        data-start="18"
-        data-duration="0.37"
-        data-track-index="22"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-3"
-        src="assets/sfx/pop.mp3"
-        data-start="18"
-        data-duration="0.72"
-        data-track-index="23"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-4"
-        src="assets/sfx/click-soft.mp3"
-        data-start="45"
-        data-duration="0.37"
-        data-track-index="24"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-5"
-        src="assets/sfx/ping.mp3"
-        data-start="45"
-        data-duration="1.32"
-        data-track-index="25"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-6"
-        src="assets/sfx/pop.mp3"
-        data-start="45"
-        data-duration="0.72"
-        data-track-index="26"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-7"
-        src="assets/sfx/typing.mp3"
-        data-start="71"
-        data-duration="1.5"
-        data-track-index="27"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-8"
-        src="assets/sfx/key-press.mp3"
-        data-start="71"
-        data-duration="0.4"
-        data-track-index="28"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-9"
-        src="assets/sfx/notification.mp3"
-        data-start="71"
-        data-duration="2.46"
-        data-track-index="29"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-10"
-        src="assets/sfx/whoosh.mp3"
-        data-start="96"
-        data-duration="0.57"
-        data-track-index="30"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-11"
-        src="assets/sfx/ping.mp3"
-        data-start="96"
-        data-duration="1.32"
-        data-track-index="31"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-12"
-        src="assets/sfx/chime.mp3"
-        data-start="96"
-        data-duration="2.5"
-        data-track-index="32"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-13"
-        src="assets/sfx/whoosh-short.mp3"
-        data-start="121"
-        data-duration="0.57"
-        data-track-index="33"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-14"
-        src="assets/sfx/pop.mp3"
-        data-start="121"
-        data-duration="0.72"
-        data-track-index="34"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-15"
-        src="assets/sfx/impact-bass-1.mp3"
-        data-start="134"
-        data-duration="2.12"
-        data-track-index="35"
-        data-volume="0.35"
-      ></audio>
-      <audio
-        id="el-sfx-16"
-        src="assets/sfx/chime.mp3"
-        data-start="134"
-        data-duration="2.5"
-        data-track-index="36"
-        data-volume="0.35"
-      ></audio>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<title>FlagKan demo (EN)</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;src:url('assets/fonts/sarabun-thai-400-normal.woff2') format('woff2');unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;}
+@font-face{font-family:'Sarabun';font-weight:400;src:url('assets/fonts/sarabun-latin-400-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Sarabun';font-weight:500;src:url('assets/fonts/sarabun-thai-500-normal.woff2') format('woff2');unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;}
+@font-face{font-family:'Sarabun';font-weight:500;src:url('assets/fonts/sarabun-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Sarabun';font-weight:600;src:url('assets/fonts/sarabun-thai-600-normal.woff2') format('woff2');unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;}
+@font-face{font-family:'Sarabun';font-weight:600;src:url('assets/fonts/sarabun-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Sarabun';font-weight:700;src:url('assets/fonts/sarabun-thai-700-normal.woff2') format('woff2');unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;}
+@font-face{font-family:'Sarabun';font-weight:700;src:url('assets/fonts/sarabun-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Sarabun';font-weight:800;src:url('assets/fonts/sarabun-thai-800-normal.woff2') format('woff2');unicode-range:U+02D7,U+0303,U+0331,U+0E01-0E5B,U+200C-200D,U+25CC;}
+@font-face{font-family:'Sarabun';font-weight:800;src:url('assets/fonts/sarabun-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'JetBrains Mono';font-weight:400;src:url('assets/fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'JetBrains Mono';font-weight:700;src:url('assets/fonts/jetbrains-mono-latin-700-normal.woff2') format('woff2');}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#16130E}
+#root{position:relative;width:100%;height:100%;overflow:hidden;background:#16130E;font-family:'Sarabun',sans-serif;color:#FFFDF7}
+#bg{position:absolute;inset:0;background:
+  radial-gradient(900px 600px at 12% 8%, rgba(183,50,31,.20), transparent 60%),
+  radial-gradient(800px 520px at 92% 18%, rgba(232,161,0,.12), transparent 60%),
+  radial-gradient(900px 700px at 70% 105%, rgba(11,122,85,.18), transparent 60%), #16130E}
+#grid{position:absolute;inset:0;background-image:radial-gradient(rgba(255,253,247,.06) 1.2px, transparent 1.3px);background-size:28px 28px}
+#stage{position:absolute;inset:0;perspective:1800px}
+#win{position:absolute;left:200px;top:34px;width:1520px;height:901px;border-radius:16px;overflow:hidden;background:#FFFDF7;border:2px solid #26211B;box-shadow:8px 8px 0 #000,0 40px 90px -20px rgba(0,0,0,.6);opacity:0}
+#bar{position:absolute;left:0;top:0;width:100%;height:46px;background:#FCEFD9;border-bottom:2px solid #26211B;display:flex;align-items:center}
+#dots{display:flex;gap:8px;margin-left:18px}
+#dots i{display:block;width:14px;height:14px;border-radius:50%;border:2px solid #26211B}
+#urlbox{position:absolute;left:50%;top:8px;width:560px;margin-left:-280px;height:28px;border-radius:99px;background:#FFFDF7;border:2px solid #26211B}
+.url{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 15px 'JetBrains Mono',monospace;color:#5E5242;opacity:0}
+.url::before{content:'';display:inline-block;width:9px;height:11px;margin-right:9px;border:2px solid #8F806A;border-radius:2px 2px 3px 3px}
+.chap{position:absolute;right:16px;top:7px;height:30px;border-radius:99px;display:flex;align-items:center;gap:10px;padding:0 14px;border-radius:15px;background:#26211B;color:#FFFDF7;font-weight:700;font-size:16px;opacity:0;white-space:nowrap}
+.chap b{font:700 13px 'JetBrains Mono',monospace;color:#E8A100}
+#view{position:absolute;left:0;top:46px;width:1520px;height:855px;overflow:hidden;background:#FFFDF7}
+.cam{position:absolute;inset:0;opacity:0}
+.foot{position:absolute;left:0;top:0;width:1520px;height:855px;object-fit:cover}
+.marks{position:absolute;left:0;top:0;width:1520px;height:855px}
+.ring{position:absolute;opacity:0}
+.tag{position:absolute;display:flex;align-items:center;background:#FFFFFF;color:#26211B;font-weight:800;white-space:nowrap;opacity:0;border-style:solid;border-color:#26211B}
+.tag i{display:inline-block;border-radius:50%}
+#prog{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,248,234,.08)}
+#progfill{display:block;width:100%;height:100%;background:linear-gradient(90deg,#E0523A,#F2B233,#2FBF86);transform-origin:0 50%}
+#capband{position:absolute;left:0;right:0;top:935px;bottom:0;opacity:0}
+.cap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 160px}
+.cap.ink span{color:#26211B;text-shadow:none}
+.cap span{display:block;text-align:center;font-weight:600;font-size:34px;line-height:1.3;color:#FFFDF7;letter-spacing:-0.2px;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="144.176" data-width="1920" data-height="1080">
+  <div id="bg"></div><div id="grid"></div>
+  <div id="stage">
+    <div id="win">
+      <div id="bar"><div id="dots"><i style="background:#B7321F"></i><i style="background:#E8A100"></i><i style="background:#0B7A55"></i></div>
+        <div id="urlbox"><span class="url" id="u-open">flag.sornkan.com</span><span class="url" id="u-board">flag.sornkan.com/board.html</span><span class="url" id="u-coin">flag.sornkan.com/board.html</span><span class="url" id="u-check">flag.sornkan.com/board.html</span><span class="url" id="u-grade">flag.sornkan.com/proof</span><span class="url" id="u-proof">flag.sornkan.com/proof</span><span class="url" id="u-api">flag.sornkan.com/api/proof</span><span class="url" id="u-outro">flag.sornkan.com</span></div><span class="chap" id="c-open"><b>00</b>FlagKan</span><span class="chap" id="c-board"><b>01</b>Live board</span><span class="chap" id="c-coin"><b>02</b>Coin verdict</span><span class="chap" id="c-check"><b>03</b>On-demand check</span><span class="chap" id="c-grade"><b>04</b>Graded in 6h</span><span class="chap" id="c-proof"><b>05</b>Criteria</span><span class="chap" id="c-api"><b>06</b>Open API</span></div>
+      <div id="view">
+      <div class="cam" id="cam-open">
+        <video id="v-open" class="clip foot" data-layout-allow-overflow src="assets/cap/landing-en.mp4" muted playsinline data-start="0" data-duration="12.891" data-media-start="0" data-track-index="1"></video>
+        <div class="marks" id="mk-open" data-layout-allow-overflow></div>
+      </div>
+      <div class="cam" id="cam-board">
+        <video id="v-board" class="clip foot" data-layout-allow-overflow src="assets/cap/board-en.mp4" muted playsinline data-start="12.191" data-duration="20.363" data-media-start="5.715" data-track-index="1"></video>
+        <div class="marks" id="mk-board" data-layout-allow-overflow>
+          <div class="ring" id="m-board-0-r" style="left:888.266px;top:126.155px;width:43.245px;height:27.412px;border:2.071px solid #0B7A55;border-radius:7.101px;box-shadow:0 0 0 3.55px #0B7A5526"></div>
+          <div class="tag" id="m-board-0-t" style="left:888.266px;top:159.484px;font-size:14.201px;padding:4.142px 8.284px;border-radius:58.58px;border-width:1.183px;box-shadow:2.367px 2.367px 0 #26211B"><i style="background:#0B7A55;width:5.325px;height:5.325px;margin-right:5.325px"></i>live connection</div>
+          <div class="ring" id="m-board-1-r" style="left:148.358px;top:256.025px;width:1223.284px;height:137.117px;border:2.979px solid #E8A100;border-radius:10.213px;box-shadow:0 0 0 5.106px #E8A10026"></div>
+          <div class="tag" id="m-board-1-t" style="left:148.358px;top:401.652px;font-size:20.426px;padding:5.957px 11.915px;border-radius:84.255px;border-width:1.702px;box-shadow:3.404px 3.404px 0 #26211B"><i style="background:#E8A100;width:7.66px;height:7.66px;margin-right:7.66px"></i>pushed live over WebSocket</div>
+          <div class="ring" id="m-board-2-r" style="left:478.519px;top:219.908px;width:151.294px;height:255.794px;border:3.078px solid #B7321F;border-radius:10.554px;box-shadow:0 0 0 5.277px #B7321F26"></div>
+          <div class="tag" id="m-board-2-t" style="left:478.519px;bottom:643.887px;font-size:21.108px;padding:6.157px 12.313px;border-radius:87.071px;border-width:1.759px;box-shadow:3.518px 3.518px 0 #26211B"><i style="background:#B7321F;width:7.916px;height:7.916px;margin-right:7.916px"></i>the light</div>
+          <div class="ring" id="m-board-3-r" style="left:615.742px;top:219.908px;width:144.961px;height:255.794px;border:3.078px solid #26211B;border-radius:10.554px;box-shadow:0 0 0 5.277px #26211B26"></div>
+          <div class="tag" id="m-board-3-t" style="left:615.742px;bottom:643.887px;font-size:21.108px;padding:6.157px 12.313px;border-radius:87.071px;border-width:1.759px;box-shadow:3.518px 3.518px 0 #26211B"><i style="background:#26211B;width:7.916px;height:7.916px;margin-right:7.916px"></i>confidence</div>
+          <div class="ring" id="m-board-4-r" style="left:899.686px;top:219.908px;width:141.794px;height:255.794px;border:3.078px solid #26211B;border-radius:10.554px;box-shadow:0 0 0 5.277px #26211B26"></div>
+          <div class="tag" id="m-board-4-t" style="left:899.686px;bottom:643.887px;font-size:21.108px;padding:6.157px 12.313px;border-radius:87.071px;border-width:1.759px;box-shadow:3.518px 3.518px 0 #26211B"><i style="background:#26211B;width:7.916px;height:7.916px;margin-right:7.916px"></i>price · liquidity</div>
+          <div class="ring" id="m-board-5-r" style="left:1028.464px;top:219.908px;width:169.239px;height:255.794px;border:3.078px solid #B7321F;border-radius:10.554px;box-shadow:0 0 0 5.277px #B7321F26"></div>
+          <div class="tag" id="m-board-5-t" style="left:1028.464px;bottom:643.887px;font-size:21.108px;padding:6.157px 12.313px;border-radius:87.071px;border-width:1.759px;box-shadow:3.518px 3.518px 0 #26211B"><i style="background:#B7321F;width:7.916px;height:7.916px;margin-right:7.916px"></i>biggest wallet’s share</div></div>
+      </div>
+      <div class="cam" id="cam-coin">
+        <video id="v-coin" class="clip foot" data-layout-allow-overflow src="assets/cap/coin-en.mp4" muted playsinline data-start="31.854" data-duration="36.262" data-media-start="0" data-track-index="1"></video>
+        <div class="marks" id="mk-coin" data-layout-allow-overflow>
+          <div class="ring" id="m-coin-0-r" style="left:452.845px;top:119.289px;width:614.31px;height:111.865px;border:1.842px solid #B7321F;border-radius:6.316px;box-shadow:0 0 0 3.158px #B7321F26"></div>
+          <div class="tag" id="m-coin-0-t" style="left:452.845px;top:236.418px;font-size:12.632px;padding:3.684px 7.368px;border-radius:52.105px;border-width:1.053px;box-shadow:2.105px 2.105px 0 #26211B"><i style="background:#B7321F;width:4.737px;height:4.737px;margin-right:4.737px"></i>model odds: red · yellow · green</div>
+          <div class="ring" id="m-coin-1-r" style="left:452.484px;top:365.929px;width:615.032px;height:152.698px;border:2px solid #E8A100;border-radius:6.857px;box-shadow:0 0 0 3.429px #E8A10026"></div>
+          <div class="tag" id="m-coin-1-t" style="left:452.484px;bottom:494.786px;font-size:13.714px;padding:4px 8px;border-radius:56.571px;border-width:1.143px;box-shadow:2.286px 2.286px 0 #26211B"><i style="background:#E8A100;width:5.143px;height:5.143px;margin-right:5.143px"></i>on-chain signals · Solami RPC</div>
+          <div class="ring" id="m-coin-2-r" style="left:766.556px;top:462.556px;width:300.389px;height:55.5px;border:1.75px solid #0B7A55;border-radius:6px;box-shadow:0 0 0 3px #0B7A5526"></div>
+          <div class="tag" id="m-coin-2-t" style="left:766.556px;top:523.056px;font-size:12px;padding:3.5px 7px;border-radius:49.5px;border-width:1px;box-shadow:2px 2px 0 #26211B"><i style="background:#0B7A55;width:4.5px;height:4.5px;margin-right:4.5px"></i>Jev · TypeSafe AI judge</div>
+          <div class="ring" id="m-coin-3-r" style="left:452.611px;top:235.167px;width:614.778px;height:102.833px;border:1.944px solid #26211B;border-radius:6.667px;box-shadow:0 0 0 3.333px #26211B26"></div>
+          <div class="tag" id="m-coin-3-t" style="left:452.611px;top:343.556px;font-size:13.333px;padding:3.889px 7.778px;border-radius:55px;border-width:1.111px;box-shadow:2.222px 2.222px 0 #26211B"><i style="background:#26211B;width:5px;height:5px;margin-right:5px"></i>light = LightGBM model + hard rules</div></div>
+      </div>
+      <div class="cam" id="cam-check">
+        <video id="v-check" class="clip foot" data-layout-allow-overflow src="assets/cap/check-en.mp4" muted playsinline data-start="67.416" data-duration="11.968" data-media-start="0" data-track-index="1"></video>
+        <div class="marks" id="mk-check" data-layout-allow-overflow>
+          <div class="ring" id="m-check-0-r" style="left:948.111px;top:102.611px;width:421.778px;height:50.222px;border:1.75px solid #E8A100;border-radius:6px;box-shadow:0 0 0 3px #E8A10026"></div>
+          <div class="tag" id="m-check-0-t" style="left:948.111px;top:157.833px;font-size:12px;padding:3.5px 7px;border-radius:49.5px;border-width:1px;box-shadow:2px 2px 0 #26211B"><i style="background:#E8A100;width:4.5px;height:4.5px;margin-right:4.5px"></i>any Solana mint</div>
+          <div class="ring" id="m-check-1-r" style="left:452.35px;top:118.794px;width:615.301px;height:112.856px;border:2.059px solid #B7321F;border-radius:7.059px;box-shadow:0 0 0 3.529px #B7321F26"></div>
+          <div class="tag" id="m-check-1-t" style="left:452.35px;top:237.533px;font-size:14.118px;padding:4.118px 8.235px;border-radius:58.235px;border-width:1.176px;box-shadow:2.353px 2.353px 0 #26211B"><i style="background:#B7321F;width:5.294px;height:5.294px;margin-right:5.294px"></i>judged fresh, in seconds</div></div>
+      </div>
+      <div class="cam" id="cam-grade">
+        <video id="v-grade" class="clip foot" data-layout-allow-overflow src="assets/cap/grade-en.mp4" muted playsinline data-start="78.684" data-duration="14.942" data-media-start="0" data-track-index="1"></video>
+        <div class="marks" id="mk-grade" data-layout-allow-overflow></div>
+      </div>
+      <div class="cam" id="cam-proof">
+        <video id="v-proof" class="clip foot" data-layout-allow-overflow src="assets/cap/proof-en.mp4" muted playsinline data-start="92.926" data-duration="33.172" data-media-start="0" data-track-index="1"></video>
+        <div class="marks" id="mk-proof" data-layout-allow-overflow>
+          <div class="ring" id="m-proof-0-r" style="left:212.521px;top:312.799px;width:372.958px;height:263.18px;border:2.616px solid #B7321F;border-radius:8.969px;box-shadow:0 0 0 4.484px #B7321F26"></div>
+          <div class="tag" id="m-proof-0-t" style="right:950.963px;bottom:295.463px;font-size:17.937px;padding:5.232px 10.463px;border-radius:73.991px;border-width:1.495px;box-shadow:2.99px 2.99px 0 #26211B"><i style="background:#B7321F;width:6.726px;height:6.726px;margin-right:6.726px"></i>the base rate</div>
+          <div class="ring" id="m-proof-1-r" style="left:573.521px;top:312.799px;width:372.958px;height:263.18px;border:2.616px solid #26211B;border-radius:8.969px;box-shadow:0 0 0 4.484px #26211B26"></div>
+          
+          <div class="ring" id="m-proof-2-r" style="left:936.056px;top:314.333px;width:369.889px;height:260.111px;border:1.944px solid #0B7A55;border-radius:6.667px;box-shadow:0 0 0 3.333px #0B7A5526"></div>
+          
+          <div class="ring" id="m-proof-3-r" style="left:843.68px;top:521.735px;width:440.64px;height:58.529px;border:2.644px solid #0B7A55;border-radius:9.063px;box-shadow:0 0 0 4.532px #0B7A5526"></div>
+          
+          
+          <div class="tag" id="m-proof-4-t" style="right:710.407px;top:465.063px;font-size:18.127px;padding:5.287px 10.574px;border-radius:74.773px;border-width:1.511px;box-shadow:3.021px 3.021px 0 #26211B"><i style="background:#0B7A55;width:6.798px;height:6.798px;margin-right:6.798px"></i>safest 10% vs a random pick</div>
+          <div class="ring" id="m-proof-5-r" style="left:211.402px;top:339.124px;width:1097.196px;height:438.529px;border:2.644px solid #E8A100;border-radius:9.063px;box-shadow:0 0 0 4.532px #E8A10026"></div>
+          <div class="tag" id="m-proof-5-t" style="left:211.402px;bottom:523.428px;font-size:18.127px;padding:5.287px 10.574px;border-radius:74.773px;border-width:1.511px;box-shadow:3.021px 3.021px 0 #26211B"><i style="background:#E8A100;width:6.798px;height:6.798px;margin-right:6.798px"></i>LightGBM vs the old model · same coins, live</div></div>
+      </div>
+      </div>
     </div>
+  </div>
+  <div id="overlays"><style>
+.full{position:absolute;inset:0;pointer-events:none}
+.paper{position:absolute;inset:0;background:#FFFDF7}
+.paper::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(38,33,27,.07) 1.2px, transparent 1.3px);background-size:28px 28px}
+.wm{position:relative;z-index:1;display:flex;align-items:center;gap:.42em;font-weight:800;letter-spacing:-.02em;color:#26211B;line-height:1}
+.wm .wmdots{display:flex;gap:.16em}
+.wm .wmdots i{display:block;width:.5em;height:.5em;border-radius:50%;border:.045em solid #26211B;box-sizing:border-box}
+.wm .d1{background:#B7321F}.wm .d2{background:#E8A100}.wm .d3{background:#0B7A55}
+.wm .wmt{padding:0 .04em .16em 0;margin-bottom:-.16em}
+.wm .wmt b{color:#B7321F;font-weight:800}
+.sub{position:relative;z-index:1;font-weight:700;color:#6E6252;letter-spacing:.01em}
+.pill{position:relative;z-index:1;display:inline-flex;align-items:center;gap:12px;padding:12px 28px;border-radius:99px;background:#FFFFFF;color:#26211B;border:2px solid #26211B;box-shadow:5px 5px 0 #26211B;font:700 30px 'JetBrains Mono',monospace}
+.chipx{display:inline-flex;align-items:center;gap:10px;padding:8px 18px;border-radius:99px;border:2px solid #26211B;color:#26211B;font-weight:700;font-size:21px;background:#FFFFFF}
+.chipx i{display:block;width:11px;height:11px;border-radius:50%;border:2px solid #26211B}
+.rcard{position:absolute;width:420px;padding:24px 28px;border-radius:16px;background:#FFFFFF;color:#26211B;border:2px solid #26211B;box-shadow:6px 6px 0 #26211B}
+.rcard .k{font:700 15px 'JetBrains Mono',monospace;letter-spacing:.08em;color:#B7321F;text-transform:uppercase}
+.rcard .v{margin-top:8px;font-weight:800;font-size:44px;line-height:1.05;letter-spacing:-.02em}
+.rcard .d{margin-top:8px;font-weight:500;font-size:21px;line-height:1.35;color:#6E6252}
+.term{position:absolute;left:190px;top:150px;width:1540px;height:640px;border-radius:16px;background:#16130E;border:2px solid #FFFDF7;box-shadow:8px 8px 0 #000;overflow:hidden}
+.term .tb{height:44px;background:#26211B;display:flex;align-items:center;padding-left:18px;gap:8px;border-bottom:2px solid #FFFDF7}
+.term .tb i{display:block;width:14px;height:14px;border-radius:50%;border:2px solid #FFFDF7}
+.term .tb span{margin-left:auto;margin-right:auto;font:500 15px 'JetBrains Mono',monospace;color:#CDBFA6;transform:translateX(-30px)}
+.term pre{margin:0;padding:26px 30px;font:400 21px/1.6 'JetBrains Mono',monospace;color:#E9DFCC;white-space:pre}
+.term .cmdl{color:#FFFDF7;font-weight:700}
+.term .pr{color:#3FBF8A}.term .ky{color:#E8A100}.term .nm{color:#FFFDF7;font-weight:700}.term .st{color:#E99A86}
+.term .ln{display:block;opacity:0}
+.term .hl{background:rgba(232,161,0,.16);box-shadow:inset 4px 0 0 #E8A100}
+.term .typed{display:inline-block;overflow:hidden;vertical-align:bottom;white-space:pre}
+.asof{position:absolute;right:236px;top:98px;padding:8px 16px;border-radius:99px;background:#FFFFFF;color:#26211B;border:2px solid #26211B;box-shadow:4px 4px 0 #26211B;font:700 17px 'Sarabun',sans-serif;opacity:0}
+.asof i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#0B7A55;border:2px solid #26211B;margin-right:9px;vertical-align:0}
+</style>
+<div class="full" id="sting"><div class="paper" id="sting-paper"></div><div id="sting-in" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px">
+  <div class="wm" id="wm-open" style="font-size:150px"><span class="wmdots"><i class="d1"></i><i class="d2"></i><i class="d3"></i></span><span class="wmt"><b>Flag</b>Kan</span></div>
+  <div class="sub" id="sting-sub" style="font-size:36px">Live product demo</div>
+</div></div><div class="rcard" id="rc-0" style="left:1250px;top:130px;opacity:0"><div class="k">dead if</div><div class="v">Price −90%</div><div class="d">or worse, within 6 hours</div></div><div class="rcard" id="rc-1" style="left:1250px;top:366px;opacity:0"><div class="k">or</div><div class="v">Liquidity < $1K</div><div class="d">from the same feed as first sight</div></div><div class="rcard" id="rc-2" style="left:1250px;top:602px;opacity:0"><div class="k">or</div><div class="v">No trades</div><div class="d">in the final hour</div></div><div class="asof" id="asof-proof"><i></i>Live data as of 13 Oct 2026, 01:43 UTC</div><div class="full" id="api-dim" style="background:rgba(22,19,14,.6);opacity:0"></div>
+<div class="term" id="term" style="opacity:0"><div class="tb"><i style="background:#B7321F"></i><i style="background:#E8A100"></i><i style="background:#0B7A55"></i><span>~ — public API, no key needed</span></div><pre><span class="ln cmdl" id="tc-0"><span class="pr">$ </span><span class="typed" id="tt-0" style="width:0ch">curl -s flag.sornkan.com/api/proof | jq -c '.headline | {n, base_dead_rate, accuracy, baseline_all_red_accuracy}'</span></span><span class="ln hl" id="to-0">{&quot;n&quot;:<span class="nm">534</span>,&quot;base_dead_rate&quot;:<span class="nm">0.974</span>,&quot;accuracy&quot;:<span class="nm">0.983</span>,&quot;baseline_all_red_accuracy&quot;:<span class="nm">0.974</span>}</span><span class="ln" style="opacity:1;height:14px"></span><span class="ln cmdl" id="tc-1"><span class="pr">$ </span><span class="typed" id="tt-1" style="width:0ch">curl -s flag.sornkan.com/api/proof | jq '.ranking.first_sight.top[] | select(.frac == 0.1)'</span></span><span class="ln" id="to-1">{</span><span class="ln" id="to-2">  &quot;frac&quot;: <span class="nm">0.1</span>,</span><span class="ln" id="to-3">  &quot;n&quot;: <span class="nm">1139</span>,</span><span class="ln hl" id="to-4">  &quot;survival&quot;: <span class="nm">0.088</span>,</span><span class="ln hl" id="to-5">  &quot;lift&quot;: <span class="nm">1.56</span>,</span><span class="ln" id="to-6">  &quot;ci_lo&quot;: <span class="nm">0.072</span>,</span><span class="ln" id="to-7">  &quot;ci_hi&quot;: <span class="nm">0.105</span>,</span><span class="ln" id="to-8">  &quot;tie_share&quot;: <span class="nm">1</span></span><span class="ln" id="to-9">}</span><span class="ln" style="opacity:1;height:14px"></span></pre></div><div class="full" id="outro-wrap"><div class="paper" id="outro-paper"></div></div><div class="full" id="outro" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px">
+  <div class="wm" id="wm-out" style="font-size:128px"><span class="wmdots"><i class="d1"></i><i class="d2"></i><i class="d3"></i></span><span class="wmt"><b>Flag</b>Kan</span></div>
+  <div class="sub" id="out-tag" style="font-size:48px;color:#26211B;font-weight:800;letter-spacing:-0.02em">Check before you buy.</div>
+  <div class="pill" id="out-url"><span style="color:#B7321F">↗</span>flag.sornkan.com</div>
+  <div id="out-chips" style="display:flex;gap:14px;margin-top:18px">
+    <span class="chipx"><i style="background:#E8A100"></i>Solami RPC</span>
+    <span class="chipx"><i style="background:#0B7A55"></i>TypeSafe Jev</span>
+    <span class="chipx"><i style="background:#B7321F"></i>LightGBM</span>
+    <span class="chipx"><i style="background:#FCEFD9"></i>Cloudflare Workers</span>
+  </div>
+  <div class="sub" id="out-nfa" style="font-size:20px;color:#8F806A;margin-top:6px;font-weight:600">FlagKan flags risk patterns. It is not financial advice.</div>
+</div></div>
+  <div id="capband"><div class="cap clip ink" id="cap-open-0" data-start="0.6" data-duration="2.176" data-track-index="5"><span>This is FlagKan, running live.</span></div>
+<div class="cap clip" id="cap-open-1" data-start="3.355" data-duration="4.479" data-track-index="5"><span>It puts a red, yellow or green light on every brand-new Solana coin —</span></div>
+<div class="cap clip" id="cap-open-2" data-start="7.854" data-duration="3.306" data-track-index="5"><span>then grades its own call in public, six hours later.</span></div>
+<div class="cap clip" id="cap-board-0" data-start="12.841" data-duration="1.336" data-track-index="5"><span>This is the live board.</span></div>
+<div class="cap clip" id="cap-board-1" data-start="14.197" data-duration="2.716" data-track-index="5"><span>New coins land here about a minute after they launch.</span></div>
+<div class="cap clip" id="cap-board-2" data-start="16.933" data-duration="5.102" data-track-index="5"><span>No refresh button: the server pushes every new coin over a WebSocket, live.</span></div>
+<div class="cap clip" id="cap-board-3" data-start="22.055" data-duration="4.245" data-track-index="5"><span>Each row shows the light, the confidence, price, liquidity,</span></div>
+<div class="cap clip" id="cap-board-4" data-start="26.32" data-duration="2.494" data-track-index="5"><span>and how much of the coin the biggest wallet holds.</span></div>
+<div class="cap clip" id="cap-board-5" data-start="28.834" data-duration="3.32" data-track-index="5"><span>Filter by light, or search any name or mint.</span></div>
+<div class="cap clip" id="cap-coin-0" data-start="32.504" data-duration="2.2" data-track-index="5"><span>Open any coin for the full verdict.</span></div>
+<div class="cap clip" id="cap-coin-1" data-start="34.724" data-duration="3.43" data-track-index="5"><span>The bar shows the model's odds for red, yellow and green.</span></div>
+<div class="cap clip" id="cap-coin-2" data-start="38.174" data-duration="6.793" data-track-index="5"><span>Under Why are the on-chain signals: whale share, the next ten holders, first-minute buys and coin age,</span></div>
+<div class="cap clip" id="cap-coin-3" data-start="44.987" data-duration="4.588" data-track-index="5"><span>read through Solami RPC. Price and liquidity come from the market feed.</span></div>
+<div class="cap clip" id="cap-coin-4" data-start="49.595" data-duration="5.266" data-track-index="5"><span>Check six is Jev, TypeSafe's AI judge, looking for wallets that move together.</span></div>
+<div class="cap clip" id="cap-coin-5" data-start="54.881" data-duration="4.331" data-track-index="5"><span>These are reference levels. The light itself comes from a LightGBM model</span></div>
+<div class="cap clip" id="cap-coin-6" data-start="59.232" data-duration="3.178" data-track-index="5"><span>trained on our own graded history, plus hard rules.</span></div>
+<div class="cap clip" id="cap-coin-7" data-start="62.43" data-duration="2.276" data-track-index="5"><span>And one tap switches everything to Thai.</span></div>
+<div class="cap clip" id="cap-check-0" data-start="68.066" data-duration="2.993" data-track-index="5"><span>Got a coin from a group chat? Paste the mint address.</span></div>
+<div class="cap clip" id="cap-check-1" data-start="71.079" data-duration="0.783" data-track-index="5"><span>Hit Check.</span></div>
+<div class="cap clip" id="cap-check-2" data-start="71.882" data-duration="5.588" data-track-index="5"><span>FlagKan reads the chain, runs the model and the AI judge, and answers in seconds.</span></div>
+<div class="cap clip" id="cap-grade-0" data-start="79.334" data-duration="2.08" data-track-index="5"><span>Then every light gets graded.</span></div>
+<div class="cap clip" id="cap-grade-1" data-start="81.498" data-duration="4.022" data-track-index="5"><span>About six hours after first sight, we check the same market feed again.</span></div>
+<div class="cap clip" id="cap-grade-2" data-start="85.54" data-duration="2.998" data-track-index="5"><span>A coin is dead if its price fell ninety percent,</span></div>
+<div class="cap clip" id="cap-grade-3" data-start="88.558" data-duration="4.668" data-track-index="5"><span>liquidity dropped under a thousand dollars, or nobody traded in the last hour.</span></div>
+<div class="cap clip" id="cap-proof-0" data-start="93.576" data-duration="1.607" data-track-index="5"><span>This is where we stay honest.</span></div>
+<div class="cap clip" id="cap-proof-1" data-start="95.36" data-duration="4.349" data-track-index="5"><span>About 97.4 percent of new coins are dead within six hours.</span></div>
+<div class="cap clip" id="cap-proof-2" data-start="99.729" data-duration="4.019" data-track-index="5"><span>So calling everything red is already 97.4 percent right.</span></div>
+<div class="cap clip" id="cap-proof-3" data-start="103.768" data-duration="4.398" data-track-index="5"><span>Accuracy isn't our skill — and we show that baseline next to every number.</span></div>
+<div class="cap clip" id="cap-proof-4" data-start="108.186" data-duration="2.222" data-track-index="5"><span>Our skill is finding the few survivors.</span></div>
+<div class="cap clip" id="cap-proof-5" data-start="110.428" data-duration="10.581" data-track-index="5"><span>Since the new model took over, the safest ten percent survived about 7 times more often than a random pick. It's an early, small sample: only 14 survivors so far.</span></div>
+<div class="cap clip" id="cap-proof-6" data-start="121.029" data-duration="4.569" data-track-index="5"><span>And LightGBM is compared with the old model, on the same coins, live.</span></div>
+<div class="cap clip" id="cap-api-0" data-start="126.048" data-duration="2.755" data-track-index="5"><span>Every number comes from a free public API.</span></div>
+<div class="cap clip" id="cap-api-1" data-start="129.149" data-duration="1.976" data-track-index="5"><span>Don't trust us — audit us.</span></div>
+<div class="cap clip ink" id="cap-outro-0" data-start="137.748" data-duration="1.993" data-track-index="5"><span>FlagKan. Check before you buy.</span></div>
+<div class="cap clip ink" id="cap-outro-1" data-start="139.761" data-duration="2.651" data-track-index="5"><span>Live now at flag.sornkan.com</span></div>
+</div>
+  <div id="prog"><i id="progfill"></i></div>
+<audio id="sfx-open-bass" src="assets/sfx/impact-bass-1.mp3" data-start="1.4" data-duration="2.12" data-track-index="24" data-volume="0.3"></audio>
+<audio id="sfx-open-whoosh" src="assets/sfx/whoosh.mp3" data-start="2.75" data-duration="0.57" data-track-index="23" data-volume="0.3"></audio>
+<audio id="sfx-open-pop1" src="assets/sfx/pop.mp3" data-start="0.25" data-duration="0.72" data-track-index="25" data-volume="0.3"></audio>
+<audio id="sfx-open-pop2" src="assets/sfx/pop.mp3" data-start="0.37" data-duration="0.72" data-track-index="26" data-volume="0.3"></audio>
+<audio id="sfx-open-pop3" src="assets/sfx/pop.mp3" data-start="0.49" data-duration="0.72" data-track-index="27" data-volume="0.3"></audio>
+<audio id="vo-open" src="assets/voice/open.wav" data-start="0" data-duration="12.541" data-track-index="10" data-volume="1"></audio>
+<audio id="sfx-board-fRed" src="assets/sfx/click-soft.mp3" data-start="29.707" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-board-fAll" src="assets/sfx/click-soft.mp3" data-start="30.51" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-board-q" src="assets/sfx/click-soft.mp3" data-start="31.217" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-board-tick-181" src="assets/sfx/pop.mp3" data-start="18.133" data-duration="0.72" data-track-index="23" data-volume="0.45"></audio>
+<audio id="vo-board" src="assets/voice/board.wav" data-start="12.541" data-duration="19.663" data-track-index="10" data-volume="1"></audio>
+<audio id="sfx-board-in" src="assets/sfx/whoosh-short.mp3" data-start="12.241" data-duration="0.57" data-track-index="21" data-volume="0.28"></audio>
+<audio id="sfx-coin-open" src="assets/sfx/click-soft.mp3" data-start="33.811" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-coin-close" src="assets/sfx/click-soft.mp3" data-start="62.344" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-coin-lang" src="assets/sfx/click-soft.mp3" data-start="63.414" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-coin-reopen" src="assets/sfx/click-soft.mp3" data-start="64.536" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="vo-coin" src="assets/voice/coin.wav" data-start="32.204" data-duration="35.562" data-track-index="10" data-volume="1"></audio>
+<audio id="sfx-coin-in" src="assets/sfx/whoosh-short.mp3" data-start="31.904" data-duration="0.57" data-track-index="21" data-volume="0.28"></audio>
+<audio id="sfx-check-focus" src="assets/sfx/click-soft.mp3" data-start="69.298" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-check-go" src="assets/sfx/click-soft.mp3" data-start="71.989" data-duration="0.37" data-track-index="22" data-volume="0.5"></audio>
+<audio id="sfx-check-tick-759" src="assets/sfx/pop.mp3" data-start="75.852" data-duration="0.72" data-track-index="23" data-volume="0.45"></audio>
+<audio id="vo-check" src="assets/voice/check.wav" data-start="67.766" data-duration="9.854" data-track-index="10" data-volume="1"></audio>
+<audio id="sfx-check-in" src="assets/sfx/whoosh-short.mp3" data-start="67.466" data-duration="0.57" data-track-index="21" data-volume="0.28"></audio>
+<audio id="sfx-grade-0" src="assets/sfx/click-soft.mp3" data-start="85.54" data-duration="0.37" data-track-index="28" data-volume="0.4"></audio>
+<audio id="sfx-grade-1" src="assets/sfx/click-soft.mp3" data-start="88.558" data-duration="0.37" data-track-index="29" data-volume="0.4"></audio>
+<audio id="sfx-grade-2" src="assets/sfx/click-soft.mp3" data-start="90.558" data-duration="0.37" data-track-index="30" data-volume="0.4"></audio>
+<audio id="vo-grade" src="assets/voice/grade.wav" data-start="79.034" data-duration="14.242" data-track-index="10" data-volume="1"></audio>
+<audio id="sfx-grade-in" src="assets/sfx/whoosh-short.mp3" data-start="78.734" data-duration="0.57" data-track-index="21" data-volume="0.28"></audio>
+<audio id="vo-proof" src="assets/voice/proof.wav" data-start="93.276" data-duration="32.472" data-track-index="10" data-volume="1"></audio>
+<audio id="sfx-proof-in" src="assets/sfx/whoosh-short.mp3" data-start="92.976" data-duration="0.57" data-track-index="21" data-volume="0.28"></audio>
+<audio id="sfx-api-type-0" src="assets/sfx/typing.mp3" data-start="126.348" data-duration="1.5" data-track-index="28" data-volume="0.3"></audio>
+<audio id="sfx-api-key-0" src="assets/sfx/key-press.mp3" data-start="128.198" data-duration="0.4" data-track-index="29" data-volume="0.35"></audio>
+<audio id="sfx-api-type-1" src="assets/sfx/typing.mp3" data-start="129.998" data-duration="1.456" data-track-index="30" data-volume="0.3"></audio>
+<audio id="sfx-api-key-1" src="assets/sfx/key-press.mp3" data-start="131.704" data-duration="0.4" data-track-index="31" data-volume="0.35"></audio>
+<audio id="vo-api" src="assets/voice/api.wav" data-start="125.748" data-duration="5.507" data-track-index="10" data-volume="1"></audio>
+<audio id="sfx-api-in" src="assets/sfx/whoosh-short.mp3" data-start="125.448" data-duration="0.57" data-track-index="21" data-volume="0.28"></audio>
+<audio id="sfx-out-impact" src="assets/sfx/impact-bass-1.mp3" data-start="138.198" data-duration="2.12" data-track-index="28" data-volume="0.3"></audio>
+<audio id="sfx-out-chime" src="assets/sfx/chime.mp3" data-start="139.748" data-duration="2.5" data-track-index="29" data-volume="0.22"></audio>
+<audio id="vo-outro" src="assets/voice/outro.wav" data-start="137.248" data-duration="6.928" data-track-index="10" data-volume="1"></audio>
+<audio id="music" src="assets/music/bed.wav" data-start="0" data-duration="144.176" data-track-index="40" data-volume="1"></audio>
 
-    <script>
-      window.__timelines = window.__timelines || {};
-      window.__timelines["main"] = gsap.timeline({ paused: true });
-    </script>
-  </body>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+tl.fromTo('#cam-open', {opacity: 1}, {opacity: 1, duration: 0.01, ease: 'none'}, 0);
+tl.set('#cam-open', {opacity: 0}, 12.891);
+tl.set('#cam-open .foot, #mk-open', {x: 0, y: 0, scale: 1, transformOrigin: '0 0'}, 0);
+tl.to('#cam-open .foot, #mk-open', {x: -89.3, y: 0, scale: 1.35, duration: 6, ease: 'power3.inOut'}, 5.5);
+
+tl.fromTo('#wm-open .d1', {scale: 0, opacity: 0}, {scale: 1, opacity: 1, duration: .45, ease: 'back.out(2.4)'}, .25);
+tl.fromTo('#wm-open .d2', {scale: 0, opacity: 0}, {scale: 1, opacity: 1, duration: .45, ease: 'back.out(2.4)'}, .37);
+tl.fromTo('#wm-open .d3', {scale: 0, opacity: 0}, {scale: 1, opacity: 1, duration: .45, ease: 'back.out(2.4)'}, .49);
+tl.fromTo('#wm-open .wmt', {opacity: 0, x: -30, clipPath: 'inset(0 100% 0 0)'}, {opacity: 1, x: 0, clipPath: 'inset(0 0% 0 0)', duration: .8, ease: 'power3.out'}, .9);
+tl.fromTo('#sting-sub', {opacity: 0, y: 16}, {opacity: 1, y: 0, duration: .6, ease: 'power2.out'}, 1.5);
+tl.to('#sting-in', {opacity: 0, scale: 1.06, y: -50, duration: .55, ease: 'power2.in'}, 2.6);
+tl.to('#sting-paper', {yPercent: -100, duration: .8, ease: 'power3.inOut'}, 2.75);
+tl.fromTo('#cam-board', {opacity: 0}, {opacity: 1, duration: 0.35, ease: 'none'}, 12.191);
+tl.set('#cam-board', {opacity: 0}, 32.554);
+tl.set('#cam-board .foot, #mk-board', {x: 0, y: 0, scale: 1, transformOrigin: '0 0'}, 12.191);
+tl.to('#cam-board .foot, #mk-board', {x: -153.427, y: 0, scale: 1.69, duration: 1, ease: 'power3.inOut'}, 14.397);
+tl.to('#cam-board .foot, #mk-board', {x: -132.659, y: 0, scale: 1.175, duration: 1, ease: 'power3.inOut'}, 17.533);
+tl.to('#cam-board .foot, #mk-board', {x: -104.455, y: 0, scale: 1.137, duration: 0.9, ease: 'power3.inOut'}, 21.855);
+tl.to('#cam-board .foot, #mk-board', {x: 0, y: 0, scale: 1.7, duration: 0.9, ease: 'power3.inOut'}, 28.534);
+tl.to('#cam-board .foot, #mk-board', {x: 0, y: 0, scale: 1, duration: 1.1, ease: 'power3.inOut'}, 32.034);
+tl.fromTo('#m-board-0-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 15.097);
+tl.fromTo('#m-board-0-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 15.217);
+tl.to(['#m-board-0-r', '#m-board-0-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 17.533);
+tl.fromTo('#m-board-1-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 18.233);
+tl.fromTo('#m-board-1-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 18.353);
+tl.to(['#m-board-1-r', '#m-board-1-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 22.055);
+tl.fromTo('#m-board-2-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 22.255);
+tl.fromTo('#m-board-2-t', {opacity: 0, y: 8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 22.375);
+tl.to(['#m-board-2-r', '#m-board-2-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 23.555);
+tl.fromTo('#m-board-3-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 23.555);
+tl.fromTo('#m-board-3-t', {opacity: 0, y: 8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 23.675);
+tl.to(['#m-board-3-r', '#m-board-3-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 24.555);
+tl.fromTo('#m-board-4-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 24.555);
+tl.fromTo('#m-board-4-t', {opacity: 0, y: 8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 24.675);
+tl.to(['#m-board-4-r', '#m-board-4-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 25.955);
+tl.fromTo('#m-board-5-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 26.42);
+tl.fromTo('#m-board-5-t', {opacity: 0, y: 8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 26.54);
+tl.to(['#m-board-5-r', '#m-board-5-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 28.534);
+tl.fromTo('#cam-coin', {opacity: 0}, {opacity: 1, duration: 0.35, ease: 'none'}, 31.854);
+tl.set('#cam-coin', {opacity: 0}, 68.116);
+tl.set('#cam-coin .foot, #mk-coin', {x: 0, y: 0, scale: 1, transformOrigin: '0 0'}, 31.854);
+tl.to('#cam-coin .foot, #mk-coin', {x: -175.562, y: -25.988, scale: 1.231, duration: 0.2, ease: 'power3.inOut'}, 34.532);
+tl.to('#cam-coin .foot, #mk-coin', {x: -684, y: 0, scale: 1.9, duration: 0.9, ease: 'power3.inOut'}, 34.624);
+tl.to('#cam-coin .foot, #mk-coin', {x: -570, y: -346.486, scale: 1.75, duration: 1, ease: 'power3.inOut'}, 38.074);
+tl.to('#cam-coin .foot, #mk-coin', {x: -1073.5, y: -553.111, scale: 2, duration: 0.9, ease: 'power3.inOut'}, 49.495);
+tl.to('#cam-coin .foot, #mk-coin', {x: -608, y: -88.35, scale: 1.8, duration: 1, ease: 'power3.inOut'}, 54.781);
+tl.to('#cam-coin .foot, #mk-coin', {x: 0, y: 0, scale: 1, duration: 0.7, ease: 'power3.inOut'}, 61.43);
+tl.to('#cam-coin .foot, #mk-coin', {x: -175.562, y: -25.988, scale: 1.231, duration: 0.9, ease: 'power3.inOut'}, 65.546);
+tl.fromTo('#m-coin-0-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 35.124);
+tl.fromTo('#m-coin-0-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 35.244);
+tl.to(['#m-coin-0-r', '#m-coin-0-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 38.074);
+tl.fromTo('#m-coin-1-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 38.674);
+tl.fromTo('#m-coin-1-t', {opacity: 0, y: 8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 38.794);
+tl.to(['#m-coin-1-r', '#m-coin-1-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 49.395);
+tl.fromTo('#m-coin-2-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 49.995);
+tl.fromTo('#m-coin-2-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 50.115);
+tl.to(['#m-coin-2-r', '#m-coin-2-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 54.781);
+tl.fromTo('#m-coin-3-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 55.481);
+tl.fromTo('#m-coin-3-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 55.601);
+tl.to(['#m-coin-3-r', '#m-coin-3-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 61.83);
+tl.fromTo('#cam-check', {opacity: 0}, {opacity: 1, duration: 0.35, ease: 'none'}, 67.416);
+tl.set('#cam-check', {opacity: 0}, 79.384);
+tl.set('#cam-check .foot, #mk-check', {x: 0, y: 0, scale: 1, transformOrigin: '0 0'}, 67.416);
+tl.to('#cam-check .foot, #mk-check', {x: -1520, y: 0, scale: 2, duration: 1, ease: 'power3.inOut'}, 67.966);
+tl.to('#cam-check .foot, #mk-check', {x: -175.562, y: -25.988, scale: 1.231, duration: 0.9, ease: 'power3.inOut'}, 73.034);
+tl.to('#cam-check .foot, #mk-check', {x: -532, y: 0, scale: 1.7, duration: 1, ease: 'power3.inOut'}, 75.034);
+tl.fromTo('#m-check-0-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 69.626);
+tl.fromTo('#m-check-0-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 69.746);
+tl.to(['#m-check-0-r', '#m-check-0-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 72.389);
+tl.fromTo('#m-check-1-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 75.434);
+tl.fromTo('#m-check-1-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 75.554);
+tl.to(['#m-check-1-r', '#m-check-1-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 78.434);
+tl.fromTo('#cam-grade', {opacity: 0}, {opacity: 1, duration: 0.35, ease: 'none'}, 78.684);
+tl.set('#cam-grade', {opacity: 0}, 93.626);
+tl.set('#cam-grade .foot, #mk-grade', {x: 0, y: 0, scale: 1, transformOrigin: '0 0'}, 78.684);
+tl.to('#cam-grade .foot, #mk-grade', {x: -229.512, y: -258.201, scale: 1.302, duration: 1.1, ease: 'power3.inOut'}, 81.698);
+tl.to('#cam-grade .foot, #mk-grade', {x: 0, y: 0, scale: 1, duration: 0.9, ease: 'power3.inOut'}, 85.14);
+tl.fromTo('#rc-0', {opacity: 0, x: 60}, {opacity: 1, x: 0, duration: .55, ease: 'power3.out'}, 85.54);
+tl.to('#rc-0', {opacity: 0, x: 40, duration: .35, ease: 'power2.in'}, 92.826);
+tl.fromTo('#rc-1', {opacity: 0, x: 60}, {opacity: 1, x: 0, duration: .55, ease: 'power3.out'}, 88.558);
+tl.to('#rc-1', {opacity: 0, x: 40, duration: .35, ease: 'power2.in'}, 92.826);
+tl.fromTo('#rc-2', {opacity: 0, x: 60}, {opacity: 1, x: 0, duration: .55, ease: 'power3.out'}, 90.558);
+tl.to('#rc-2', {opacity: 0, x: 40, duration: .35, ease: 'power2.in'}, 92.826);
+tl.fromTo('#cam-proof', {opacity: 0}, {opacity: 1, duration: 0.35, ease: 'none'}, 92.926);
+tl.set('#cam-proof', {opacity: 0}, 126.098);
+tl.set('#cam-proof .foot, #mk-proof', {x: -190, y: -127.986, scale: 1.25, transformOrigin: '0 0'}, 92.926);
+tl.to('#cam-proof .foot, #mk-proof', {x: -257.1, y: -167.221, scale: 1.338, duration: 1, ease: 'power3.inOut'}, 95.26);
+tl.to('#cam-proof .foot, #mk-proof', {x: -1216, y: -372.4, scale: 1.8, duration: 1, ease: 'power3.inOut'}, 108.086);
+tl.to('#cam-proof .foot, #mk-proof', {x: -193.31, y: 0, scale: 1.254, duration: 0.5, ease: 'power3.inOut'}, 109.828);
+tl.to('#cam-proof .foot, #mk-proof', {x: -245.882, y: -276.618, scale: 1.324, duration: 1, ease: 'power3.inOut'}, 111.845);
+tl.to('#cam-proof .foot, #mk-proof', {x: -193.31, y: 0, scale: 1.254, duration: 0.5, ease: 'power3.inOut'}, 120.429);
+tl.to('#cam-proof .foot, #mk-proof', {x: -245.882, y: -276.618, scale: 1.324, duration: 1, ease: 'power3.inOut'}, 122.442);
+tl.fromTo('#m-proof-0-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 95.96);
+tl.fromTo('#m-proof-0-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 96.08);
+tl.to(['#m-proof-0-r', '#m-proof-0-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 99.529);
+tl.fromTo('#m-proof-1-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 100.329);
+tl.fromTo('#m-proof-1-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 100.449);
+tl.to(['#m-proof-1-r', '#m-proof-1-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 107.986);
+tl.fromTo('#m-proof-2-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 108.686);
+tl.fromTo('#m-proof-2-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 108.806);
+tl.to(['#m-proof-2-r', '#m-proof-2-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 110.028);
+tl.fromTo('#m-proof-3-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 112.945);
+tl.fromTo('#m-proof-3-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 113.065);
+tl.to(['#m-proof-3-r', '#m-proof-3-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 120.729);
+tl.fromTo('#m-proof-4-t', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 113.165);
+tl.to(['#m-proof-4-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 120.729);
+tl.fromTo('#m-proof-5-r', {opacity: 0, scale: 1.06}, {opacity: 1, scale: 1, duration: 0.35, ease: 'power2.out'}, 123.542);
+tl.fromTo('#m-proof-5-t', {opacity: 0, y: 8}, {opacity: 1, y: 0, duration: 0.35, ease: 'power2.out'}, 123.662);
+tl.to(['#m-proof-5-r', '#m-proof-5-t'], {opacity: 0, duration: 0.3, ease: 'power1.in'}, 126.542);
+tl.fromTo('#asof-proof', {opacity: 0, y: -8}, {opacity: 1, y: 0, duration: .4}, 93.876); tl.to('#asof-proof', {opacity: 0, duration: .3}, 125.448);
+tl.fromTo('#api-dim', {opacity: 0}, {opacity: 1, duration: .4}, 125.748);
+tl.fromTo('#term', {opacity: 0, y: 40, scale: .97}, {opacity: 1, y: 0, scale: 1, duration: .6, ease: 'power3.out'}, 125.848);
+tl.fromTo('#tc-0', {opacity: 0}, {opacity: 1, duration: .05}, 126.348);
+tl.fromTo('#tt-0', {width: '0ch'}, {width: '113ch', duration: 1.6, ease: 'steps(113)'}, 126.348);
+tl.fromTo('#to-0', {opacity: 0}, {opacity: 1, duration: .1}, 128.548);
+tl.fromTo('#tc-1', {opacity: 0}, {opacity: 1, duration: .05}, 129.998);
+tl.fromTo('#tt-1', {width: '0ch'}, {width: '91ch', duration: 1.456, ease: 'steps(91)'}, 129.998);
+tl.fromTo('#to-1', {opacity: 0}, {opacity: 1, duration: .1}, 132.054);
+tl.fromTo('#to-2', {opacity: 0}, {opacity: 1, duration: .1}, 132.104);
+tl.fromTo('#to-3', {opacity: 0}, {opacity: 1, duration: .1}, 132.154);
+tl.fromTo('#to-4', {opacity: 0}, {opacity: 1, duration: .1}, 132.204);
+tl.fromTo('#to-5', {opacity: 0}, {opacity: 1, duration: .1}, 132.254);
+tl.fromTo('#to-6', {opacity: 0}, {opacity: 1, duration: .1}, 132.304);
+tl.fromTo('#to-7', {opacity: 0}, {opacity: 1, duration: .1}, 132.354);
+tl.fromTo('#to-8', {opacity: 0}, {opacity: 1, duration: .1}, 132.404);
+tl.fromTo('#to-9', {opacity: 0}, {opacity: 1, duration: .1}, 132.454);
+tl.to(['#term', '#api-dim'], {opacity: 0, duration: .4}, 136.798);
+
+tl.fromTo('#outro-paper', {yPercent: 100}, {yPercent: 0, duration: .8, ease: 'power3.inOut'}, 137.248);
+tl.fromTo('#wm-out .d1', {scale: 0}, {scale: 1, duration: .45, ease: 'back.out(2.4)'}, 137.748);
+tl.fromTo('#wm-out .d2', {scale: 0}, {scale: 1, duration: .45, ease: 'back.out(2.4)'}, 137.898);
+tl.fromTo('#wm-out .d3', {scale: 0}, {scale: 1, duration: .45, ease: 'back.out(2.4)'}, 138.048);
+tl.fromTo('#wm-out .wmt', {opacity: 0, clipPath: 'inset(0 100% 0 0)'}, {opacity: 1, clipPath: 'inset(0 0% 0 0)', duration: .7, ease: 'power3.out'}, 138.248);
+tl.fromTo('#out-tag', {opacity: 0, y: 18}, {opacity: 1, y: 0, duration: .55, ease: 'power2.out'}, 138.648);
+tl.fromTo('#out-url', {opacity: 0, y: 18, scale: .96}, {opacity: 1, y: 0, scale: 1, duration: .55, ease: 'back.out(1.6)'}, 139.748);
+tl.fromTo('#out-chips .chipx', {opacity: 0, y: 12}, {opacity: 1, y: 0, duration: .4, stagger: .1, ease: 'power2.out'}, 140.348);
+tl.fromTo('#out-nfa', {opacity: 0}, {opacity: 1, duration: .5}, 140.948);
+tl.fromTo('#u-open', {opacity: 0}, {opacity: 1, duration: 0.25}, 0); tl.to('#u-open', {opacity: 0, duration: 0.2}, 12.441);
+tl.fromTo('#u-board', {opacity: 0}, {opacity: 1, duration: 0.25}, 12.541); tl.to('#u-board', {opacity: 0, duration: 0.2}, 32.104);
+tl.fromTo('#c-board', {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.4, ease: 'power2.out'}, 12.641); tl.to('#c-board', {opacity: 0, y: -8, duration: 0.25}, 32.004);
+tl.fromTo('#u-coin', {opacity: 0}, {opacity: 1, duration: 0.25}, 32.204); tl.to('#u-coin', {opacity: 0, duration: 0.2}, 67.666);
+tl.fromTo('#c-coin', {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.4, ease: 'power2.out'}, 32.304); tl.to('#c-coin', {opacity: 0, y: -8, duration: 0.25}, 67.566);
+tl.fromTo('#u-check', {opacity: 0}, {opacity: 1, duration: 0.25}, 67.766); tl.to('#u-check', {opacity: 0, duration: 0.2}, 78.934);
+tl.fromTo('#c-check', {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.4, ease: 'power2.out'}, 67.866); tl.to('#c-check', {opacity: 0, y: -8, duration: 0.25}, 78.834);
+tl.fromTo('#u-grade', {opacity: 0}, {opacity: 1, duration: 0.25}, 79.034); tl.to('#u-grade', {opacity: 0, duration: 0.2}, 93.176);
+tl.fromTo('#c-grade', {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.4, ease: 'power2.out'}, 79.134); tl.to('#c-grade', {opacity: 0, y: -8, duration: 0.25}, 93.076);
+tl.fromTo('#u-proof', {opacity: 0}, {opacity: 1, duration: 0.25}, 93.276); tl.to('#u-proof', {opacity: 0, duration: 0.2}, 125.648);
+tl.fromTo('#c-proof', {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.4, ease: 'power2.out'}, 93.376); tl.to('#c-proof', {opacity: 0, y: -8, duration: 0.25}, 125.548);
+tl.fromTo('#u-api', {opacity: 0}, {opacity: 1, duration: 0.25}, 125.748); tl.to('#u-api', {opacity: 0, duration: 0.2}, 137.148);
+tl.fromTo('#c-api', {opacity: 0, y: 10}, {opacity: 1, y: 0, duration: 0.4, ease: 'power2.out'}, 125.848); tl.to('#c-api', {opacity: 0, y: -8, duration: 0.25}, 137.048);
+tl.fromTo('#u-outro', {opacity: 0}, {opacity: 1, duration: 0.25}, 137.248); tl.to('#u-outro', {opacity: 0, duration: 0.2}, 144.076);
+tl.fromTo('#win', {y: 260, opacity: 0, scale: 0.92, rotationX: 14}, {y: 0, opacity: 1, scale: 1, rotationX: 0, duration: 1.2, ease: 'power3.out'}, 2.9);
+tl.to('#win', {y: -40, opacity: 0, scale: 0.94, duration: 0.8, ease: 'power2.in'}, 137.348);
+tl.fromTo('#progfill', {scaleX: 0}, {scaleX: 1, duration: 144.176, ease: 'none'}, 0);
+tl.fromTo('#capband', {opacity: 0}, {opacity: 1, duration: 0.3}, 0.2);
+
+window.__timelines["main"] = tl;
+</script>
+</body>
 </html>

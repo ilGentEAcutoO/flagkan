@@ -1,0 +1,177 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:-0.025em;--hl-lh:1.0;--body-lh:1.3;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--ink);background:var(--paper);}
+.s5-world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;}
+.s5-dots{position:absolute;left:-400px;top:-400px;width:2720px;height:1880px;background-image:radial-gradient(#E3D8C3 1.6px, transparent 1.8px);background-size:30px 30px;}
+.s5-head{position:absolute;left:70px;top:56px;width:1400px;}
+.s5-kicker{display:flex;align-items:center;gap:14px;font-family:'JBMono',monospace;font-weight:700;font-size:26px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);}
+.s5-kicker .fk-dot{width:16px;height:16px;}
+.s5-title{margin-top:8px;font-weight:800;font-size:68px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s5-node{position:absolute;top:250px;width:300px;padding:22px 22px 24px;}
+.s5-n1{left:70px;} .s5-n2{left:440px;} .s5-n3{left:810px;} .s5-n4{left:1180px;}
+.s5-n1 .s5-nn{font-size:32px;}
+.s5-nt{font-family:'JBMono',monospace;font-weight:700;font-size:26px;color:var(--red);letter-spacing:.02em;line-height:1.3;}
+.s5-nn{margin-top:8px;font-weight:800;font-size:40px;line-height:1.12;}
+.s5-ns{margin-top:8px;font-weight:500;font-size:28px;line-height:var(--body-lh);color:var(--dim);}
+.s5-chip{display:block;margin-top:12px;padding:7px 14px 9px;border:2px solid var(--ink);border-radius:12px;background:var(--cream);font-weight:700;font-size:28px;line-height:1.3;}
+.s5-chip.s5-cr{background:var(--redbg);}
+.s5-clock{position:relative;margin-top:16px;width:70px;height:70px;border-radius:50%;border:3px solid var(--ink);background:var(--yelbg);}
+.s5-hand{position:absolute;left:32px;top:8px;width:4px;height:27px;background:var(--ink);border-radius:3px;transform-origin:50% 100%;display:block;}
+.s5-pin{position:absolute;left:29px;top:29px;width:10px;height:10px;border-radius:50%;background:var(--red);}
+.s5-bar{position:relative;margin-top:16px;height:26px;border:3px solid var(--ink);border-radius:14px;background:#fff;overflow:hidden;}
+.s5-bar i{position:absolute;left:0;top:0;bottom:0;width:100%;display:block;background:linear-gradient(90deg,#0B7A55,#E8A100 55%,#B7321F);transform-origin:left center;}
+.s5-barl{margin-top:6px;font-family:'JBMono',monospace;font-size:26px;font-weight:600;color:var(--dim);}
+.s5-shield{display:flex;align-items:center;gap:10px;margin-top:14px;padding:6px 14px 8px;border:2px dashed var(--ink);border-radius:12px;font-weight:800;font-size:26px;line-height:1.3;}
+.s5-shield svg{flex:none;}
+.s5-link{position:absolute;top:340px;width:70px;height:4px;}
+.s5-l1{left:370px;} .s5-l2{left:740px;} .s5-l3{left:1110px;} .s5-l4{left:1480px;}
+.s5-line{position:absolute;left:0;top:0;width:100%;height:4px;background:var(--ink);transform-origin:left center;display:block;}
+.s5-pk{position:absolute;left:0;top:-6px;width:16px;height:16px;border-radius:50%;background:var(--yel);border:2px solid var(--ink);opacity:0;}
+.s5-out{position:absolute;left:1550px;top:250px;width:300px;display:flex;flex-direction:column;align-items:center;}
+.s5-outt{font-family:'JBMono',monospace;font-weight:700;font-size:26px;color:var(--red);}
+.s5-house{margin-top:12px;width:136px;padding:16px 0;border-radius:40px;background:var(--ink);border:3px solid var(--ink);box-shadow:var(--hard);display:flex;flex-direction:column;align-items:center;gap:12px;}
+.s5-lamp{width:78px;height:78px;border-radius:50%;background:#3A3127;border:3px solid #4A3F31;}
+.s5-reason{margin-top:20px;width:300px;padding:14px 18px 16px;}
+.s5-eg{font-family:'JBMono',monospace;font-size:26px;font-weight:600;color:var(--dim);}
+.s5-rt{margin-top:4px;font-weight:700;font-size:28px;line-height:var(--body-lh);}
+.s5-foot{position:absolute;left:70px;top:868px;width:1780px;height:66px;border-radius:99px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;gap:16px;font-weight:700;font-size:30px;}
+.s5-foot .fk-dot{width:16px;height:16px;border-color:var(--paper);}
+</style>
+<div id="root" data-composition-id="s5-engine" data-width="1920" data-height="1080">
+  <div class="s5-world">
+    <div class="s5-dots"></div>
+    <div class="s5-head">
+      <div class="s5-kicker"><span class="fk-dot fk-r"></span><span class="fk-dot fk-y"></span><span class="fk-dot fk-g"></span><span>How it works</span></div>
+      <div class="s5-title">From new pool to verdict</div>
+    </div>
+    <div class="s5-link s5-l1"><i class="s5-line"></i><b class="s5-pk"></b><b class="s5-pk"></b><b class="s5-pk"></b></div>
+    <div class="s5-link s5-l2"><i class="s5-line"></i><b class="s5-pk"></b><b class="s5-pk"></b><b class="s5-pk"></b></div>
+    <div class="s5-link s5-l3"><i class="s5-line"></i><b class="s5-pk"></b><b class="s5-pk"></b><b class="s5-pk"></b></div>
+    <div class="s5-link s5-l4"><i class="s5-line"></i><b class="s5-pk"></b><b class="s5-pk"></b><b class="s5-pk"></b></div>
+    <div class="s5-node s5-n1 fk-card">
+      <div class="s5-nt">1 · Spot</div>
+      <div class="s5-nn">GeckoTerminal + DexScreener</div>
+      <div class="s5-ns">New pools, every minute</div>
+      <div class="s5-clock"><i class="s5-hand"></i><b class="s5-pin"></b></div>
+    </div>
+    <div class="s5-node s5-n2 fk-card">
+      <div class="s5-nt">2 · Read the chain</div>
+      <div class="s5-nn">Solami RPC</div>
+      <span class="s5-chip s5-sig s5-sig1">Whale share</span>
+      <span class="s5-chip s5-sig s5-sig2">Holder spread</span>
+      <span class="s5-chip s5-sig s5-sig3">Early buys</span>
+      <span class="s5-chip s5-sig s5-sig4">Coin age</span>
+      <span class="s5-chip s5-sig s5-sig5">Mint / freeze authority</span>
+    </div>
+    <div class="s5-node s5-n3 fk-card">
+      <div class="s5-nt">3 · Score</div>
+      <div class="s5-nn">LightGBM</div>
+      <div class="s5-ns">Trained on our own graded history</div>
+      <div class="s5-bar"><i class="s5-bar-i"></i></div>
+      <div class="s5-barl">risk score</div>
+      <div class="s5-shield"><svg width="26" height="30" viewBox="0 0 26 30"><path d="M13 2 L23 6 V14 C23 21 18 26 13 28 C8 26 3 21 3 14 V6 Z" fill="#DDF5E9" stroke="#26211B" stroke-width="3"/></svg><span>+ explicit rules</span></div>
+    </div>
+    <div class="s5-node s5-n4 fk-card">
+      <div class="s5-nt">4 · Judge</div>
+      <div class="s5-nn">Jev AI judge</div>
+      <div class="s5-ns">by TypeSafe</div>
+      <span class="s5-chip s5-cr s5-c1">Coordinated wallets</span>
+      <span class="s5-chip s5-c2">Sell pressure</span>
+    </div>
+    <div class="s5-out">
+      <div class="s5-outt">The light</div>
+      <div class="s5-house"><div class="s5-lamp s5-lr"></div><div class="s5-lamp s5-ly"></div><div class="s5-lamp s5-lg"></div></div>
+      <div class="s5-reason fk-card"><div class="s5-eg">Jev scores · a real coin</div><div class="s5-rt">whale risk 95% · sell pressure 43%</div></div>
+    </div>
+    <div class="s5-foot"><span class="fk-dot fk-r"></span><span class="fk-dot fk-y"></span><span class="fk-dot fk-g"></span><span>One Cloudflare Worker · D1 · real-time push (Durable Objects)</span></div>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=5.092, B3=12.248, B4=18.55, E2=11.828, E3=18.13, E4=27.432, D=28.202;
+const tl = gsap.timeline({ paused: true });
+// camera: follow newest node, pull back on b4
+const S = 1.22;
+function cam(cx, cy, s) {
+  const x = Math.min(0, Math.max(1920 - 1920 * s, 960 - cx * s));
+  const y = Math.min(0, Math.max(1080 - 1080 * s, 540 - cy * s));
+  return {x: x, y: y, scale: s};
+}
+tl.fromTo(".s5-world", cam(220, 420, S + 0.06), Object.assign({duration:B2 - 0.2, ease:"sine.inOut"}, cam(320, 420, S)), 0);
+tl.to(".s5-world", Object.assign({duration:1.6, ease:"power2.inOut"}, cam(700, 460, S)), B2 - 0.2);
+tl.to(".s5-world", Object.assign({duration:1.6, ease:"power2.inOut"}, cam(1000, 460, S)), B3 - 0.2);
+tl.to(".s5-world", Object.assign({duration:2.2, ease:"power3.inOut"}, cam(960, 540, 1)), B4 - 0.1);
+tl.to(".s5-world", {scale:1.015, x:-14, y:-8, duration:Math.max(0.5, D - (B4 + 2.1)), ease:"none"}, B4 + 2.1);
+
+// header
+tl.fromTo(".s5-head", {opacity:0, y:30}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, 0.1);
+// b1 node 1
+tl.fromTo(".s5-n1", {opacity:0, y:50}, {opacity:1, y:0, duration:0.6, ease:"back.out(1.6)"}, B1);
+const ticks = Math.max(1, Math.floor((D - B1) / 1.0));
+tl.fromTo(".s5-hand", {rotation:0}, {rotation:30 * ticks, duration:ticks * 1.0, ease:"steps(" + ticks + ")"}, B1 + 0.3);
+
+function link(sel, t0) {
+  tl.fromTo(sel + " .s5-line", {scaleX:0}, {scaleX:1, duration:0.45, ease:"power2.out"}, t0);
+  const pks = document.querySelectorAll(sel + " .s5-pk");
+  const cyc = 0.9;
+  pks.forEach((p, k) => {
+    const st = t0 + 0.4 + k * cyc / 3;
+    const rep = Math.max(0, Math.floor((D - st) / cyc) - 1);
+    tl.fromTo(p, {x:-6, opacity:1}, {x:60, opacity:1, duration:cyc, ease:"none", repeat:rep, immediateRender:false}, st);
+  });
+}
+// b2 node 2 + signals
+link(".s5-l1", B2 - 0.3);
+tl.fromTo(".s5-n2", {opacity:0, y:50}, {opacity:1, y:0, duration:0.6, ease:"back.out(1.6)"}, B2);
+const sigGap = Math.max(0.7, (E2 - B2 - 1.6) / 5);
+for (let k = 1; k <= 5; k++) {
+  tl.fromTo(".s5-sig" + k, {opacity:0, x:-24}, {opacity:1, x:0, duration:0.35, ease:"back.out(2)"}, B2 + 1.2 + (k - 1) * sigGap);
+}
+// b3 node 3
+link(".s5-l2", B3 - 0.3);
+tl.fromTo(".s5-n3", {opacity:0, y:50}, {opacity:1, y:0, duration:0.6, ease:"back.out(1.6)"}, B3);
+tl.fromTo(".s5-bar-i", {scaleX:0}, {scaleX:0.88, duration:1.8, ease:"power2.out"}, B3 + 1.6);
+tl.fromTo(".s5-shield", {opacity:0, scale:0.6}, {opacity:1, scale:1, duration:0.45, ease:"back.out(2.4)"}, Math.max(B3 + 2.4, E3 - 1.4));
+// b4 node 4 + output
+link(".s5-l3", B4 - 0.3);
+tl.fromTo(".s5-n4", {opacity:0, y:50}, {opacity:1, y:0, duration:0.6, ease:"back.out(1.6)"}, B4);
+tl.fromTo(".s5-c1", {opacity:0, x:-24}, {opacity:1, x:0, duration:0.35, ease:"back.out(2)"}, B4 + 1.7);
+tl.fromTo(".s5-c2", {opacity:0, x:-24}, {opacity:1, x:0, duration:0.35, ease:"back.out(2)"}, Math.max(B4 + 2.5, E4 - 1.8));
+link(".s5-l4", B4 + 2.2);
+tl.fromTo(".s5-out", {opacity:0, y:40}, {opacity:1, y:0, duration:0.55, ease:"back.out(1.6)"}, B4 + 2.4);
+tl.to(".s5-lg", {backgroundColor:"#19B37E", duration:0.12}, B4 + 2.9);
+tl.to(".s5-lg", {backgroundColor:"#3A3127", duration:0.12}, B4 + 3.1);
+tl.to(".s5-ly", {backgroundColor:"#E8A100", duration:0.12}, B4 + 3.1);
+tl.to(".s5-ly", {backgroundColor:"#3A3127", duration:0.12}, B4 + 3.3);
+tl.fromTo(".s5-lr", {backgroundColor:"#3A3127", boxShadow:"0 0 0px rgba(224,69,44,0)"}, {backgroundColor:"#E0452C", boxShadow:"0 0 40px rgba(224,69,44,.9)", duration:0.25, ease:"power2.out"}, B4 + 3.3);
+tl.fromTo(".s5-reason", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5, ease:"expo.out"}, B4 + 3.6);
+tl.fromTo(".s5-foot", {opacity:0, y:30}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B4 + 1.4);
+window.__timelines["s5-engine"] = tl;
+})();
+</script>
+</template>
+</body></html>

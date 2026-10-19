@@ -1,0 +1,129 @@
+<!doctype html>
+<html><head><meta charset="UTF-8" /></head><body>
+<template>
+<style>
+@font-face{font-family:'Sarabun';font-weight:400;font-style:normal;src:url("assets/fonts/Sarabun-Regular.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:500;font-style:normal;src:url("assets/fonts/Sarabun-Medium.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:600;font-style:normal;src:url("assets/fonts/Sarabun-SemiBold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:700;font-style:normal;src:url("assets/fonts/Sarabun-Bold.ttf") format('truetype');}
+@font-face{font-family:'Sarabun';font-weight:800;font-style:normal;src:url("assets/fonts/Sarabun-ExtraBold.ttf") format('truetype');}
+@font-face{font-family:'JBMono';font-weight:100 800;font-style:normal;src:url("assets/fonts/JetBrainsMono.ttf") format('truetype');}
+:root{
+  --paper:#FFFDF7; --cream:#FCEFD9; --ink:#26211B; --dim:#6E6252; --faint:#8F806A; --line:#E9DFCC;
+  --night:#16130E; --night2:#211C15;
+  --red:#B7321F; --redhot:#E0452C; --redbg:#FDE3DC;
+  --yel:#E8A100; --yeltx:#8A5E00; --yelbg:#FFF1D4;
+  --grn:#0B7A55; --grnhot:#19B37E; --grnbg:#DDF5E9;
+  --hard:6px 6px 0 #26211B;
+}
+.fk{font-family:'Sarabun',sans-serif;}
+.fk-mono{font-family:'JBMono',monospace;}
+.fk-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:var(--hard);}
+.fk-pill{display:inline-flex;align-items:center;gap:12px;border-radius:99px;font-weight:800;}
+.fk-dot{display:block;border-radius:50%;border:3px solid var(--ink);}
+.fk-r{background:var(--red);} .fk-y{background:var(--yel);} .fk-g{background:var(--grn);}
+
+:root{--hl-track:0em;--hl-lh:1.18;--body-lh:1.45;}
+#root{position:absolute;inset:0;overflow:hidden;font-family:'Sarabun',sans-serif;color:var(--ink);background:var(--paper);}
+.s8-cam{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:50% 45%;}
+.s8-dots{position:absolute;left:-100px;top:-100px;width:2120px;height:1280px;background-image:radial-gradient(#E3D8C3 1.6px, transparent 1.8px);background-size:30px 30px;}
+.s8-left{position:absolute;left:100px;top:96px;width:860px;}
+.s8-kicker{display:flex;align-items:center;gap:14px;font-family:'JBMono',monospace;font-weight:700;font-size:26px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);}
+.s8-kicker .fk-dot{width:16px;height:16px;}
+.s8-title{margin-top:8px;font-weight:800;font-size:68px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);max-width:840px;}
+.s8-tl{display:block;}
+.s8-tier{position:relative;margin-top:36px;width:840px;padding:26px 32px 30px;}
+.s8-tag{display:inline-block;padding:4px 16px 6px;border-radius:99px;border:2px solid var(--ink);font-family:'JBMono',monospace;font-weight:800;font-size:26px;letter-spacing:.08em;}
+.s8-tag-free{background:var(--grnbg);color:var(--grn);}
+.s8-tag-paid{background:var(--ink);color:var(--paper);}
+.s8-th{margin-top:12px;font-weight:800;font-size:50px;line-height:var(--hl-lh);}
+.s8-ts{margin-top:6px;font-weight:500;font-size:31px;line-height:var(--body-lh);color:var(--dim);}
+.s8-icons{display:flex;gap:20px;margin-top:22px;}
+.s8-ic{display:flex;align-items:center;gap:12px;padding:8px 18px 10px 12px;border:2px solid var(--ink);border-radius:14px;background:var(--cream);font-weight:700;font-size:29px;}
+.s8-ic svg{flex:none;display:block;}
+.s8-right{position:absolute;left:1040px;top:96px;width:800px;}
+.s8-rh{display:flex;align-items:center;gap:20px;}
+.s8-next{font-weight:800;font-size:68px;line-height:var(--hl-lh);letter-spacing:var(--hl-track);}
+.s8-road{padding:4px 16px 6px;border-radius:99px;border:2px dashed var(--ink);font-family:'JBMono',monospace;font-weight:800;font-size:26px;letter-spacing:.08em;color:var(--dim);}
+.s8-list{position:relative;margin-top:48px;}
+.s8-rail{position:absolute;left:46px;top:50px;width:4px;height:520px;background:repeating-linear-gradient(180deg,#26211B 0 10px,transparent 10px 20px);transform-origin:top center;display:block;}
+.s8-item{position:relative;display:flex;align-items:flex-start;gap:26px;margin-bottom:38px;}
+.s8-num{flex:none;width:96px;height:96px;border-radius:50%;border:3px solid var(--ink);background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:4px 4px 0 #26211B;}
+.s8-num svg{display:block;}
+.s8-card{flex:1;padding:18px 26px 22px;border:3px dashed var(--ink);border-radius:18px;background:rgba(255,255,255,.85);}
+.s8-nt{display:inline-block;padding:2px 12px 4px;border-radius:99px;background:var(--yelbg);border:2px solid var(--yel);color:var(--yeltx);font-family:'JBMono',monospace;font-weight:800;font-size:26px;letter-spacing:.06em;}
+.s8-rt{margin-top:8px;font-weight:800;font-size:40px;line-height:var(--hl-lh);}
+.s8-rs{margin-top:6px;font-weight:500;font-size:30px;line-height:var(--body-lh);color:var(--dim);}
+</style>
+<div id="root" data-composition-id="s8-next" data-width="1920" data-height="1080">
+  <div class="s8-cam">
+    <div class="s8-dots"></div>
+    <div class="s8-left">
+      <div class="s8-kicker"><span class="fk-dot fk-r"></span><span class="fk-dot fk-y"></span><span class="fk-dot fk-g"></span><span>โมเดลธุรกิจ</span></div>
+      <div class="s8-title"><span class="s8-tl">เช็กฟรี</span><span class="s8-tl">จ่ายเมื่อเอาไปต่อยอด</span></div>
+      <div class="s8-tier s8-free fk-card">
+        <span class="s8-tag s8-tag-free">ฟรี</span>
+        <div class="s8-th">กระดานสาธารณะ</div>
+        <div class="s8-ts">สำหรับนักเทรดทุกคน ตลอดไป</div>
+      </div>
+      <div class="s8-tier s8-paid fk-card">
+        <span class="s8-tag s8-tag-paid">เสียเงิน</span>
+        <div class="s8-th">ฟีดเรียลไทม์ + API</div>
+        <div class="s8-ts">ใส่คำตัดสินในโปรดักต์ของคุณ</div>
+        <div class="s8-icons">
+          <div class="s8-ic s8-ic1"><svg width="44" height="44" viewBox="0 0 44 44"><rect x="4" y="10" width="34" height="26" rx="5" fill="#FFF1D4" stroke="#26211B" stroke-width="3"/><path d="M8 10 L30 4 L32 10" fill="none" stroke="#26211B" stroke-width="3"/><rect x="26" y="19" width="14" height="9" rx="3" fill="#E8A100" stroke="#26211B" stroke-width="3"/></svg><span>กระเป๋าเงิน</span></div>
+          <div class="s8-ic s8-ic2"><svg width="44" height="44" viewBox="0 0 44 44"><line x1="22" y1="3" x2="22" y2="10" stroke="#26211B" stroke-width="3"/><circle cx="22" cy="4" r="3" fill="#B7321F" stroke="#26211B" stroke-width="2"/><rect x="6" y="10" width="32" height="26" rx="7" fill="#DDF5E9" stroke="#26211B" stroke-width="3"/><circle cx="16" cy="22" r="3.5" fill="#26211B"/><circle cx="28" cy="22" r="3.5" fill="#26211B"/><line x1="16" y1="30" x2="28" y2="30" stroke="#26211B" stroke-width="3"/></svg><span>บอตเทรด</span></div>
+          <div class="s8-ic s8-ic3"><svg width="44" height="44" viewBox="0 0 44 44"><path d="M22 3 C31 9 33 20 29 30 H15 C11 20 13 9 22 3 Z" fill="#FDE3DC" stroke="#26211B" stroke-width="3"/><circle cx="22" cy="16" r="4" fill="#fff" stroke="#26211B" stroke-width="3"/><path d="M15 25 L8 33 L15 32 Z M29 25 L36 33 L29 32 Z" fill="#B7321F" stroke="#26211B" stroke-width="2.5"/><path d="M18 34 L22 42 L26 34" fill="#E8A100" stroke="#26211B" stroke-width="2.5"/></svg><span>ลอนช์แพด</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="s8-right">
+      <div class="s8-rh"><span class="s8-next">ก้าวต่อไป</span><span class="s8-road">แผนงาน</span></div>
+      <div class="s8-list">
+        <i class="s8-rail"></i>
+        <div class="s8-item s8-r1">
+          <div class="s8-num"><svg width="48" height="48" viewBox="0 0 40 40"><path d="M10 28 V18 C10 11 14 7 20 7 C26 7 30 11 30 18 V28 L33 31 H7 Z" fill="#FFF1D4" stroke="#26211B" stroke-width="3" stroke-linejoin="round"/><circle cx="20" cy="34" r="3" fill="#26211B"/></svg></div>
+          <div class="s8-card"><span class="s8-nt">ถัดไป</span><div class="s8-rt">แจ้งเตือนเหรียญที่คุณจับตา</div></div>
+        </div>
+        <div class="s8-item s8-r2">
+          <div class="s8-num"><svg width="48" height="48" viewBox="0 0 40 40"><rect x="3" y="14" width="18" height="12" rx="6" fill="none" stroke="#26211B" stroke-width="3.5"/><rect x="19" y="14" width="18" height="12" rx="6" fill="none" stroke="#B7321F" stroke-width="3.5"/></svg></div>
+          <div class="s8-card"><span class="s8-nt">ถัดไป</span><div class="s8-rt">ลิงก์เช็กก่อนซื้อ แปะได้ทุกที่</div></div>
+        </div>
+        <div class="s8-item s8-r3">
+          <div class="s8-num"><svg width="48" height="48" viewBox="0 0 40 40"><rect x="13" y="4" width="14" height="14" rx="4" fill="#E8A100" stroke="#26211B" stroke-width="3"/><path d="M17 18 V24 H8 V30 H32 V24 H23 V18" fill="#fff" stroke="#26211B" stroke-width="3" stroke-linejoin="round"/><line x1="6" y1="35" x2="34" y2="35" stroke="#B7321F" stroke-width="3.5"/></svg></div>
+          <div class="s8-card"><span class="s8-nt">ถัดไป</span><div class="s8-rt">ประทับตราไฟทุกชุดลงโซลานา ก่อนรู้ผล</div><div class="s8-rs">ใครก็ตรวจได้ว่าไม่มีการย้อนแก้</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+const B1=0.55, B2=7.585, E1=7.165, E2=16.074, D=16.844;
+const tl = gsap.timeline({ paused: true });
+tl.fromTo(".s8-cam", {scale:1.06}, {scale:1.0, duration:D, ease:"sine.out"}, 0);
+// b1: business tiers
+tl.fromTo(".s8-kicker", {opacity:0, y:20}, {opacity:1, y:0, duration:0.5, ease:"power3.out"}, Math.max(0, B1 - 0.4));
+tl.fromTo(".s8-title", {opacity:0, y:50}, {opacity:1, y:0, duration:0.7, ease:"expo.out"}, Math.max(0, B1 - 0.3));
+tl.fromTo(".s8-free", {opacity:0, x:-60}, {opacity:1, x:0, duration:0.6, ease:"back.out(1.5)"}, B1 + 0.5);
+const paidT = B1 + Math.max(2.2, (E1 - B1) * 0.42);
+tl.fromTo(".s8-paid", {opacity:0, x:-60}, {opacity:1, x:0, duration:0.6, ease:"back.out(1.5)"}, paidT);
+const icGap = Math.max(0.35, (E1 - paidT - 0.9) / 3);
+[".s8-ic1", ".s8-ic2", ".s8-ic3"].forEach((s, k) => {
+  tl.fromTo(s, {opacity:0, scale:0.5}, {opacity:1, scale:1, duration:0.4, ease:"back.out(2.6)"}, paidT + 0.7 + k * icGap);
+});
+// b2: roadmap
+tl.to(".s8-left", {opacity:0.55, duration:0.6}, B2 - 0.2);
+tl.fromTo(".s8-rh", {opacity:0, y:30}, {opacity:1, y:0, duration:0.6, ease:"expo.out"}, B2 - 0.3);
+tl.fromTo(".s8-rail", {scaleY:0}, {scaleY:1, duration:Math.max(1.5, E2 - B2 - 1.5), ease:"power1.inOut"}, B2 + 0.4);
+const span = Math.max(4.5, E2 - B2);
+const its = [B2 + 0.8, B2 + span * 0.36, B2 + span * 0.64];
+[".s8-r1", ".s8-r2", ".s8-r3"].forEach((s, k) => {
+  tl.fromTo(s, {opacity:0, x:60}, {opacity:1, x:0, duration:0.55, ease:"back.out(1.5)"}, its[k]);
+  tl.fromTo(s + " .s8-num", {rotation:-90, scale:0.4}, {rotation:0, scale:1, duration:0.5, ease:"back.out(2.2)"}, its[k] + 0.1);
+});
+window.__timelines["s8-next"] = tl;
+})();
+</script>
+</template>
+</body></html>
